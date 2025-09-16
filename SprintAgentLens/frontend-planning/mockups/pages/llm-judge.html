@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Agent Lens - LLM Judge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/base.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .evaluation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .response-comparison { border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); padding: 1.25rem; background-color: var(--color-background-card); }
+        .score-bar { width: 100%; height: 8px; background-color: var(--color-background); border-radius: var(--radius-full); margin: 0.5rem 0; overflow: hidden; }
+        .score-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.3s ease; }
+        .score-excellent { background-color: var(--color-success); }
+        .score-good { background-color: var(--color-primary); }
+        .score-fair { background-color: var(--color-warning); }
+        .score-poor { background-color: var(--color-error); }
+        .criteria-list { space-y: 1rem; margin-top: 1rem; }
+        .criteria-item { display: flex; align-items: center; justify-content: between; padding: 0.75rem; background-color: var(--color-background); border-radius: var(--radius-base); }
+        .judge-panel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .judge-card { text-align: center; padding: 1.25rem; border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); background-color: var(--color-background-card); }
+        .overall-score { font-size: 2rem; font-weight: 800; margin: 0.5rem 0; }
+    </style>
+</head>
+<body class="bg-background">
+    <div class="min-h-screen flex">
+        <nav class="sidebar w-64 bg-card border-r border-light flex flex-col">
+            <div class="p-6 border-b border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <span class="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+                </div>
+            </div>
+            <div class="flex-1 p-4">
+                <ul class="space-y-1">
+                    <li><a href="main-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Dashboard</a></li>
+                    <li><a href="individual-project-view.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="folder" class="w-4 h-4"></i>Projects</a></li>
+                    <li><a href="agent-monitoring.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="bot" class="w-4 h-4"></i>Agents</a></li>
+                    <li><a href="prompt-library.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="message-square" class="w-4 h-4"></i>Prompts</a></li>
+                    <li><a href="test-suite.html" class="nav-item active flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary-alpha text-primary"><i data-lucide="flask" class="w-4 h-4"></i>Testing</a></li>
+                    <li><a href="dataset-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="database" class="w-4 h-4"></i>Datasets</a></li>
+                </ul>
+                <div class="mt-8 pt-6 border-t border-light">
+                    <p class="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">Administration</p>
+                    <ul class="space-y-1">
+                        <li><a href="user-management-admin.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="users" class="w-4 h-4"></i>User Management</a></li>
+                        <li><a href="llm-provider-management.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="cpu" class="w-4 h-4"></i>LLM Providers</a></li>
+                        <li><a href="admin-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="bar-chart" class="w-4 h-4"></i>Analytics</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="p-4 border-t border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-primary">JD</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-primary truncate">John Doe</p>
+                        <p class="text-xs text-muted truncate">john@company.com</p>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex-1 flex flex-col">
+            <header class="bg-card border-b border-light px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-primary">LLM Judge Evaluation</h1>
+                        <nav class="flex items-center gap-2 mt-1" aria-label="Breadcrumb">
+                            <span class="text-sm text-muted">Dashboard</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            <span class="text-sm text-muted">Testing</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            <span class="text-sm text-primary">LLM Judge</span>
+                        </nav>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="btn btn-outline"><i data-lucide="settings" class="w-4 h-4"></i>Configure Judges</button>
+                        <button class="btn btn-primary"><i data-lucide="play" class="w-4 h-4"></i>Start Evaluation</button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 p-6 overflow-auto">
+                <!-- Judge Panel Overview -->
+                <div class="judge-panel">
+                    <div class="judge-card">
+                        <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="brain" class="w-6 h-6 text-inverse"></i>
+                        </div>
+                        <h3 class="font-semibold text-primary">GPT-4 Judge</h3>
+                        <p class="text-sm text-muted mb-2">Comprehensive evaluation</p>
+                        <div class="overall-score text-success">8.7</div>
+                        <div class="text-xs text-muted">Overall Score</div>
+                    </div>
+                    
+                    <div class="judge-card">
+                        <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="zap" class="w-6 h-6 text-inverse"></i>
+                        </div>
+                        <h3 class="font-semibold text-primary">Claude Judge</h3>
+                        <p class="text-sm text-muted mb-2">Quality assessment</p>
+                        <div class="overall-score text-primary">8.4</div>
+                        <div class="text-xs text-muted">Overall Score</div>
+                    </div>
+                    
+                    <div class="judge-card">
+                        <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="target" class="w-6 h-6 text-inverse"></i>
+                        </div>
+                        <h3 class="font-semibold text-primary">Consensus Score</h3>
+                        <p class="text-sm text-muted mb-2">Weighted average</p>
+                        <div class="overall-score text-success">8.6</div>
+                        <div class="text-xs text-muted">Final Rating</div>
+                    </div>
+                </div>
+
+                <!-- Evaluation Results -->
+                <div class="evaluation-grid">
+                    <!-- Current Response -->
+                    <div class="response-comparison">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-primary">Customer Response Under Review</h3>
+                            <div class="text-sm text-muted">Agent: Customer Support v2.1</div>
+                        </div>
+                        
+                        <div class="p-4 bg-background rounded-md mb-4">
+                            <div class="text-xs text-muted mb-2">Customer Query:</div>
+                            <div class="text-sm mb-3">"I've been trying to cancel my subscription for weeks but can't find the option anywhere. This is really frustrating!"</div>
+                            
+                            <div class="text-xs text-muted mb-2">Agent Response:</div>
+                            <div class="text-sm">"I completely understand your frustration with trying to cancel your subscription. That must be really annoying! Let me help you get this sorted out right away. I can see your account here and I'll walk you through the cancellation process step by step, or I can process it for you directly if you'd prefer. Which option would work better for you?"</div>
+                        </div>
+                        
+                        <div class="criteria-list">
+                            <div class="criteria-item">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Empathy & Understanding</div>
+                                    <div class="score-bar">
+                                        <div class="score-fill score-excellent" style="width: 92%;"></div>
+                                    </div>
+                                    <div class="text-xs text-muted">9.2/10 - Excellent acknowledgment of customer frustration</div>
+                                </div>
+                            </div>
+                            
+                            <div class="criteria-item">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Problem Resolution</div>
+                                    <div class="score-bar">
+                                        <div class="score-fill score-excellent" style="width: 95%;"></div>
+                                    </div>
+                                    <div class="text-xs text-muted">9.5/10 - Clear solution with multiple options</div>
+                                </div>
+                            </div>
+                            
+                            <div class="criteria-item">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Professional Tone</div>
+                                    <div class="score-bar">
+                                        <div class="score-fill score-good" style="width: 88%;"></div>
+                                    </div>
+                                    <div class="text-xs text-muted">8.8/10 - Friendly and professional</div>
+                                </div>
+                            </div>
+                            
+                            <div class="criteria-item">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Clarity & Structure</div>
+                                    <div class="score-bar">
+                                        <div class="score-fill score-good" style="width: 85%;"></div>
+                                    </div>
+                                    <div class="text-xs text-muted">8.5/10 - Well organized response</div>
+                                </div>
+                            </div>
+                            
+                            <div class="criteria-item">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Efficiency</div>
+                                    <div class="score-bar">
+                                        <div class="score-fill score-good" style="width: 78%;"></div>
+                                    </div>
+                                    <div class="text-xs text-muted">7.8/10 - Could be more concise</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Judge Feedback -->
+                    <div class="response-comparison">
+                        <h3 class="font-semibold text-primary mb-4">Detailed Judge Analysis</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="p-4 border border-success/20 bg-success/5 rounded-md">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i data-lucide="thumbs-up" class="w-4 h-4 text-success"></i>
+                                    <span class="font-medium text-success">Strengths Identified</span>
+                                </div>
+                                <ul class="text-sm text-muted space-y-1">
+                                    <li>• Excellent emotional recognition and validation</li>
+                                    <li>• Offers multiple resolution paths</li>
+                                    <li>• Proactive and solution-focused approach</li>
+                                    <li>• Uses empathetic language effectively</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="p-4 border border-warning/20 bg-warning/5 rounded-md">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 text-warning"></i>
+                                    <span class="font-medium text-warning">Improvement Areas</span>
+                                </div>
+                                <ul class="text-sm text-muted space-y-1">
+                                    <li>• Response could be more concise</li>
+                                    <li>• Could provide direct cancellation steps upfront</li>
+                                    <li>• Missing retention attempt (business context)</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="p-4 border border-primary/20 bg-primary/5 rounded-md">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-primary"></i>
+                                    <span class="font-medium text-primary">Recommendations</span>
+                                </div>
+                                <div class="text-sm text-muted">
+                                    Consider leading with immediate solution acknowledgment: "I can help you cancel right now" followed by empathetic validation. This would improve efficiency while maintaining the excellent customer care approach.
+                                </div>
+                            </div>
+                            
+                            <div class="p-4 border border-secondary/20 bg-secondary/5 rounded-md">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-secondary"></i>
+                                    <span class="font-medium text-secondary">Comparative Analysis</span>
+                                </div>
+                                <div class="text-sm text-muted">
+                                    This response scores 12% higher than the baseline template and 6% higher than the previous version on customer satisfaction metrics. The empathy improvements are particularly effective.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-light">
+                            <div class="text-sm font-medium text-secondary mb-2">Judge Confidence Levels</div>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-muted">GPT-4 Judge</span>
+                                    <span class="font-medium">95% confident</span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-muted">Claude Judge</span>
+                                    <span class="font-medium">91% confident</span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-muted">Inter-judge Agreement</span>
+                                    <span class="font-medium text-success">87% aligned</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Historical Comparison -->
+                <div class="card mt-6">
+                    <h3 class="font-semibold text-primary mb-4">Historical Performance Trend</h3>
+                    <div class="grid grid-cols-5 gap-4">
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-primary">8.6</div>
+                            <div class="text-xs text-muted">Current</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-secondary">8.1</div>
+                            <div class="text-xs text-muted">Last Week</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-secondary">7.8</div>
+                            <div class="text-xs text-muted">Last Month</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-success">+10.3%</div>
+                            <div class="text-xs text-muted">Improvement</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-primary">94%</div>
+                            <div class="text-xs text-muted">Above Average</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

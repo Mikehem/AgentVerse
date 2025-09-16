@@ -1,0 +1,288 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sprintlens"
+description = "Sprint Agent Lens SDK for Enterprise AI Observability and Evaluation"
+version = "1.0.0"
+authors = [
+    {name = "Sprint Agent Lens Team", email = "team@sprintagentlens.com"}
+]
+maintainers = [
+    {name = "Sprint Agent Lens Team", email = "team@sprintagentlens.com"}
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = [
+    "ai",
+    "ml", 
+    "observability",
+    "tracing",
+    "evaluation",
+    "llm",
+    "monitoring"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "httpx>=0.25.0,<1.0.0",
+    "pydantic>=2.0.0,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0", 
+    "click>=8.0.0,<9.0.0",
+    "structlog>=22.0.0,<25.0.0",
+    "tenacity>=8.0.0,<9.0.0",
+    "rich>=13.0.0,<14.0.0",
+    "typing-extensions>=4.5.0",
+    "uuid6>=2024.1.12",
+    "jinja2>=3.1.0,<4.0.0",
+]
+
+[project.optional-dependencies]
+# LLM Provider Integrations
+openai = ["openai>=1.0.0,<2.0.0"]
+anthropic = ["anthropic>=0.21.0,<1.0.0"]
+azure-openai = ["openai>=1.0.0,<2.0.0", "azure-identity>=1.12.0"]
+bedrock = ["boto3>=1.34.0", "boto3-stubs[bedrock-runtime]>=1.34.110"]
+google-ai = ["google-generativeai>=0.3.0"]
+cohere = ["cohere>=4.0.0"]
+
+# Framework Integrations  
+langchain = ["langchain>=0.1.0,<1.0.0", "langchain-community>=0.0.20"]
+llamaindex = ["llama-index>=0.9.0"]
+haystack = ["haystack-ai>=2.0.0"]
+dspy = ["dspy-ai>=2.4.0"]
+crewai = ["crewai>=0.28.0"]
+autogen = ["pyautogen>=0.2.0"]
+
+# Evaluation & Analytics
+evaluation = [
+    "numpy>=1.21.0,<2.0.0",
+    "scikit-learn>=1.0.0,<2.0.0",
+    "pandas>=1.3.0,<3.0.0",
+    "datasets>=2.0.0,<3.0.0",
+    "nltk>=3.8,<4.0",
+    "rouge-score>=0.1.2",
+    "bert-score>=0.3.13",
+]
+
+# Development Environment
+jupyter = [
+    "ipython>=8.0.0",
+    "jupyter>=1.0.0", 
+    "ipywidgets>=8.0.0",
+    "matplotlib>=3.5.0",
+]
+
+# Web Framework Integrations
+fastapi = ["fastapi>=0.95.0"]
+streamlit = ["streamlit>=1.28.0"]
+flask = ["flask>=2.0.0"]
+django = ["django>=4.0.0"]
+
+# Production & Enterprise
+production = [
+    "uvloop>=0.17.0; sys_platform != 'win32'",
+    "orjson>=3.8.0",
+    "prometheus-client>=0.16.0",
+    "sentry-sdk>=1.32.0",
+]
+
+# Development Dependencies
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.11.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.3.0",
+    "mypy>=1.5.0",
+    "black>=23.7.0",
+    "ruff>=0.0.287",
+    "isort>=5.12.0",
+    "pre-commit>=3.3.0",
+    "coverage[toml]>=7.3.0",
+    "build>=0.10.0",
+    "twine>=4.0.2",
+]
+
+# Documentation
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.2.0",
+    "mkdocstrings[python]>=0.22.0",
+    "mkdocs-jupyter>=0.24.0",
+]
+
+# All optional dependencies
+all = [
+    "sprintlens[openai,anthropic,azure-openai,bedrock,google-ai,cohere]",
+    "sprintlens[langchain,llamaindex,haystack,dspy,crewai,autogen]", 
+    "sprintlens[evaluation,jupyter,fastapi,streamlit,flask,django]",
+    "sprintlens[production]",
+]
+
+[project.urls]
+Homepage = "https://github.com/SprintAgentLens/Sprint_Lens_SDK"
+Documentation = "https://docs.sprintagentlens.com/sdk/"
+Repository = "https://github.com/SprintAgentLens/Sprint_Lens_SDK"
+Issues = "https://github.com/SprintAgentLens/Sprint_Lens_SDK/issues"
+Changelog = "https://github.com/SprintAgentLens/Sprint_Lens_SDK/blob/main/CHANGELOG.md"
+"Bug Reports" = "https://github.com/SprintAgentLens/Sprint_Lens_SDK/issues"
+"Feature Requests" = "https://github.com/SprintAgentLens/Sprint_Lens_SDK/discussions"
+
+[project.scripts]
+sprintlens = "sprintlens.cli.main:cli"
+
+# [project.entry-points."pytest11"]
+# sprintlens = "sprintlens.plugins.pytest.hooks"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sprintlens"]
+
+[tool.hatch.version]
+path = "src/sprintlens/version.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+# Development tools configuration
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["sprintlens"]
+known_third_party = ["httpx", "pydantic", "click", "structlog"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**/*" = ["B011"]
+
+[tool.mypy]
+python_version = "3.8"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+no_implicit_reexport = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    "openai.*",
+    "anthropic.*",
+    "langchain.*",
+    "llama_index.*",
+    "datasets.*",
+    "rouge_score.*",
+    "bert_score.*",
+    "nltk.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=sprintlens",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-report=html",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests", 
+    "performance: marks tests as performance benchmarks",
+    "requires_backend: marks tests that require a running backend",
+]
+
+[tool.coverage.run]
+source = ["src/sprintlens"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/conftest.py",
+    "*/__init__.py",
+    "*/version.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Agent Lens - Prompt Library</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Base CSS Framework -->
+    <link rel="stylesheet" href="../assets/base.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        .prompt-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .prompt-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow-medium);
+        }
+        
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            background-color: var(--color-primary-alpha);
+            color: var(--color-primary);
+        }
+        
+        .status-active {
+            background-color: rgba(167, 180, 158, 0.15);
+            color: var(--color-success);
+        }
+        
+        .status-draft {
+            background-color: rgba(212, 176, 106, 0.15);
+            color: var(--color-warning);
+        }
+        
+        .prompt-preview {
+            background-color: var(--color-background);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-base);
+            padding: 1rem;
+            font-family: var(--font-family-mono);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            max-height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .prompt-preview::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, var(--color-background));
+        }
+        
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.25rem;
+            background-color: var(--color-accent-alpha);
+            color: var(--color-accent-dark);
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .filter-sidebar {
+            width: 280px;
+            flex-shrink: 0;
+        }
+        
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .search-results-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 1.5rem;
+        }
+        
+        .grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .table-view {
+            display: block;
+        }
+        
+        .performance-metrics {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 0.5rem;
+            background-color: var(--color-background);
+            border-radius: var(--radius-base);
+            border: 1px solid var(--color-border-light);
+            flex: 1;
+        }
+        
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-background">
+    <!-- Main Layout Container -->
+    <div class="min-h-screen flex">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar w-64 bg-card border-r border-light flex flex-col">
+            <!-- Logo Section -->
+            <div class="p-6 border-b border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <span class="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <div class="flex-1 p-4">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="main-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="individual-project-view.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="folder" class="w-4 h-4"></i>
+                            Projects
+                        </a>
+                    </li>
+                    <li>
+                        <a href="agent-monitoring.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="bot" class="w-4 h-4"></i>
+                            Agents
+                        </a>
+                    </li>
+                    <li>
+                        <a href="prompt-library.html" class="nav-item active flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary-alpha text-primary">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            Prompts
+                        </a>
+                    </li>
+                    <li>
+                        <a href="test-suite.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="flask" class="w-4 h-4"></i>
+                            Testing
+                        </a>
+                    </li>
+                    <li>
+                        <a href="dataset-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="database" class="w-4 h-4"></i>
+                            Datasets
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Secondary Navigation -->
+                <div class="mt-8 pt-6 border-t border-light">
+                    <p class="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                        Administration
+                    </p>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="user-management-admin.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                                User Management
+                            </a>
+                        </li>
+                        <li>
+                            <a href="llm-provider-management.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                                <i data-lucide="cpu" class="w-4 h-4"></i>
+                                LLM Providers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                                <i data-lucide="bar-chart" class="w-4 h-4"></i>
+                                Analytics
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- User Profile Section -->
+            <div class="p-4 border-t border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-primary">JD</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-primary truncate">John Doe</p>
+                        <p class="text-xs text-muted truncate">john@company.com</p>
+                    </div>
+                    <button class="p-1 rounded-md hover:bg-accent-alpha transition-colors">
+                        <i data-lucide="more-horizontal" class="w-4 h-4 text-muted"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Top Header -->
+            <header class="bg-card border-b border-light px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <!-- Page Title and Breadcrumb -->
+                    <div>
+                        <h1 class="text-2xl font-semibold text-primary">Prompt Library</h1>
+                        <nav class="flex items-center gap-2 mt-1" aria-label="Breadcrumb">
+                            <span class="text-sm text-muted">Dashboard</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            <span class="text-sm text-muted">Prompts</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            <span class="text-sm text-primary">Library</span>
+                        </nav>
+                    </div>
+                    
+                    <!-- Header Actions -->
+                    <div class="flex items-center gap-3">
+                        <button class="btn btn-outline">
+                            <i data-lucide="import" class="w-4 h-4"></i>
+                            Import Prompts
+                        </button>
+                        <button class="btn btn-primary">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Create Prompt
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 p-6 overflow-auto">
+                <div class="flex gap-6 h-full">
+                    <!-- Filter Sidebar -->
+                    <div class="filter-sidebar">
+                        <div class="card">
+                            <h3 class="font-semibold text-primary mb-4">Filters</h3>
+                            
+                            <!-- Search -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-secondary mb-2">Search</label>
+                                <div class="relative">
+                                    <input type="text" placeholder="Search prompts..." class="input pl-9">
+                                    <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Category Filter -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-secondary mb-2">Category</label>
+                                <select class="input">
+                                    <option>All Categories</option>
+                                    <option>Customer Support</option>
+                                    <option>Content Generation</option>
+                                    <option>Data Analysis</option>
+                                    <option>Code Review</option>
+                                    <option>Translation</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Status Filter -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-secondary mb-2">Status</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2" checked>
+                                        <span class="text-sm text-secondary">Active</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2" checked>
+                                        <span class="text-sm text-secondary">Draft</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2">
+                                        <span class="text-sm text-secondary">Archived</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Tags Filter -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-secondary mb-2">Tags</label>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="tag">chatbot</span>
+                                    <span class="tag">summarization</span>
+                                    <span class="tag">classification</span>
+                                    <span class="tag">qa</span>
+                                    <span class="tag">creative</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Performance Filter -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-secondary mb-2">Performance Score</label>
+                                <input type="range" min="0" max="100" value="75" class="w-full">
+                                <div class="flex justify-between text-xs text-muted mt-1">
+                                    <span>0</span>
+                                    <span>100</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Content -->
+                    <div class="main-content">
+                        <!-- Search Results Header -->
+                        <div class="search-results-header mb-6">
+                            <div class="flex items-center gap-4">
+                                <span class="text-sm text-secondary">
+                                    <strong class="text-primary">24 prompts</strong> found
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-muted">Sort by:</span>
+                                    <select class="input text-sm py-1 px-2 w-auto">
+                                        <option>Last Modified</option>
+                                        <option>Name (A-Z)</option>
+                                        <option>Performance</option>
+                                        <option>Usage Count</option>
+                                        <option>Created Date</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="p-2 rounded-md hover:bg-accent-alpha transition-colors">
+                                    <i data-lucide="grid-3x3" class="w-4 h-4 text-muted"></i>
+                                </button>
+                                <button class="p-2 rounded-md hover:bg-accent-alpha transition-colors bg-accent-alpha">
+                                    <i data-lucide="list" class="w-4 h-4 text-primary"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Prompt Cards Grid -->
+                        <div class="grid-view">
+                            <!-- Prompt Card 1 -->
+                            <div class="prompt-card card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 class="font-semibold text-primary mb-1">Customer Support Assistant</h3>
+                                        <p class="text-sm text-muted">Help customers with common inquiries and escalation routing</p>
+                                    </div>
+                                    <span class="version-badge status-active">v2.1 Active</span>
+                                </div>
+                                
+                                <div class="prompt-preview mb-3">
+You are a helpful customer support assistant. Your role is to:
+1. Understand customer inquiries clearly
+2. Provide accurate and helpful responses
+3. Escalate complex issues to human agents when needed
+4. Maintain a friendly and professional tone
+
+When responding to customers:
+- Always acknowledge their concern
+- Provide step-by-step solutions when applicable
+- Ask clarifying questions if needed
+- End with asking if they need further assistance
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-1 mb-3">
+                                    <span class="tag">customer-support</span>
+                                    <span class="tag">chatbot</span>
+                                    <span class="tag">escalation</span>
+                                </div>
+                                
+                                <div class="performance-metrics">
+                                    <div class="metric">
+                                        <div class="metric-value">94%</div>
+                                        <div class="metric-label">Success Rate</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">1,247</div>
+                                        <div class="metric-label">Uses</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">4.2s</div>
+                                        <div class="metric-label">Avg Response</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-4 pt-4 border-t border-light">
+                                    <div class="text-xs text-muted">
+                                        Modified by <span class="text-secondary">Sarah Chen</span> • 2 hours ago
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="edit" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="copy" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Prompt Card 2 -->
+                            <div class="prompt-card card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 class="font-semibold text-primary mb-1">Content Summarizer</h3>
+                                        <p class="text-sm text-muted">Extract key insights and create concise summaries</p>
+                                    </div>
+                                    <span class="version-badge status-active">v1.5 Active</span>
+                                </div>
+                                
+                                <div class="prompt-preview mb-3">
+Please analyze the following content and provide a concise summary that includes:
+
+1. Main topic and key points (3-5 bullet points)
+2. Important statistics or data mentioned
+3. Conclusions or recommendations
+4. Actionable insights
+
+Format your response clearly with headers for each section. Keep the summary under 200 words while maintaining accuracy.
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-1 mb-3">
+                                    <span class="tag">summarization</span>
+                                    <span class="tag">analysis</span>
+                                    <span class="tag">content</span>
+                                </div>
+                                
+                                <div class="performance-metrics">
+                                    <div class="metric">
+                                        <div class="metric-value">91%</div>
+                                        <div class="metric-label">Success Rate</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">856</div>
+                                        <div class="metric-label">Uses</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">3.8s</div>
+                                        <div class="metric-label">Avg Response</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-4 pt-4 border-t border-light">
+                                    <div class="text-xs text-muted">
+                                        Modified by <span class="text-secondary">Mike Johnson</span> • 1 day ago
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="edit" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="copy" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Prompt Card 3 -->
+                            <div class="prompt-card card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 class="font-semibold text-primary mb-1">Code Review Assistant</h3>
+                                        <p class="text-sm text-muted">Automated code quality analysis and suggestions</p>
+                                    </div>
+                                    <span class="version-badge status-draft">v3.0 Draft</span>
+                                </div>
+                                
+                                <div class="prompt-preview mb-3">
+You are an expert code reviewer. Analyze the provided code and provide feedback on:
+
+**Code Quality:**
+- Readability and maintainability
+- Performance considerations
+- Security vulnerabilities
+- Best practices adherence
+
+**Specific Areas:**
+- Variable naming conventions
+- Function structure and complexity
+- Error handling
+- Documentation quality
+
+Provide specific, actionable feedback with examples where possible.
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-1 mb-3">
+                                    <span class="tag">code-review</span>
+                                    <span class="tag">quality</span>
+                                    <span class="tag">security</span>
+                                    <span class="tag">performance</span>
+                                </div>
+                                
+                                <div class="performance-metrics">
+                                    <div class="metric">
+                                        <div class="metric-value">—</div>
+                                        <div class="metric-label">Success Rate</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">0</div>
+                                        <div class="metric-label">Uses</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">—</div>
+                                        <div class="metric-label">Avg Response</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-4 pt-4 border-t border-light">
+                                    <div class="text-xs text-muted">
+                                        Created by <span class="text-secondary">Alex Rivera</span> • 3 hours ago
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="edit" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="copy" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Prompt Card 4 -->
+                            <div class="prompt-card card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 class="font-semibold text-primary mb-1">Data Classification Engine</h3>
+                                        <p class="text-sm text-muted">Categorize and label incoming data automatically</p>
+                                    </div>
+                                    <span class="version-badge status-active">v1.8 Active</span>
+                                </div>
+                                
+                                <div class="prompt-preview mb-3">
+Analyze the provided data and classify it according to the following categories:
+
+**Primary Categories:**
+- Customer Feedback (positive, negative, neutral)
+- Support Request (technical, billing, general)
+- Sales Inquiry (pricing, features, demo)
+- Bug Report (critical, moderate, minor)
+
+**Output Format:**
+- Category: [Primary Category]
+- Subcategory: [Specific type]
+- Confidence: [0-100%]
+- Key Indicators: [Supporting evidence]
+
+Be specific and provide reasoning for your classification.
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-1 mb-3">
+                                    <span class="tag">classification</span>
+                                    <span class="tag">data-analysis</span>
+                                    <span class="tag">automation</span>
+                                </div>
+                                
+                                <div class="performance-metrics">
+                                    <div class="metric">
+                                        <div class="metric-value">88%</div>
+                                        <div class="metric-label">Success Rate</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">2,134</div>
+                                        <div class="metric-label">Uses</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">2.1s</div>
+                                        <div class="metric-label">Avg Response</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-4 pt-4 border-t border-light">
+                                    <div class="text-xs text-muted">
+                                        Modified by <span class="text-secondary">Emma Wilson</span> • 5 days ago
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="edit" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="copy" class="w-3 h-3"></i>
+                                        </button>
+                                        <button class="btn-outline text-xs px-2 py-1" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                            <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div class="flex items-center justify-between mt-8">
+                            <div class="text-sm text-muted">
+                                Showing 1-4 of 24 prompts
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="btn btn-outline" disabled>Previous</button>
+                                <button class="btn bg-primary text-inverse">1</button>
+                                <button class="btn btn-outline">2</button>
+                                <button class="btn btn-outline">3</button>
+                                <button class="btn btn-outline">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Add some basic interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle navigation active states
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all items
+                    navItems.forEach(nav => nav.classList.remove('active', 'bg-primary-alpha', 'text-primary'));
+                    navItems.forEach(nav => nav.classList.add('text-secondary'));
+                    
+                    // Add active class to clicked item
+                    this.classList.add('active', 'bg-primary-alpha', 'text-primary');
+                    this.classList.remove('text-secondary');
+                });
+            });
+            
+            // Prompt card interactions
+            const promptCards = document.querySelectorAll('.prompt-card');
+            promptCards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('button')) {
+                        // Navigate to prompt detail/editor
+                        console.log('Navigate to prompt editor');
+                    }
+                });
+            });
+            
+            // Filter functionality
+            const searchInput = document.querySelector('input[placeholder="Search prompts..."]');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    console.log('Search:', this.value);
+                    // Implement search filtering
+                });
+            }
+            
+            // Tag clicks
+            const tags = document.querySelectorAll('.tag');
+            tags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    console.log('Filter by tag:', this.textContent);
+                    // Implement tag filtering
+                });
+            });
+        });
+    </script>
+</body>
+</html>

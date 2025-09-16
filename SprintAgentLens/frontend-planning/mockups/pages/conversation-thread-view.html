@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Agent Lens - Conversation Thread</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Base CSS Framework -->
+    <link rel="stylesheet" href="../assets/base.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        .conversation-thread {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-user {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .message-agent {
+            display: flex;
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 1rem;
+            border-radius: 1rem;
+            position: relative;
+        }
+        
+        .message-user .message-content {
+            background: #5C7285;
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .message-agent .message-content {
+            background: #E2E0C8;
+            color: #5C7285;
+            border-bottom-left-radius: 0.25rem;
+        }
+        
+        .message-meta {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
+        
+        .message-user .message-meta {
+            text-align: right;
+        }
+        
+        .message-agent .message-meta {
+            text-align: left;
+            color: #818C78;
+        }
+        
+        .trace-indicator {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+        
+        .trace-indicator.error {
+            background: #ef4444;
+        }
+        
+        .trace-indicator.warning {
+            background: #f59e0b;
+        }
+        
+        .thread-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .thread-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #5C7285, #818C78, #A7B49E);
+        }
+        
+        .timeline-node {
+            position: absolute;
+            left: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #5C7285;
+            z-index: 1;
+        }
+        
+        .timeline-node.user {
+            background: #5C7285;
+        }
+        
+        .timeline-node.agent {
+            background: #818C78;
+        }
+        
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+        
+        .metric-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(92, 114, 133, 0.05);
+            border-radius: 0.5rem;
+        }
+        
+        .thread-header {
+            border-bottom: 2px solid #E2E0C8;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .sidebar-panel {
+            background: #f8f9fa;
+            border-left: 2px solid #E2E0C8;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .span-tree {
+            font-size: 0.875rem;
+        }
+        
+        .span-item {
+            padding: 0.5rem;
+            border-left: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .span-item:hover {
+            background: rgba(92, 114, 133, 0.1);
+            border-left-color: #5C7285;
+        }
+        
+        .span-item.active {
+            background: rgba(92, 114, 133, 0.2);
+            border-left-color: #5C7285;
+        }
+        
+        .span-indent-1 { padding-left: 1rem; }
+        .span-indent-2 { padding-left: 2rem; }
+        .span-indent-3 { padding-left: 3rem; }
+        
+        .feedback-section {
+            border-top: 1px solid #E2E0C8;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .rating-stars {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .star {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .star.filled {
+            color: #fbbf24;
+        }
+        
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #E2E0C8;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        
+        .context-menu-item:hover {
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-background">
+    <!-- Main Layout Container -->
+    <div class="min-h-screen flex">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar w-64 bg-card border-r border-light flex flex-col">
+            <!-- Logo Section -->
+            <div class="p-6 border-b border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <span class="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <div class="flex-1 p-4">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="folder" class="w-4 h-4"></i>
+                            Projects
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="cpu" class="w-4 h-4"></i>
+                            Agents
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item active flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary-alpha text-primary">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i>
+                            Conversations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="activity" class="w-4 h-4"></i>
+                            Traces
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            Analytics
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex overflow-hidden">
+            <!-- Conversation View -->
+            <div class="flex-1 flex flex-col">
+                <!-- Header -->
+                <header class="bg-card border-b border-light p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <nav class="flex items-center space-x-2 text-sm text-muted mb-2">
+                                <span>Conversations</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                <span class="text-primary font-medium">Thread: thread_tech_456</span>
+                            </nav>
+                            <h1 class="text-2xl font-bold text-primary">Technical Support Conversation</h1>
+                            <div class="flex items-center gap-4 mt-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-muted">Agent:</span>
+                                    <span class="text-sm font-medium text-secondary">Technical Helper</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-muted">Thread ID:</span>
+                                    <code class="text-sm bg-accent-alpha text-accent px-2 py-1 rounded">thread_tech_456</code>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-muted">Started:</span>
+                                    <span class="text-sm text-secondary">Sep 12, 14:26</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <button class="btn btn-outline flex items-center gap-2">
+                                <i data-lucide="share" class="w-4 h-4"></i>
+                                Share
+                            </button>
+                            <button class="btn btn-outline flex items-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                Export
+                            </button>
+                            <button class="btn btn-primary flex items-center gap-2">
+                                <i data-lucide="activity" class="w-4 h-4"></i>
+                                View Traces
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Thread Performance Metrics -->
+                <div class="bg-card border-b border-light p-4">
+                    <div class="performance-metrics">
+                        <div class="metric-item">
+                            <p class="text-xs text-muted mb-1">Messages</p>
+                            <p class="text-lg font-bold text-primary">7</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="text-xs text-muted mb-1">Total Time</p>
+                            <p class="text-lg font-bold text-primary">3m 42s</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="text-xs text-muted mb-1">Avg Response</p>
+                            <p class="text-lg font-bold text-success">412ms</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="text-xs text-muted mb-1">Total Tokens</p>
+                            <p class="text-lg font-bold text-primary">3,421</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="text-xs text-muted mb-1">Status</p>
+                            <p class="text-lg font-bold text-success">Success</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="text-xs text-muted mb-1">Spans</p>
+                            <p class="text-lg font-bold text-primary">15</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conversation Thread -->
+                <div class="flex-1 p-6 conversation-thread">
+                    <div class="thread-timeline">
+                        <!-- Message 1 - User -->
+                        <div class="message message-user" style="margin-top: 2rem;">
+                            <div class="timeline-node user" style="top: 2.5rem;"></div>
+                            <div class="message-content">
+                                <div class="trace-indicator" title="View trace"></div>
+                                <p>Can you help me with deployment issues? My application keeps failing during the build process.</p>
+                                <div class="message-meta">
+                                    <div>You • 8 min ago</div>
+                                    <div>Tokens: 23 • Response time: N/A</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message 2 - Agent -->
+                        <div class="message message-agent">
+                            <div class="timeline-node agent" style="top: 6rem;"></div>
+                            <div class="message-content">
+                                <div class="trace-indicator" title="View trace"></div>
+                                <p>I'd be happy to help you troubleshoot your deployment issues! Let me guide you through some common solutions.</p>
+                                <p class="mt-2">First, can you tell me:</p>
+                                <ul class="mt-2 ml-4 list-disc">
+                                    <li>What build system are you using? (npm, yarn, webpack, etc.)</li>
+                                    <li>What error messages are you seeing?</li>
+                                    <li>When did this issue first start occurring?</li>
+                                </ul>
+                                <div class="message-meta">
+                                    <div>Technical Helper • 7 min ago</div>
+                                    <div>Tokens: 87 • Response time: 245ms</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message 3 - User -->
+                        <div class="message message-user">
+                            <div class="timeline-node user" style="top: 12rem;"></div>
+                            <div class="message-content">
+                                <div class="trace-indicator" title="View trace"></div>
+                                <p>I'm using npm for builds. The error says "Module not found: Error: Can't resolve './components/Header' in '/src/pages'". This started happening after I restructured my project folders yesterday.</p>
+                                <div class="message-meta">
+                                    <div>You • 6 min ago</div>
+                                    <div>Tokens: 45 • Response time: N/A</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message 4 - Agent -->
+                        <div class="message message-agent">
+                            <div class="timeline-node agent" style="top: 16rem;"></div>
+                            <div class="message-content">
+                                <div class="trace-indicator" title="View trace"></div>
+                                <p>Ah, that's a classic import path issue after restructuring! The build system can't find your Header component because the relative path has changed.</p>
+                                <p class="mt-3 font-medium">Here are a few solutions:</p>
+                                <div class="mt-2 p-3 bg-gray-100 rounded">
+                                    <p class="font-medium">1. Update the import path:</p>
+                                    <code class="block mt-1 text-sm">import Header from '../components/Header';</code>
+                                </div>
+                                <div class="mt-2 p-3 bg-gray-100 rounded">
+                                    <p class="font-medium">2. Or use absolute imports with jsconfig.json:</p>
+                                    <code class="block mt-1 text-sm">import Header from 'components/Header';</code>
+                                </div>
+                                <div class="message-meta">
+                                    <div>Technical Helper • 6 min ago</div>
+                                    <div>Tokens: 134 • Response time: 412ms</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message 5 - User -->
+                        <div class="message message-user">
+                            <div class="timeline-node user" style="top: 24rem;"></div>
+                            <div class="message-content">
+                                <div class="trace-indicator" title="View trace"></div>
+                                <p>Great! I updated the import paths and the build is working now. However, I'm now getting a runtime error: "Cannot read property 'map' of undefined" in my component.</p>
+                                <div class="message-meta">
+                                    <div>You • 5 min ago</div>
+                                    <div>Tokens: 38 • Response time: N/A</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message 6 - Agent -->
+                        <div class="message message-agent">
+                            <div class="timeline-node agent" style="top: 28rem;"></div>
+                            <div class="message-content">
+                                <div class="trace-indicator warning" title="View trace with warnings"></div>
+                                <p>That runtime error suggests you're trying to call .map() on a variable that's undefined or null. This commonly happens with:</p>
+                                <ul class="mt-2 ml-4 list-disc">
+                                    <li>Async data that hasn't loaded yet</li>
+                                    <li>Props that aren't being passed correctly</li>
+                                    <li>State initialization issues</li>
+                                </ul>
+                                <p class="mt-3">Can you show me the component code where this error occurs? Also, make sure to add a safety check:</p>
+                                <div class="mt-2 p-3 bg-gray-100 rounded">
+                                    <code class="text-sm">{`data && data.map((item) => ...)`}</code>
+                                </div>
+                                <div class="message-meta">
+                                    <div>Technical Helper • 4 min ago</div>
+                                    <div>Tokens: 98 • Response time: 567ms</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message 7 - User -->
+                        <div class="message message-user">
+                            <div class="timeline-node user" style="top: 36rem;"></div>
+                            <div class="message-content">
+                                <div class="trace-indicator" title="View trace"></div>
+                                <p>Perfect! Adding the safety check fixed the runtime error. Everything is working now. Thank you so much for your help!</p>
+                                <div class="message-meta">
+                                    <div>You • 3 min ago</div>
+                                    <div>Tokens: 28 • Response time: N/A</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feedback Section -->
+                        <div class="feedback-section">
+                            <div class="bg-card p-4 rounded-lg">
+                                <h4 class="font-semibold text-primary mb-3">How was this conversation?</h4>
+                                <div class="flex items-center gap-4">
+                                    <div class="rating-stars">
+                                        <i data-lucide="star" class="star filled"></i>
+                                        <i data-lucide="star" class="star filled"></i>
+                                        <i data-lucide="star" class="star filled"></i>
+                                        <i data-lucide="star" class="star filled"></i>
+                                        <i data-lucide="star" class="star filled"></i>
+                                    </div>
+                                    <span class="text-sm text-success">Excellent (5/5)</span>
+                                </div>
+                                <p class="text-sm text-muted mt-2">User feedback: "Very helpful and detailed explanations!"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar - Span Tree & Traces -->
+            <aside class="w-80 sidebar-panel">
+                <div class="p-4 border-b border-light">
+                    <h3 class="font-semibold text-primary mb-2">Execution Traces</h3>
+                    <p class="text-sm text-muted">15 spans across 7 conversations</p>
+                </div>
+                
+                <!-- Span Tree -->
+                <div class="span-tree p-2">
+                    <div class="span-item active">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="message-circle" class="w-4 h-4 text-primary"></i>
+                            <span class="font-medium">thread_tech_456</span>
+                        </div>
+                        <div class="text-xs text-muted mt-1">Trace • 3m 42s</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="user" class="w-3 h-3 text-secondary"></i>
+                            <span class="text-sm">User Message #1</span>
+                        </div>
+                        <div class="text-xs text-muted">Input processing • 2ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="cpu" class="w-3 h-3 text-accent"></i>
+                            <span class="text-sm">Agent Response #1</span>
+                        </div>
+                        <div class="text-xs text-muted">LLM call • 245ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="brain" class="w-3 h-3 text-primary"></i>
+                            <span class="text-sm">Intent classification</span>
+                        </div>
+                        <div class="text-xs text-muted">ML inference • 45ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="search" class="w-3 h-3 text-secondary"></i>
+                            <span class="text-sm">Knowledge retrieval</span>
+                        </div>
+                        <div class="text-xs text-muted">Database query • 78ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="type" class="w-3 h-3 text-accent"></i>
+                            <span class="text-sm">Response generation</span>
+                        </div>
+                        <div class="text-xs text-muted">Template render • 122ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="user" class="w-3 h-3 text-secondary"></i>
+                            <span class="text-sm">User Message #2</span>
+                        </div>
+                        <div class="text-xs text-muted">Input processing • 1ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="cpu" class="w-3 h-3 text-accent"></i>
+                            <span class="text-sm">Agent Response #2</span>
+                        </div>
+                        <div class="text-xs text-muted">LLM call • 412ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="code" class="w-3 h-3 text-primary"></i>
+                            <span class="text-sm">Code analysis</span>
+                        </div>
+                        <div class="text-xs text-muted">Pattern matching • 89ms</div>
+                    </div>
+                    
+                    <div class="span-item span-indent-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-3 h-3 text-secondary"></i>
+                            <span class="text-sm">Solution lookup</span>
+                        </div>
+                        <div class="text-xs text-muted">KB search • 156ms</div>
+                    </div>
+                    
+                    <!-- Collapsed spans indicator -->
+                    <div class="span-item span-indent-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-muted"></i>
+                            <span class="text-sm text-muted">5 more spans...</span>
+                        </div>
+                        <div class="text-xs text-muted">Click to expand</div>
+                    </div>
+                </div>
+                
+                <!-- Span Details Panel -->
+                <div class="border-t border-light p-4">
+                    <h4 class="font-semibold text-primary mb-2">Selected Span Details</h4>
+                    <div class="space-y-2 text-sm">
+                        <div>
+                            <span class="text-muted">Span ID:</span>
+                            <code class="ml-2 text-xs bg-accent-alpha text-accent px-2 py-1 rounded">span_123abc</code>
+                        </div>
+                        <div>
+                            <span class="text-muted">Duration:</span>
+                            <span class="ml-2 text-success">3m 42s</span>
+                        </div>
+                        <div>
+                            <span class="text-muted">Status:</span>
+                            <span class="ml-2 text-success">Success</span>
+                        </div>
+                        <div>
+                            <span class="text-muted">Tags:</span>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                <span class="text-xs bg-primary-alpha text-primary px-2 py-1 rounded">technical-support</span>
+                                <span class="text-xs bg-secondary-alpha text-secondary px-2 py-1 rounded">deployment</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span>Copy Message</span>
+        </div>
+        <div class="context-menu-item">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+            <span>View Trace</span>
+        </div>
+        <div class="context-menu-item">
+            <i data-lucide="flag" class="w-4 h-4"></i>
+            <span>Report Issue</span>
+        </div>
+        <div class="context-menu-item">
+            <i data-lucide="share" class="w-4 h-4"></i>
+            <span>Share</span>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Add interaction handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Span tree interactions
+            const spanItems = document.querySelectorAll('.span-item');
+            spanItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all items
+                    spanItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                });
+            });
+            
+            // Context menu for messages
+            const messages = document.querySelectorAll('.message-content');
+            const contextMenu = document.getElementById('contextMenu');
+            
+            messages.forEach(message => {
+                message.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    contextMenu.style.display = 'block';
+                    contextMenu.style.left = e.pageX + 'px';
+                    contextMenu.style.top = e.pageY + 'px';
+                });
+            });
+            
+            // Hide context menu when clicking elsewhere
+            document.addEventListener('click', function() {
+                contextMenu.style.display = 'none';
+            });
+            
+            // Trace indicator clicks
+            const traceIndicators = document.querySelectorAll('.trace-indicator');
+            traceIndicators.forEach(indicator => {
+                indicator.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // Navigate to trace detail
+                    console.log('Navigate to trace detail');
+                });
+            });
+            
+            // Rating stars interaction
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                star.addEventListener('click', function() {
+                    // Update rating
+                    stars.forEach((s, i) => {
+                        if (i <= index) {
+                            s.classList.add('filled');
+                        } else {
+                            s.classList.remove('filled');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

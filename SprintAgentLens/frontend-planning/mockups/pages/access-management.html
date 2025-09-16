@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Management - Sprint Agent Lens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/base.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        .role-card {
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all var(--transition-normal);
+        }
+        
+        .role-card:hover {
+            box-shadow: 0 4px 8px var(--shadow-medium);
+        }
+        
+        .role-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .role-admin .role-icon {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .role-manager .role-icon {
+            background: rgba(92, 114, 133, 0.2);
+            color: var(--color-primary);
+        }
+        
+        .role-developer .role-icon {
+            background: rgba(129, 140, 120, 0.2);
+            color: var(--color-secondary);
+        }
+        
+        .role-viewer .role-icon {
+            background: rgba(167, 180, 158, 0.2);
+            color: var(--color-accent);
+        }
+        
+        .permission-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .permission-item.allowed {
+            color: var(--color-success);
+        }
+        
+        .permission-item.denied {
+            color: var(--color-text-muted);
+        }
+        
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .user-card {
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all var(--transition-normal);
+        }
+        
+        .user-card:hover {
+            box-shadow: 0 2px 4px var(--shadow-light);
+        }
+        
+        .user-avatar {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius-full);
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-inverse);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .user-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: rgba(167, 180, 158, 0.2);
+            color: var(--color-success);
+        }
+        
+        .status-inactive {
+            background: rgba(129, 140, 120, 0.2);
+            color: var(--color-text-muted);
+        }
+        
+        .status-pending {
+            background: rgba(212, 176, 106, 0.2);
+            color: var(--color-warning);
+        }
+        
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+        
+        .role-admin-badge {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .role-manager-badge {
+            background: rgba(92, 114, 133, 0.2);
+            color: var(--color-primary);
+        }
+        
+        .role-developer-badge {
+            background: rgba(129, 140, 120, 0.2);
+            color: var(--color-secondary);
+        }
+        
+        .role-viewer-badge {
+            background: rgba(167, 180, 158, 0.2);
+            color: var(--color-accent);
+        }
+        
+        .audit-log {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .audit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--color-border-light);
+        }
+        
+        .audit-item:last-child {
+            border-bottom: none;
+        }
+        
+        .audit-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .audit-icon.user-action {
+            background: rgba(92, 114, 133, 0.2);
+            color: var(--color-primary);
+        }
+        
+        .audit-icon.role-change {
+            background: rgba(212, 176, 106, 0.2);
+            color: var(--color-warning);
+        }
+        
+        .audit-icon.permission-change {
+            background: rgba(129, 140, 120, 0.2);
+            color: var(--color-secondary);
+        }
+        
+        .permissions-matrix {
+            overflow-x: auto;
+        }
+        
+        .permissions-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        
+        .permissions-table th,
+        .permissions-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border-light);
+        }
+        
+        .permissions-table th {
+            background: var(--color-background);
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+        
+        .permission-cell {
+            text-align: center;
+        }
+        
+        .permission-check {
+            color: var(--color-success);
+        }
+        
+        .permission-x {
+            color: var(--color-text-muted);
+        }
+        
+        .invite-form {
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .user-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .permissions-matrix {
+                font-size: 0.75rem;
+            }
+            
+            .permissions-table th,
+            .permissions-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background">
+    <div class="container mx-auto py-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <nav class="breadcrumb">
+                    <a href="main-dashboard.html" class="breadcrumb-item">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        Dashboard
+                    </a>
+                    <span class="breadcrumb-separator">
+                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                    </span>
+                    <a href="individual-project-view.html" class="breadcrumb-item">E-commerce Support</a>
+                    <span class="breadcrumb-separator">
+                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                    </span>
+                    <span class="breadcrumb-current">Access Management</span>
+                </nav>
+                <h1 class="text-3xl font-bold text-primary mt-2">Access Management</h1>
+                <p class="text-muted mt-1">Manage user roles, permissions, and project access</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-outline">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    Export Users
+                </button>
+                <button class="btn btn-primary" onclick="openInviteModal()">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    Invite User
+                </button>
+            </div>
+        </div>
+
+        <!-- Invite User Form -->
+        <div class="invite-form">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="mail" class="w-5 h-5 text-inverse"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-primary">Invite Team Member</h3>
+                    <p class="text-sm text-muted">Send an invitation to join this project</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="form-field">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" placeholder="user@company.com" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Role</label>
+                    <select class="form-input" required>
+                        <option value="">Select Role</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="developer">Developer</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label class="form-label">&nbsp;</label>
+                    <button class="btn btn-primary w-full">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        Send Invitation
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Definitions -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h2 class="text-xl font-semibold text-primary">Role Definitions</h2>
+                <p class="text-muted">Understanding permissions for each role level</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="role-card role-admin">
+                    <div class="role-icon">
+                        <i data-lucide="shield" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-primary mb-2">Admin</h3>
+                    <p class="text-sm text-muted mb-3">Full system access with all permissions</p>
+                    
+                    <ul class="permission-list">
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Project management
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            User & role management
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Agent configuration
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            System settings
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Billing & usage
+                        </li>
+                    </ul>
+                    
+                    <div class="text-xs text-muted">2 users assigned</div>
+                </div>
+                
+                <div class="role-card role-manager">
+                    <div class="role-icon">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-primary mb-2">Manager</h3>
+                    <p class="text-sm text-muted mb-3">Project oversight and team coordination</p>
+                    
+                    <ul class="permission-list">
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Agent monitoring
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Performance analytics
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            User invitation
+                        </li>
+                        <li class="permission-item denied">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                            System configuration
+                        </li>
+                        <li class="permission-item denied">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                            Billing access
+                        </li>
+                    </ul>
+                    
+                    <div class="text-xs text-muted">3 users assigned</div>
+                </div>
+                
+                <div class="role-card role-developer">
+                    <div class="role-icon">
+                        <i data-lucide="code" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-primary mb-2">Developer</h3>
+                    <p class="text-sm text-muted mb-3">Agent development and testing access</p>
+                    
+                    <ul class="permission-list">
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Agent testing
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Prompt management
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Debug logs
+                        </li>
+                        <li class="permission-item denied">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                            Production deployment
+                        </li>
+                        <li class="permission-item denied">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                            User management
+                        </li>
+                    </ul>
+                    
+                    <div class="text-xs text-muted">5 users assigned</div>
+                </div>
+                
+                <div class="role-card role-viewer">
+                    <div class="role-icon">
+                        <i data-lucide="eye" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-primary mb-2">Viewer</h3>
+                    <p class="text-sm text-muted mb-3">Read-only access to project data</p>
+                    
+                    <ul class="permission-list">
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            View dashboards
+                        </li>
+                        <li class="permission-item allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Export reports
+                        </li>
+                        <li class="permission-item denied">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                            Agent configuration
+                        </li>
+                        <li class="permission-item denied">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                            User management
+                        </li>
+                        <li class="permission-item denied">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                            System changes
+                        </li>
+                    </ul>
+                    
+                    <div class="text-xs text-muted">12 users assigned</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Users -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h2 class="text-xl font-semibold text-primary">Team Members</h2>
+                <div class="flex items-center gap-4">
+                    <select class="form-input text-sm py-1 px-2">
+                        <option>All Roles</option>
+                        <option>Admin</option>
+                        <option>Manager</option>
+                        <option>Developer</option>
+                        <option>Viewer</option>
+                    </select>
+                    <select class="form-input text-sm py-1 px-2">
+                        <option>All Status</option>
+                        <option>Active</option>
+                        <option>Inactive</option>
+                        <option>Pending</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="user-grid">
+                <div class="user-card">
+                    <div class="user-avatar">MS</div>
+                    <h3 class="font-semibold text-primary">Michael Smith</h3>
+                    <p class="text-sm text-muted mb-2">michael.smith@company.com</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="user-status status-active">
+                            <div class="w-2 h-2 rounded-full bg-success"></div>
+                            Active
+                        </div>
+                        <div class="text-xs text-muted">Last seen: 2h ago</div>
+                    </div>
+                    <div class="role-badge role-admin-badge">
+                        <i data-lucide="shield" class="w-3 h-3"></i>
+                        Project Admin
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-outline">Edit</button>
+                        <button class="btn btn-sm btn-primary">Profile</button>
+                    </div>
+                </div>
+                
+                <div class="user-card">
+                    <div class="user-avatar">SJ</div>
+                    <h3 class="font-semibold text-primary">Sarah Johnson</h3>
+                    <p class="text-sm text-muted mb-2">sarah.j@company.com</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="user-status status-active">
+                            <div class="w-2 h-2 rounded-full bg-success"></div>
+                            Active
+                        </div>
+                        <div class="text-xs text-muted">Last seen: 15m ago</div>
+                    </div>
+                    <div class="role-badge role-manager-badge">
+                        <i data-lucide="users" class="w-3 h-3"></i>
+                        Product Manager
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-outline">Edit</button>
+                        <button class="btn btn-sm btn-primary">Profile</button>
+                    </div>
+                </div>
+                
+                <div class="user-card">
+                    <div class="user-avatar">DL</div>
+                    <h3 class="font-semibold text-primary">David Lee</h3>
+                    <p class="text-sm text-muted mb-2">david.lee@company.com</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="user-status status-active">
+                            <div class="w-2 h-2 rounded-full bg-success"></div>
+                            Active
+                        </div>
+                        <div class="text-xs text-muted">Last seen: 1h ago</div>
+                    </div>
+                    <div class="role-badge role-developer-badge">
+                        <i data-lucide="code" class="w-3 h-3"></i>
+                        Senior Developer
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-outline">Edit</button>
+                        <button class="btn btn-sm btn-primary">Profile</button>
+                    </div>
+                </div>
+                
+                <div class="user-card">
+                    <div class="user-avatar">EM</div>
+                    <h3 class="font-semibold text-primary">Emily Martinez</h3>
+                    <p class="text-sm text-muted mb-2">emily.m@company.com</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="user-status status-pending">
+                            <div class="w-2 h-2 rounded-full bg-warning"></div>
+                            Pending
+                        </div>
+                        <div class="text-xs text-muted">Invited: 2d ago</div>
+                    </div>
+                    <div class="role-badge role-viewer-badge">
+                        <i data-lucide="eye" class="w-3 h-3"></i>
+                        Business Analyst
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-outline">Resend</button>
+                        <button class="btn btn-sm btn-secondary">Cancel</button>
+                    </div>
+                </div>
+                
+                <div class="user-card">
+                    <div class="user-avatar">RB</div>
+                    <h3 class="font-semibold text-primary">Robert Brown</h3>
+                    <p class="text-sm text-muted mb-2">robert.b@company.com</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="user-status status-inactive">
+                            <div class="w-2 h-2 rounded-full bg-muted"></div>
+                            Inactive
+                        </div>
+                        <div class="text-xs text-muted">Last seen: 2w ago</div>
+                    </div>
+                    <div class="role-badge role-developer-badge">
+                        <i data-lucide="code" class="w-3 h-3"></i>
+                        Developer
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-outline">Reactivate</button>
+                        <button class="btn btn-sm btn-secondary">Remove</button>
+                    </div>
+                </div>
+                
+                <div class="user-card">
+                    <div class="user-avatar">JW</div>
+                    <h3 class="font-semibold text-primary">Jessica White</h3>
+                    <p class="text-sm text-muted mb-2">jessica.w@company.com</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="user-status status-active">
+                            <div class="w-2 h-2 rounded-full bg-success"></div>
+                            Active
+                        </div>
+                        <div class="text-xs text-muted">Last seen: 30m ago</div>
+                    </div>
+                    <div class="role-badge role-viewer-badge">
+                        <i data-lucide="eye" class="w-3 h-3"></i>
+                        Quality Assurance
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-outline">Edit</button>
+                        <button class="btn btn-sm btn-primary">Profile</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions Matrix -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h2 class="text-xl font-semibold text-primary">Permissions Matrix</h2>
+                <p class="text-muted">Detailed view of role-based permissions</p>
+            </div>
+            
+            <div class="permissions-matrix">
+                <table class="permissions-table">
+                    <thead>
+                        <tr>
+                            <th>Permission</th>
+                            <th class="permission-cell">Admin</th>
+                            <th class="permission-cell">Manager</th>
+                            <th class="permission-cell">Developer</th>
+                            <th class="permission-cell">Viewer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>View Project Dashboard</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Agent Configuration</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                        </tr>
+                        <tr>
+                            <td>User Management</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Production Deployment</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Billing & Usage</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                        </tr>
+                        <tr>
+                            <td>System Settings</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Debug & Logs</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-x"><i data-lucide="x" class="w-4 h-4"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Export Data</td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                            <td class="permission-cell permission-check"><i data-lucide="check" class="w-4 h-4"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Access Audit Log -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-xl font-semibold text-primary">Access Audit Log</h2>
+                <button class="btn btn-sm btn-outline">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    View Full Log
+                </button>
+            </div>
+            
+            <div class="audit-log">
+                <div class="audit-item">
+                    <div class="audit-icon role-change">
+                        <i data-lucide="user-check" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium">Role Updated</div>
+                        <div class="text-sm text-muted mb-1">Emily Martinez role changed from Developer to Business Analyst by Michael Smith</div>
+                        <div class="text-xs text-muted">2 hours ago • IP: 192.168.1.47</div>
+                    </div>
+                </div>
+                
+                <div class="audit-item">
+                    <div class="audit-icon user-action">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium">User Invited</div>
+                        <div class="text-sm text-muted mb-1">Jessica White invited to project with Viewer role by Sarah Johnson</div>
+                        <div class="text-xs text-muted">5 hours ago • IP: 10.0.0.123</div>
+                    </div>
+                </div>
+                
+                <div class="audit-item">
+                    <div class="audit-icon permission-change">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium">Permission Modified</div>
+                        <div class="text-sm text-muted mb-1">Developer role permissions updated to include agent testing access</div>
+                        <div class="text-xs text-muted">1 day ago • IP: 192.168.1.47</div>
+                    </div>
+                </div>
+                
+                <div class="audit-item">
+                    <div class="audit-icon user-action">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium">Access Granted</div>
+                        <div class="text-sm text-muted mb-1">David Lee successfully authenticated and accessed project dashboard</div>
+                        <div class="text-xs text-muted">1 day ago • IP: 172.16.0.89</div>
+                    </div>
+                </div>
+                
+                <div class="audit-item">
+                    <div class="audit-icon user-action">
+                        <i data-lucide="user-minus" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium">User Deactivated</div>
+                        <div class="text-sm text-muted mb-1">Robert Brown account deactivated due to inactivity by Michael Smith</div>
+                        <div class="text-xs text-muted">2 days ago • IP: 192.168.1.47</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        function openInviteModal() {
+            // Focus on email input
+            document.querySelector('input[type="email"]').focus();
+        }
+        
+        // Filter users by role and status
+        const roleFilter = document.querySelector('select');
+        const statusFilter = document.querySelectorAll('select')[1];
+        
+        function filterUsers() {
+            // Implementation would filter the user grid based on selected values
+            console.log('Filtering users...');
+        }
+        
+        if (roleFilter) roleFilter.addEventListener('change', filterUsers);
+        if (statusFilter) statusFilter.addEventListener('change', filterUsers);
+    </script>
+</body>
+</html>

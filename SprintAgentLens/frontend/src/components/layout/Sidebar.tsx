@@ -1,0 +1,130 @@
+'use client'
+
+import { 
+  LayoutDashboard, 
+  Folder, 
+  Bot, 
+  MessageSquare, 
+  MessageCircle,
+  Activity,
+  TestTube, 
+  Database, 
+  Settings, 
+  Users, 
+  Cpu, 
+  BarChart, 
+  Zap,
+  MoreHorizontal,
+  Building2,
+  Star,
+  ThumbsUp
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, current: true },
+  { name: 'Projects', href: '/projects', icon: Folder, current: false },
+  { name: 'Agents', href: '/agents', icon: Bot, current: false },
+  { name: 'Conversations', href: '/conversations', icon: MessageCircle, current: false },
+  { name: 'Prompts', href: '/prompts', icon: MessageSquare, current: false },
+  { name: 'Evaluations', href: '/evaluations', icon: TestTube, current: false },
+  { name: 'Experiments', href: '/experiments', icon: Zap, current: false },
+  { name: 'Datasets', href: '/datasets', icon: Database, current: false },
+  { name: 'Settings', href: '/settings', icon: Settings, current: false },
+]
+
+const adminNavigation = [
+  { name: 'User Management', href: '/admin/users', icon: Users, current: false },
+  { name: 'Departments', href: '/admin/departments', icon: Building2, current: false },
+  { name: 'Business Priorities', href: '/admin/priorities', icon: Star, current: false },
+  { name: 'Feedback Definitions', href: '/admin/feedback-definitions', icon: ThumbsUp, current: false },
+  { name: 'LLM Providers', href: '/admin/providers', icon: Cpu, current: false },
+  { name: 'Analytics', href: '/admin/analytics', icon: BarChart, current: false },
+]
+
+export function Sidebar() {
+  return (
+    <div className="sidebar flex flex-col">
+      {/* Logo Section */}
+      <div className="p-6 border-b border-light">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+            <Zap className="w-5 h-5 text-inverse" />
+          </div>
+          <span className="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+        </div>
+      </div>
+
+      {/* Navigation Menu */}
+      <div className="flex-1 p-4">
+        <ul className="space-y-1">
+          {navigation.map((item) => {
+            const Icon = item.icon
+            return (
+              <li key={item.name}>
+                <a
+                  href={item.href}
+                  className={cn(
+                    'nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                    item.current
+                      ? 'active bg-primary-alpha text-primary'
+                      : 'text-secondary hover:bg-accent-alpha hover:text-primary'
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.name}
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+
+        {/* Secondary Navigation */}
+        <div className="mt-8 pt-6 border-t border-light">
+          <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+            Administration
+          </p>
+          <ul className="space-y-1">
+            {adminNavigation.map((item) => {
+              const Icon = item.icon
+              return (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className={cn(
+                      'nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      item.current
+                        ? 'active bg-primary-alpha text-primary'
+                        : 'text-secondary hover:bg-accent-alpha hover:text-primary'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </div>
+
+      {/* User Profile Section */}
+      <div className="p-4 border-t border-light">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+            <span className="text-sm font-medium text-primary">
+              AD
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-primary truncate">Admin User</p>
+            <p className="text-xs text-muted truncate">admin@sprintlens.com</p>
+          </div>
+          <button className="p-1 rounded-md hover:bg-accent-alpha transition-colors">
+            <MoreHorizontal className="w-4 h-4 text-muted" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

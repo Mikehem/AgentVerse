@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Agent Lens - Conversation Spans & Traces</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Base CSS Framework -->
+    <link rel="stylesheet" href="../assets/base.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        .trace-waterfall {
+            min-height: 500px;
+            position: relative;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
+        .waterfall-row {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(226, 224, 200, 0.3);
+            position: relative;
+        }
+        
+        .waterfall-row:hover {
+            background: rgba(92, 114, 133, 0.05);
+        }
+        
+        .span-info {
+            width: 300px;
+            padding-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .span-name {
+            font-weight: 500;
+            color: #5C7285;
+            font-size: 0.875rem;
+        }
+        
+        .span-details {
+            font-size: 0.75rem;
+            color: #818C78;
+            margin-top: 0.25rem;
+        }
+        
+        .span-timeline {
+            flex: 1;
+            height: 40px;
+            position: relative;
+            background: linear-gradient(90deg, 
+                rgba(92, 114, 133, 0.1) 0%, 
+                rgba(129, 140, 120, 0.1) 50%, 
+                rgba(167, 180, 158, 0.1) 100%);
+            border-radius: 4px;
+            margin: 0 1rem;
+        }
+        
+        .span-bar {
+            position: absolute;
+            height: 24px;
+            top: 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0 0.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .span-bar:hover {
+            transform: scaleY(1.1);
+            z-index: 10;
+        }
+        
+        .span-bar.llm-call { background: linear-gradient(90deg, #5C7285, #4A5A6B); }
+        .span-bar.database { background: linear-gradient(90deg, #818C78, #6B7865); }
+        .span-bar.processing { background: linear-gradient(90deg, #A7B49E, #8FA085); }
+        .span-bar.api-call { background: linear-gradient(90deg, #E2A028, #C88E1F); }
+        .span-bar.error { background: linear-gradient(90deg, #EF4444, #DC2626); }
+        .span-bar.warning { background: linear-gradient(90deg, #F59E0B, #D97706); }
+        
+        .span-duration {
+            width: 80px;
+            text-align: right;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #5C7285;
+            flex-shrink: 0;
+        }
+        
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 2px solid #E2E0C8;
+            font-size: 0.875rem;
+            color: #818C78;
+            font-weight: 500;
+        }
+        
+        .timeline-labels {
+            flex: 1;
+            margin: 0 1rem;
+            height: 20px;
+            position: relative;
+        }
+        
+        .time-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(129, 140, 120, 0.3);
+        }
+        
+        .time-label {
+            position: absolute;
+            top: -20px;
+            font-size: 0.75rem;
+            color: #818C78;
+            transform: translateX(-50%);
+        }
+        
+        .span-indent-0 { margin-left: 0rem; }
+        .span-indent-1 { margin-left: 1rem; }
+        .span-indent-2 { margin-left: 2rem; }
+        .span-indent-3 { margin-left: 3rem; }
+        
+        .span-metadata {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .span-metadata.active {
+            display: block;
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .metadata-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .metadata-label {
+            font-size: 0.75rem;
+            color: #818C78;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metadata-value {
+            font-size: 0.875rem;
+            color: #5C7285;
+            font-weight: 400;
+        }
+        
+        .json-viewer {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .json-key { color: #9cdcfe; }
+        .json-string { color: #ce9178; }
+        .json-number { color: #b5cea8; }
+        .json-boolean { color: #569cd6; }
+        
+        .performance-chart {
+            height: 200px;
+            background: linear-gradient(135deg, rgba(92, 114, 133, 0.1), rgba(167, 180, 158, 0.1));
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            padding: 1rem;
+            gap: 0.5rem;
+        }
+        
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #5C7285, #818C78);
+            border-radius: 4px 4px 0 0;
+            min-height: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .chart-bar:hover {
+            transform: scaleY(1.1);
+            background: linear-gradient(180deg, #4A5A6B, #6B7865);
+        }
+        
+        .chart-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #818C78;
+            white-space: nowrap;
+        }
+        
+        .error-details {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .error-stack {
+            background: #1e1e1e;
+            color: #ef4444;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            border-bottom: 2px solid #E2E0C8;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #818C78;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .filter-tab.active {
+            color: #5C7285;
+            border-bottom-color: #5C7285;
+        }
+        
+        .filter-tab:hover {
+            color: #5C7285;
+            background: rgba(92, 114, 133, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background">
+    <!-- Main Layout Container -->
+    <div class="min-h-screen flex">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar w-64 bg-card border-r border-light flex flex-col">
+            <!-- Logo Section -->
+            <div class="p-6 border-b border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <span class="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <div class="flex-1 p-4">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="folder" class="w-4 h-4"></i>
+                            Projects
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="cpu" class="w-4 h-4"></i>
+                            Agents
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i>
+                            Conversations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item active flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary-alpha text-primary">
+                            <i data-lucide="activity" class="w-4 h-4"></i>
+                            Traces
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            Analytics
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-hidden">
+            <!-- Header -->
+            <header class="bg-card border-b border-light p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <nav class="flex items-center space-x-2 text-sm text-muted mb-2">
+                            <span>Conversations</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            <span>thread_tech_456</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            <span class="text-primary font-medium">Spans & Traces</span>
+                        </nav>
+                        <h1 class="text-2xl font-bold text-primary">Execution Traces & Spans</h1>
+                        <div class="flex items-center gap-4 mt-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-muted">Trace ID:</span>
+                                <code class="text-sm bg-primary-alpha text-primary px-2 py-1 rounded">trace_abc123def</code>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-muted">Total Duration:</span>
+                                <span class="text-sm font-medium text-success">3m 42s</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-muted">Spans:</span>
+                                <span class="text-sm font-medium text-primary">15</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button class="btn btn-outline flex items-center gap-2">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                            Search Spans
+                        </button>
+                        <button class="btn btn-outline flex items-center gap-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            Export Trace
+                        </button>
+                        <button class="btn btn-primary flex items-center gap-2">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                            Replay
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 p-6 overflow-auto">
+                <!-- Performance Overview -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="lg:col-span-2">
+                        <div class="card p-4">
+                            <h3 class="text-lg font-semibold text-primary mb-4">Performance Timeline</h3>
+                            <div class="performance-chart">
+                                <div class="chart-bar" style="height: 60%;">
+                                    <div class="chart-label">Input</div>
+                                </div>
+                                <div class="chart-bar" style="height: 90%;">
+                                    <div class="chart-label">Intent</div>
+                                </div>
+                                <div class="chart-bar" style="height: 100%;">
+                                    <div class="chart-label">LLM</div>
+                                </div>
+                                <div class="chart-bar" style="height: 75%;">
+                                    <div class="chart-label">DB</div>
+                                </div>
+                                <div class="chart-bar" style="height: 40%;">
+                                    <div class="chart-label">Format</div>
+                                </div>
+                                <div class="chart-bar" style="height: 30%;">
+                                    <div class="chart-label">Output</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="card p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-muted">Slowest Span</span>
+                                <i data-lucide="clock" class="w-4 h-4 text-warning"></i>
+                            </div>
+                            <p class="font-semibold text-primary">LLM Response Generation</p>
+                            <p class="text-2xl font-bold text-warning">412ms</p>
+                        </div>
+                        
+                        <div class="card p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-muted">Error Count</span>
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-error"></i>
+                            </div>
+                            <p class="font-semibold text-primary">Database Timeout</p>
+                            <p class="text-2xl font-bold text-error">1</p>
+                        </div>
+                        
+                        <div class="card p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-muted">Success Rate</span>
+                                <i data-lucide="check-circle" class="w-4 h-4 text-success"></i>
+                            </div>
+                            <p class="font-semibold text-primary">Overall Success</p>
+                            <p class="text-2xl font-bold text-success">93.3%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="card">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All Spans (15)</button>
+                        <button class="filter-tab" data-filter="llm">LLM Calls (4)</button>
+                        <button class="filter-tab" data-filter="database">Database (6)</button>
+                        <button class="filter-tab" data-filter="processing">Processing (3)</button>
+                        <button class="filter-tab" data-filter="errors">Errors (1)</button>
+                        <button class="filter-tab" data-filter="warnings">Warnings (1)</button>
+                    </div>
+
+                    <!-- Waterfall Chart -->
+                    <div class="trace-waterfall p-4">
+                        <!-- Timeline Header -->
+                        <div class="timeline-header">
+                            <div class="span-info">Span Name</div>
+                            <div class="timeline-labels">
+                                <div class="time-marker" style="left: 0%;">
+                                    <div class="time-label">0ms</div>
+                                </div>
+                                <div class="time-marker" style="left: 25%;">
+                                    <div class="time-label">500ms</div>
+                                </div>
+                                <div class="time-marker" style="left: 50%;">
+                                    <div class="time-label">1s</div>
+                                </div>
+                                <div class="time-marker" style="left: 75%;">
+                                    <div class="time-label">1.5s</div>
+                                </div>
+                                <div class="time-marker" style="left: 100%;">
+                                    <div class="time-label">2s</div>
+                                </div>
+                            </div>
+                            <div class="span-duration">Duration</div>
+                        </div>
+
+                        <!-- Root Trace -->
+                        <div class="waterfall-row span-indent-0" data-span="root">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="message-circle" class="w-4 h-4 inline mr-1"></i>
+                                    Conversation Thread
+                                </div>
+                                <div class="span-details">trace_abc123def • thread_tech_456</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar processing" style="left: 0%; width: 100%;">
+                                    Full Conversation
+                                </div>
+                            </div>
+                            <div class="span-duration">3m 42s</div>
+                        </div>
+
+                        <!-- Message 1 Processing -->
+                        <div class="waterfall-row span-indent-1" data-span="msg1">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="arrow-down-circle" class="w-4 h-4 inline mr-1"></i>
+                                    User Input Processing
+                                </div>
+                                <div class="span-details">Input validation & parsing</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar processing" style="left: 1%; width: 2%;">
+                                    2ms
+                                </div>
+                            </div>
+                            <div class="span-duration">2ms</div>
+                        </div>
+
+                        <!-- Agent Response 1 -->
+                        <div class="waterfall-row span-indent-1" data-span="agent1">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="cpu" class="w-4 h-4 inline mr-1"></i>
+                                    Agent Response Generation
+                                </div>
+                                <div class="span-details">Technical Helper response #1</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar llm-call" style="left: 3%; width: 12%;">
+                                    245ms
+                                </div>
+                            </div>
+                            <div class="span-duration">245ms</div>
+                        </div>
+
+                        <!-- Intent Classification -->
+                        <div class="waterfall-row span-indent-2" data-span="intent1">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="brain" class="w-4 h-4 inline mr-1"></i>
+                                    Intent Classification
+                                </div>
+                                <div class="span-details">ML model inference</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar processing" style="left: 4%; width: 4%;">
+                                    45ms
+                                </div>
+                            </div>
+                            <div class="span-duration">45ms</div>
+                        </div>
+
+                        <!-- Knowledge Retrieval -->
+                        <div class="waterfall-row span-indent-2" data-span="knowledge1">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="database" class="w-4 h-4 inline mr-1"></i>
+                                    Knowledge Base Query
+                                </div>
+                                <div class="span-details">Deployment troubleshooting docs</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar database" style="left: 8%; width: 6%;">
+                                    78ms
+                                </div>
+                            </div>
+                            <div class="span-duration">78ms</div>
+                        </div>
+
+                        <!-- Response Template -->
+                        <div class="waterfall-row span-indent-2" data-span="template1">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="file-text" class="w-4 h-4 inline mr-1"></i>
+                                    Response Template Render
+                                </div>
+                                <div class="span-details">Markdown formatting & structure</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar processing" style="left: 14%; width: 8%;">
+                                    122ms
+                                </div>
+                            </div>
+                            <div class="span-duration">122ms</div>
+                        </div>
+
+                        <!-- Message 2 Processing -->
+                        <div class="waterfall-row span-indent-1" data-span="msg2">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="arrow-down-circle" class="w-4 h-4 inline mr-1"></i>
+                                    User Input Processing
+                                </div>
+                                <div class="span-details">Error message analysis</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar processing" style="left: 23%; width: 1%;">
+                                    1ms
+                                </div>
+                            </div>
+                            <div class="span-duration">1ms</div>
+                        </div>
+
+                        <!-- Agent Response 2 -->
+                        <div class="waterfall-row span-indent-1" data-span="agent2">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="cpu" class="w-4 h-4 inline mr-1"></i>
+                                    Agent Response Generation
+                                </div>
+                                <div class="span-details">Technical Helper response #2</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar llm-call" style="left: 24%; width: 18%;">
+                                    412ms
+                                </div>
+                            </div>
+                            <div class="span-duration">412ms</div>
+                        </div>
+
+                        <!-- Code Analysis -->
+                        <div class="waterfall-row span-indent-2" data-span="code1">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="code" class="w-4 h-4 inline mr-1"></i>
+                                    Code Error Analysis
+                                </div>
+                                <div class="span-details">Pattern matching & AST parsing</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar processing" style="left: 26%; width: 7%;">
+                                    89ms
+                                </div>
+                            </div>
+                            <div class="span-duration">89ms</div>
+                        </div>
+
+                        <!-- Solution Lookup -->
+                        <div class="waterfall-row span-indent-2" data-span="solution1">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
+                                    Solution Database Query
+                                </div>
+                                <div class="span-details">Common fixes for import errors</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar database" style="left: 33%; width: 9%;">
+                                    156ms
+                                </div>
+                            </div>
+                            <div class="span-duration">156ms</div>
+                        </div>
+
+                        <!-- Database Timeout Error -->
+                        <div class="waterfall-row span-indent-3" data-span="db-error">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 inline mr-1"></i>
+                                    Database Connection Timeout
+                                </div>
+                                <div class="span-details">Retry mechanism triggered</div>
+                            </div>
+                            <div class="span-timeline">
+                                <div class="span-bar error" style="left: 35%; width: 6%;">
+                                    ERROR
+                                </div>
+                            </div>
+                            <div class="span-duration">3.2s</div>
+                        </div>
+
+                        <!-- Remaining spans... (collapsed) -->
+                        <div class="waterfall-row span-indent-1" style="opacity: 0.6;">
+                            <div class="span-info">
+                                <div class="span-name">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 inline mr-1"></i>
+                                    5 more spans...
+                                </div>
+                                <div class="span-details">Click to expand remaining spans</div>
+                            </div>
+                            <div class="span-timeline">
+                                <!-- Empty timeline for collapsed spans -->
+                            </div>
+                            <div class="span-duration">...</div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Span Metadata -->
+                    <div id="span-metadata" class="span-metadata">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-primary">Span Details: Agent Response Generation</h3>
+                            <button class="btn btn-outline btn-sm">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <div class="metadata-grid mb-6">
+                            <div class="metadata-item">
+                                <div class="metadata-label">Span ID</div>
+                                <div class="metadata-value">
+                                    <code class="bg-accent-alpha text-accent px-2 py-1 rounded text-sm">span_abc123</code>
+                                </div>
+                            </div>
+                            
+                            <div class="metadata-item">
+                                <div class="metadata-label">Parent Span</div>
+                                <div class="metadata-value">
+                                    <code class="bg-primary-alpha text-primary px-2 py-1 rounded text-sm">trace_root</code>
+                                </div>
+                            </div>
+                            
+                            <div class="metadata-item">
+                                <div class="metadata-label">Start Time</div>
+                                <div class="metadata-value">2025-09-12T14:26:03.245Z</div>
+                            </div>
+                            
+                            <div class="metadata-item">
+                                <div class="metadata-label">Duration</div>
+                                <div class="metadata-value text-warning font-semibold">412ms</div>
+                            </div>
+                            
+                            <div class="metadata-item">
+                                <div class="metadata-label">Status</div>
+                                <div class="metadata-value text-success">Success</div>
+                            </div>
+                            
+                            <div class="metadata-item">
+                                <div class="metadata-label">Operation Type</div>
+                                <div class="metadata-value">LLM Response Generation</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Input Data -->
+                            <div>
+                                <h4 class="font-semibold text-primary mb-2">Input Data</h4>
+                                <div class="json-viewer">
+<span class="json-key">"input"</span>: <span class="json-string">"I'm using npm for builds. The error says \"Module not found: Error: Can't resolve './components/Header' in '/src/pages'\". This started happening after I restructured my project folders yesterday."</span>,
+<span class="json-key">"context"</span>: {
+  <span class="json-key">"thread_id"</span>: <span class="json-string">"thread_tech_456"</span>,
+  <span class="json-key">"conversation_index"</span>: <span class="json-number">2</span>,
+  <span class="json-key">"intent"</span>: <span class="json-string">"technical_support"</span>,
+  <span class="json-key">"previous_context"</span>: <span class="json-string">"User asking about deployment issues"</span>
+}
+                                </div>
+                            </div>
+
+                            <!-- Output Data -->
+                            <div>
+                                <h4 class="font-semibold text-primary mb-2">Output Data</h4>
+                                <div class="json-viewer">
+<span class="json-key">"response"</span>: <span class="json-string">"Ah, that's a classic import path issue after restructuring! The build system can't find your Header component because the relative path has changed..."</span>,
+<span class="json-key">"metadata"</span>: {
+  <span class="json-key">"token_count"</span>: <span class="json-number">134</span>,
+  <span class="json-key">"model"</span>: <span class="json-string">"gpt-4-turbo"</span>,
+  <span class="json-key">"confidence"</span>: <span class="json-number">0.95</span>,
+  <span class="json-key">"suggestions_provided"</span>: <span class="json-number">2</span>
+}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Error Details (if applicable) -->
+                        <div id="error-details" class="error-details mt-6" style="display: none;">
+                            <h4 class="font-semibold text-error mb-2">Error Information</h4>
+                            <p class="text-error mb-2">Database connection timeout after 3 retry attempts</p>
+                            <div class="error-stack">
+TimeoutError: Connection timeout after 3000ms
+    at Database.connect (/app/src/database/connection.js:45:12)
+    at KnowledgeBase.query (/app/src/knowledge/base.js:23:8)
+    at Agent.generateResponse (/app/src/agent/technical.js:156:10)
+    at async ConversationHandler.process (/app/src/handler.js:89:5)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Add interaction handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filter tab interactions
+            const filterTabs = document.querySelectorAll('.filter-tab');
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active from all tabs
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    // Add active to clicked tab
+                    this.classList.add('active');
+                    
+                    // Filter spans based on data-filter
+                    const filterType = this.getAttribute('data-filter');
+                    filterSpans(filterType);
+                });
+            });
+            
+            // Span row interactions
+            const spanRows = document.querySelectorAll('.waterfall-row');
+            spanRows.forEach(row => {
+                row.addEventListener('click', function() {
+                    // Remove active from all rows
+                    spanRows.forEach(r => r.classList.remove('bg-accent-alpha'));
+                    // Add active to clicked row
+                    this.classList.add('bg-accent-alpha');
+                    
+                    // Show metadata panel
+                    const metadata = document.getElementById('span-metadata');
+                    metadata.classList.add('active');
+                    
+                    // Update metadata based on selected span
+                    const spanId = this.getAttribute('data-span');
+                    updateSpanMetadata(spanId);
+                });
+            });
+            
+            // Performance chart interactions
+            const chartBars = document.querySelectorAll('.chart-bar');
+            chartBars.forEach(bar => {
+                bar.addEventListener('click', function() {
+                    const label = this.querySelector('.chart-label').textContent;
+                    console.log('Navigate to span:', label);
+                });
+            });
+            
+            // Close metadata panel
+            const closeBtn = document.querySelector('#span-metadata .btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    const metadata = document.getElementById('span-metadata');
+                    metadata.classList.remove('active');
+                });
+            }
+        });
+        
+        function filterSpans(type) {
+            const rows = document.querySelectorAll('.waterfall-row');
+            rows.forEach(row => {
+                if (type === 'all') {
+                    row.style.display = 'flex';
+                } else {
+                    // Simple filtering logic - in real app, this would check span types
+                    const spanName = row.querySelector('.span-name').textContent.toLowerCase();
+                    const shouldShow = spanName.includes(type.toLowerCase()) || 
+                                     (type === 'errors' && spanName.includes('error')) ||
+                                     (type === 'warnings' && spanName.includes('timeout'));
+                    
+                    row.style.display = shouldShow ? 'flex' : 'none';
+                }
+            });
+        }
+        
+        function updateSpanMetadata(spanId) {
+            // Update metadata panel based on selected span
+            // In real app, this would fetch actual span data
+            
+            const errorDetails = document.getElementById('error-details');
+            if (spanId === 'db-error') {
+                errorDetails.style.display = 'block';
+            } else {
+                errorDetails.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

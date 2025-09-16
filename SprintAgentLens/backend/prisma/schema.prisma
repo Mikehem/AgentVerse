@@ -1,0 +1,777 @@
+// SprintAgentLens Prisma Schema
+// Database schema for enterprise AI observability platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================================================
+
+/// User accounts with enterprise authentication features
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique @db.VarChar(50)
+  email     String   @unique @db.VarChar(255)
+  fullName  String?  @map("full_name") @db.VarChar(100)
+  
+  // Authentication fields
+  passwordHash String  @map("password_hash") @db.VarChar(255)
+  salt         String  @db.VarChar(255)
+  
+  // Account status
+  isActive     Boolean @default(true) @map("is_active")
+  role         UserRole @default(USER)
+  
+  // Security tracking
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  accountLockedUntil  DateTime? @map("account_locked_until")
+  lastLoginAt         DateTime? @map("last_login_at")
+  
+  // Workspace association
+  workspaceId String @default("default") @map("workspace_id") @db.VarChar(50)
+  
+  // Audit fields
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String?  @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  // Relationships
+  sessions    UserSession[]
+  auditLogs   UserAuditLog[]
+  createdProjects Project[] @relation("ProjectCreator")
+  createdDatasets Dataset[] @relation("DatasetCreator")
+  updatedDatasets Dataset[] @relation("DatasetUpdater")
+  createdDatasetItems DatasetItem[] @relation("DatasetItemCreator")
+  updatedDatasetItems DatasetItem[] @relation("DatasetItemUpdater")
+  createdExperiments Experiment[] @relation("ExperimentCreator")
+  updatedExperiments Experiment[] @relation("ExperimentUpdater")
+  createdLLMProviders LlmProviderApiKey[] @relation("LLMProviderCreator")
+  updatedLLMProviders LlmProviderApiKey[] @relation("LLMProviderUpdater")
+  verifiedFeedback FeedbackInstance[] @relation("FeedbackVerifier")
+  
+  @@map("users")
+  @@index([username])
+  @@index([email])
+  @@index([workspaceId])
+  @@index([isActive])
+}
+
+/// User roles for role-based access control
+enum UserRole {
+  ADMIN
+  USER
+  VIEWER
+  
+  @@map("user_role")
+}
+
+/// Active user sessions with JWT token management
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  
+  // Session details
+  sessionToken String   @unique @map("session_token") @db.VarChar(500)
+  refreshToken String?  @map("refresh_token") @db.VarChar(500)
+  
+  // Session metadata
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  expiresAt   DateTime @map("expires_at")
+  lastUsedAt  DateTime @default(now()) @map("last_used_at")
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_sessions")
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+}
+
+/// Security audit log for authentication events
+model UserAuditLog {
+  id       String   @id @default(cuid())
+  userId   String?  @map("user_id")
+  
+  // Event details
+  event       String   @db.VarChar(100)
+  eventType   AuditEventType @map("event_type")
+  description String?  @db.Text
+  
+  // Request metadata
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  requestId   String?  @map("request_id") @db.VarChar(100)
+  
+  // Additional context
+  metadata    Json?
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  // Relationships
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@map("user_audit_log")
+  @@index([userId])
+  @@index([event])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+/// Audit event types for security monitoring
+enum AuditEventType {
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  ACCOUNT_LOCKED
+  ACCOUNT_UNLOCKED
+  PASSWORD_CHANGED
+  USER_CREATED
+  USER_UPDATED
+  USER_DELETED
+  PERMISSION_DENIED
+  
+  @@map("audit_event_type")
+}
+
+// ============================================================================
+// PROJECT MANAGEMENT
+// ============================================================================
+
+/// Projects for organizing AI experiments and datasets
+model Project {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  
+  // Workspace association
+  workspaceId String @map("workspace_id") @db.VarChar(50)
+  
+  // Audit fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String   @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  // Relationships
+  creator     User     @relation("ProjectCreator", fields: [createdBy], references: [id])
+  datasets    Dataset[]
+  experiments Experiment[]
+  traces      Trace[]
+  agents      Agent[]
+  
+  @@map("projects")
+  @@index([workspaceId])
+  @@index([createdBy])
+  @@index([name])
+}
+
+// ============================================================================
+// DATASET MANAGEMENT  
+// ============================================================================
+
+/// Datasets for AI model evaluation with workspace isolation
+model Dataset {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  
+  // Project and workspace association for access control
+  projectId   String   @map("project_id")
+  workspaceId String   @map("workspace_id") @db.VarChar(50)
+  
+  // Dataset metadata and configuration
+  metadata    Json?    // Stores DatasetMetadata as JSON
+  tags        Json?    // Array of string tags
+  status      DatasetStatus @default(DRAFT)
+  
+  // Statistics
+  itemCount   Int      @default(0) @map("item_count")
+  version     Int      @default(1)
+  
+  // Audit fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String   @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  // Relationships with access control
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator     User     @relation("DatasetCreator", fields: [createdBy], references: [id])
+  updater     User?    @relation("DatasetUpdater", fields: [lastUpdatedBy], references: [id])
+  items       DatasetItem[]
+  experiments Experiment[]
+  
+  @@map("datasets")
+  @@index([projectId])
+  @@index([workspaceId]) // Critical for workspace isolation
+  @@index([createdBy])
+  @@index([name])
+  @@index([status])
+}
+
+/// Dataset status for lifecycle management
+enum DatasetStatus {
+  DRAFT
+  READY
+  PROCESSING
+  ERROR
+  ARCHIVED
+  DEPRECATED
+  
+  @@map("dataset_status")
+}
+
+/// Dataset items for storing individual data points
+model DatasetItem {
+  id          String   @id @default(cuid())
+  
+  // Dataset association
+  datasetId   String   @map("dataset_id")
+  
+  // Item data
+  input       Json     // Input data for the item
+  expectedOutput Json? @map("expected_output") // Expected output (ground truth)
+  metadata    Json?    // DatasetItemMetadata as JSON
+  tags        Json?    // Array of string tags
+  
+  // Audit fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String   @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  // Relationships
+  dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  creator     User     @relation("DatasetItemCreator", fields: [createdBy], references: [id])
+  updater     User?    @relation("DatasetItemUpdater", fields: [lastUpdatedBy], references: [id])
+  
+  @@map("dataset_items")
+  @@index([datasetId])
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// EXPERIMENT MANAGEMENT
+// ============================================================================
+
+/// AI experiments for model evaluation with workspace isolation
+model Experiment {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  
+  // Project and workspace association for access control
+  projectId   String   @map("project_id")
+  workspaceId String   @map("workspace_id") @db.VarChar(50)
+  datasetId   String?  @map("dataset_id")
+  
+  // Experiment configuration and metadata
+  configuration Json?  // Stores ExperimentConfiguration as JSON
+  metadata      Json?  // Stores ExperimentMetadata as JSON
+  tags          Json?  // Array of string tags
+  status        ExperimentStatus @default(DRAFT)
+  progress      Json?  // Stores ExperimentProgress as JSON
+  results       Json?  // Stores ExperimentResults as JSON
+  
+  // Metrics and statistics
+  itemCount        Int      @default(0) @map("item_count")
+  processedItems   Int      @default(0) @map("processed_items")
+  successfulItems  Int      @default(0) @map("successful_items")
+  failedItems      Int      @default(0) @map("failed_items")
+  averageLatency   Float?   @map("average_latency")
+  totalCost        Float?   @map("total_cost")
+  
+  // Execution timestamps
+  startedAt    DateTime? @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  
+  // Audit fields
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String   @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  // Relationships with access control
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  dataset     Dataset? @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  creator     User     @relation("ExperimentCreator", fields: [createdBy], references: [id])
+  updater     User?    @relation("ExperimentUpdater", fields: [lastUpdatedBy], references: [id])
+  
+  @@map("experiments")
+  @@index([projectId])
+  @@index([workspaceId]) // Critical for workspace isolation
+  @@index([datasetId])
+  @@index([createdBy])
+  @@index([status])
+  @@index([startedAt])
+  @@index([completedAt])
+}
+
+/// Experiment status tracking
+enum ExperimentStatus {
+  DRAFT
+  QUEUED
+  RUNNING
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+  TIMEOUT
+  ARCHIVED
+  
+  @@map("experiment_status")
+}
+
+// ============================================================================
+// WORKSPACE CONFIGURATIONS
+// ============================================================================
+
+/// Workspace configuration settings
+model WorkspaceConfiguration {
+  id          String   @id @default(cuid())
+  workspaceId String   @unique @map("workspace_id") @db.VarChar(50)
+  
+  // Configuration data
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  settings    Json?
+  
+  // Feature toggles
+  features    Json?
+  
+  // Audit fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String   @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  @@map("workspace_configurations")
+}
+
+// ============================================================================
+// LLM PROVIDER MANAGEMENT
+// ============================================================================
+
+/// LLM provider API key management with enterprise features
+model LlmProviderApiKey {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(100)
+  provider    String   @db.VarChar(50) // openai, anthropic, google, etc.
+  
+  // Encrypted API key storage
+  encryptedKey String  @map("encrypted_key") @db.Text
+  keyHash      String  @map("key_hash") @db.VarChar(255)
+  
+  // Provider configuration and metadata
+  configuration Json?  // Stores LLMProviderConfiguration as JSON
+  tags          Json?  // Array of string tags
+  
+  // Status and settings
+  isActive     Boolean @default(true) @map("is_active")
+  workspaceId  String  @map("workspace_id") @db.VarChar(50)
+  
+  // Usage and performance tracking
+  lastUsedAt   DateTime? @map("last_used_at")
+  usageCount   Int       @default(0) @map("usage_count")
+  totalCost    Float     @default(0) @map("total_cost")
+  
+  // Health monitoring
+  lastHealthCheck DateTime? @map("last_health_check")
+  healthStatus    Json?     @map("health_status") // Stores LLMProviderHealthStatus
+  
+  // Audit fields
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String   @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  // Relationships
+  creator     User     @relation("LLMProviderCreator", fields: [createdBy], references: [id])
+  updater     User?    @relation("LLMProviderUpdater", fields: [lastUpdatedBy], references: [id])
+  
+  @@map("llm_provider_api_keys")
+  @@index([provider])
+  @@index([workspaceId]) // Critical for workspace isolation
+  @@index([isActive])
+  @@index([lastUsedAt])
+  @@index([name, workspaceId]) // Unique name per workspace
+}
+
+// ============================================================================
+// AGENT MANAGEMENT
+// ============================================================================
+
+/// Agents for managing AI agents within projects
+model Agent {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  
+  // Project and workspace association
+  projectId   String   @map("project_id")
+  workspaceId String   @map("workspace_id") @db.VarChar(50)
+  
+  // Agent configuration
+  agentType   String   @map("agent_type") @db.VarChar(50) // e.g., "llm", "search", "tool", "custom"
+  version     String?  @db.VarChar(20)
+  status      AgentStatus @default(ACTIVE)
+  
+  // Agent metadata and configuration
+  configuration Json?  // Agent-specific configuration
+  metadata      Json?  // Additional metadata
+  tags          Json?  // Array of string tags
+  
+  // Usage statistics
+  totalTraces   Int      @default(0) @map("total_traces")
+  totalSpans    Int      @default(0) @map("total_spans")
+  lastUsedAt    DateTime? @map("last_used_at")
+  
+  // Audit fields
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String   @map("created_by") @db.VarChar(50)
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
+  lastUpdatedBy String?  @map("last_updated_by") @db.VarChar(50)
+  
+  // Relationships
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  traces        Trace[]  @relation("TraceAgent")
+  spans         Span[]   @relation("SpanAgent")
+  
+  @@map("agents")
+  @@index([projectId])
+  @@index([workspaceId]) // Critical for workspace isolation
+  @@index([agentType])
+  @@index([status])
+  @@index([name, projectId]) // Unique name per project
+  @@index([lastUsedAt])
+  @@index([createdAt])
+}
+
+/// Agent status for lifecycle management
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+  ARCHIVED
+  
+  @@map("agent_status")
+}
+
+// ============================================================================
+// TRACING & OBSERVABILITY
+// ============================================================================
+
+/// Traces for capturing execution flows and observability data
+model Trace {
+  id          String   @id @default(cuid())
+  name        String?  @db.VarChar(255)
+  
+  // Project and workspace association for access control
+  projectId   String   @map("project_id")
+  workspaceId String   @map("workspace_id") @db.VarChar(50)
+  
+  // Agent association
+  agentId     String?  @map("agent_id")
+  
+  // Execution metadata
+  startTime   DateTime @map("start_time")
+  endTime     DateTime? @map("end_time")
+  duration    Int?     // Duration in milliseconds
+  status      TraceStatus @default(RUNNING)
+  
+  // Context and metadata
+  input       Json?    // Input data for the trace
+  output      Json?    // Output data from the trace
+  metadata    Json?    // Additional metadata
+  tags        Json?    // Array of string tags
+  
+  // Error information
+  error       String?  @db.Text
+  stackTrace  String?  @map("stack_trace") @db.Text
+  
+  // Cost and performance tracking
+  totalCost   Float?   @map("total_cost")
+  totalTokens Int?     @map("total_tokens")
+  
+  // Audit fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relationships
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent       Agent?   @relation("TraceAgent", fields: [agentId], references: [id], onDelete: SetNull)
+  spans       Span[]
+  
+  @@map("traces")
+  @@index([projectId])
+  @@index([workspaceId]) // Critical for workspace isolation
+  @@index([agentId])
+  @@index([status])
+  @@index([startTime])
+  @@index([endTime])
+  @@index([createdAt])
+}
+
+/// Trace execution status
+enum TraceStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  TIMEOUT
+  
+  @@map("trace_status")
+}
+
+/// Spans for capturing individual operations within traces
+model Span {
+  id          String   @id @default(cuid())
+  traceId     String   @map("trace_id")
+  parentSpanId String? @map("parent_span_id")
+  
+  // Agent association
+  agentId     String?  @map("agent_id")
+  
+  // Span identification
+  name        String   @db.VarChar(255)
+  spanType    SpanType @map("span_type")
+  
+  // Timing
+  startTime   DateTime @map("start_time")
+  endTime     DateTime? @map("end_time")
+  duration    Int?     // Duration in milliseconds
+  status      SpanStatus @default(RUNNING)
+  
+  // Context and metadata
+  input       Json?    // Input data for the span
+  output      Json?    // Output data from the span
+  metadata    Json?    // Additional metadata
+  tags        Json?    // Array of string tags
+  
+  // Error information
+  error       String?  @db.Text
+  stackTrace  String?  @map("stack_trace") @db.Text
+  
+  // LLM-specific fields
+  model       String?  @db.VarChar(100)
+  provider    String?  @db.VarChar(50)
+  tokens      Json?    // Token usage details
+  cost        Float?   // Cost for this span
+  
+  // Audit fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relationships
+  trace       Trace    @relation(fields: [traceId], references: [id], onDelete: Cascade)
+  agent       Agent?   @relation("SpanAgent", fields: [agentId], references: [id], onDelete: SetNull)
+  parentSpan  Span?    @relation("SpanHierarchy", fields: [parentSpanId], references: [id])
+  childSpans  Span[]   @relation("SpanHierarchy")
+  
+  @@map("spans")
+  @@index([traceId])
+  @@index([parentSpanId])
+  @@index([agentId])
+  @@index([spanType])
+  @@index([status])
+  @@index([startTime])
+  @@index([endTime])
+  @@index([createdAt])
+}
+
+/// Span types for categorizing operations
+enum SpanType {
+  LLM
+  AGENT
+  TOOL
+  CHAIN
+  RETRIEVAL
+  EMBEDDING
+  CUSTOM
+  
+  @@map("span_type")
+}
+
+/// Span execution status
+enum SpanStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  TIMEOUT
+  
+  @@map("span_status")
+}
+
+// ============================================================================
+// FEEDBACK & SCORING SYSTEM
+// ============================================================================
+
+/// Feedback definitions for configuring feedback collection
+model FeedbackDefinition {
+  id            String   @id @default(cuid())
+  name          String   @db.VarChar(100)
+  displayName   String   @map("display_name") @db.VarChar(200)
+  description   String?  @db.Text
+  
+  // Type and scope
+  type          FeedbackType
+  scope         FeedbackScope
+  
+  // Configuration (stored as JSON for type-specific configs)
+  config        Json     // FeedbackConfig serialized
+  validation    Json     // FeedbackValidation serialized
+  aggregation   Json     // FeedbackAggregationConfig serialized
+  
+  // Settings
+  isActive      Boolean  @default(true) @map("is_active")
+  isRequired    Boolean  @default(false) @map("is_required")
+  allowMultiple Boolean  @default(false) @map("allow_multiple")
+  
+  // Workspace association
+  workspaceId   String   @map("workspace_id") @db.VarChar(50)
+  
+  // Metadata (stored as JSON)
+  metadata      Json     // Contains creator, version, tags, etc.
+  permissions   Json     // Contains canRead, canWrite, canDelete arrays
+  
+  // Audit fields
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  
+  // Relationships
+  instances     FeedbackInstance[]
+  
+  @@map("feedback_definitions")
+  @@index([workspaceId])
+  @@index([type])
+  @@index([scope])
+  @@index([isActive])
+  @@index([name, workspaceId]) // Unique name per workspace
+  @@index([createdAt])
+}
+
+/// Feedback types supported by the system
+enum FeedbackType {
+  NUMERICAL
+  CATEGORICAL
+  BOOLEAN
+  TEXT
+  LIKERT_SCALE
+  
+  @@map("feedback_type")
+}
+
+/// Feedback scopes defining what entities can receive feedback
+enum FeedbackScope {
+  TRACE
+  SPAN
+  EXPERIMENT
+  DATASET
+  MODEL
+  GLOBAL
+  
+  @@map("feedback_scope")
+}
+
+/// Individual feedback instances containing actual feedback data
+model FeedbackInstance {
+  id              String   @id @default(cuid())
+  definitionId    String   @map("definition_id")
+  definitionName  String   @map("definition_name") @db.VarChar(100)
+  
+  // Target entity
+  entityType      FeedbackScope @map("entity_type")
+  entityId        String   @map("entity_id") @db.VarChar(100)
+  
+  // Feedback value (serialized as JSON to handle different types)
+  value           Json
+  confidence      Float?   // 0-1 for AI-generated feedback
+  
+  // Context
+  workspaceId     String   @map("workspace_id") @db.VarChar(50)
+  projectId       String?  @map("project_id")
+  experimentId    String?  @map("experiment_id")
+  
+  // Source information (stored as JSON)
+  source          Json     // FeedbackSource serialized
+  
+  // Metadata (stored as JSON)
+  metadata        Json     // Contains sessionId, batchId, tags, etc.
+  
+  // Verification
+  isVerified      Boolean  @default(false) @map("is_verified")
+  verifiedBy      String?  @map("verified_by") @db.VarChar(50)
+  verifiedAt      DateTime? @map("verified_at")
+  
+  // Audit fields
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  // Relationships
+  definition      FeedbackDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  verifier        User?    @relation("FeedbackVerifier", fields: [verifiedBy], references: [id])
+  
+  @@map("feedback_instances")
+  @@index([definitionId])
+  @@index([entityType, entityId])
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([experimentId])
+  @@index([isVerified])
+  @@index([createdAt])
+  @@index([verifiedBy])
+}
+
+/// Feedback aggregation results cache for performance
+model FeedbackAggregationCache {
+  id              String   @id @default(cuid())
+  
+  // Cache key components
+  definitionId    String   @map("definition_id")
+  aggregationType String   @map("aggregation_type") @db.VarChar(50)
+  timeWindow      String   @map("time_window") @db.VarChar(50)
+  entityType      FeedbackScope? @map("entity_type")
+  entityIds       Json?    @map("entity_ids") // Array of entity IDs
+  
+  // Filter hash for cache invalidation
+  filtersHash     String   @map("filters_hash") @db.VarChar(255)
+  
+  // Cached results (stored as JSON)
+  result          Json     // FeedbackAggregationResult serialized
+  
+  // Cache metadata
+  workspaceId     String   @map("workspace_id") @db.VarChar(50)
+  dataPoints      Int      @map("data_points")
+  
+  // Cache timing
+  calculatedAt    DateTime @map("calculated_at")
+  expiresAt       DateTime @map("expires_at")
+  
+  // Time range covered
+  timeRangeStart  DateTime @map("time_range_start")
+  timeRangeEnd    DateTime @map("time_range_end")
+  
+  @@map("feedback_aggregation_cache")
+  @@index([definitionId, aggregationType, timeWindow])
+  @@index([workspaceId])
+  @@index([expiresAt])
+  @@index([calculatedAt])
+  @@index([filtersHash])
+}

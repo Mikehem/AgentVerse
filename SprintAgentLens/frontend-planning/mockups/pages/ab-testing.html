@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Agent Lens - A/B Testing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/base.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .test-variant { border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); padding: 1.5rem; background-color: var(--color-background-card); }
+        .test-variant.winner { border-color: var(--color-success); box-shadow: 0 0 0 2px rgba(167, 180, 158, 0.1); }
+        .variant-header { display: flex; align-items: center; justify-content: between; margin-bottom: 1rem; }
+        .winner-badge { background-color: var(--color-success); color: var(--color-text-inverse); padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; }
+        .metric-comparison { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+        .comparison-metric { text-align: center; padding: 1rem; background-color: var(--color-background); border-radius: var(--radius-base); }
+        .metric-value { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); }
+        .metric-change { font-size: 0.75rem; margin-top: 0.25rem; }
+        .positive { color: var(--color-success); }
+        .negative { color: var(--color-error); }
+        .confidence-indicator { width: 100%; height: 8px; background-color: var(--color-background); border-radius: var(--radius-full); margin: 0.5rem 0; }
+        .confidence-bar { height: 100%; border-radius: var(--radius-full); background: linear-gradient(90deg, var(--color-warning) 0%, var(--color-success) 100%); }
+    </style>
+</head>
+<body class="bg-background">
+    <div class="min-h-screen flex">
+        <nav class="sidebar w-64 bg-card border-r border-light flex flex-col">
+            <div class="p-6 border-b border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <span class="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+                </div>
+            </div>
+            <div class="flex-1 p-4">
+                <ul class="space-y-1">
+                    <li><a href="main-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Dashboard</a></li>
+                    <li><a href="individual-project-view.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="folder" class="w-4 h-4"></i>Projects</a></li>
+                    <li><a href="agent-monitoring.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="bot" class="w-4 h-4"></i>Agents</a></li>
+                    <li><a href="prompt-library.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="message-square" class="w-4 h-4"></i>Prompts</a></li>
+                    <li><a href="test-suite.html" class="nav-item active flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary-alpha text-primary"><i data-lucide="flask" class="w-4 h-4"></i>Testing</a></li>
+                    <li><a href="dataset-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="database" class="w-4 h-4"></i>Datasets</a></li>
+                </ul>
+                <div class="mt-8 pt-6 border-t border-light">
+                    <p class="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">Administration</p>
+                    <ul class="space-y-1">
+                        <li><a href="user-management-admin.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="users" class="w-4 h-4"></i>User Management</a></li>
+                        <li><a href="llm-provider-management.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="cpu" class="w-4 h-4"></i>LLM Providers</a></li>
+                        <li><a href="admin-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="bar-chart" class="w-4 h-4"></i>Analytics</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="p-4 border-t border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-primary">JD</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-primary truncate">John Doe</p>
+                        <p class="text-xs text-muted truncate">john@company.com</p>
+                    </div>
+                    <button class="p-1 rounded-md hover:bg-accent-alpha transition-colors">
+                        <i data-lucide="more-horizontal" class="w-4 h-4 text-muted"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex-1 flex flex-col">
+            <header class="bg-card border-b border-light px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-primary">A/B Testing</h1>
+                        <nav class="flex items-center gap-2 mt-1" aria-label="Breadcrumb">
+                            <span class="text-sm text-muted">Dashboard</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            <span class="text-sm text-muted">Testing</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            <span class="text-sm text-primary">A/B Testing</span>
+                        </nav>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="btn btn-outline"><i data-lucide="plus" class="w-4 h-4"></i>New Test</button>
+                        <button class="btn btn-primary"><i data-lucide="bar-chart" class="w-4 h-4"></i>View Results</button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 p-6 overflow-auto">
+                <!-- Test Overview -->
+                <div class="card mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="text-xl font-semibold text-primary">Customer Support Response Test</h2>
+                            <p class="text-sm text-muted">Testing empathy level in customer support responses</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-sm">
+                                <span class="text-muted">Status:</span>
+                                <span class="font-medium text-primary">Active</span>
+                            </div>
+                            <div class="text-sm">
+                                <span class="text-muted">Confidence:</span>
+                                <span class="font-medium text-success">95%</span>
+                            </div>
+                            <button class="btn btn-outline text-sm">Stop Test</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary">2,847</div>
+                            <div class="text-sm text-muted">Total Interactions</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-success">+12.4%</div>
+                            <div class="text-sm text-muted">Satisfaction Improvement</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary">7 days</div>
+                            <div class="text-sm text-muted">Running Duration</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary">95%</div>
+                            <div class="text-sm text-muted">Statistical Confidence</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Grid -->
+                <div class="comparison-grid">
+                    <!-- Variant A (Control) -->
+                    <div class="test-variant">
+                        <div class="variant-header">
+                            <div>
+                                <h3 class="font-semibold text-primary">Variant A (Control)</h3>
+                                <p class="text-sm text-muted">Standard response template</p>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-background rounded-md mb-4">
+                            <div class="text-xs text-muted mb-2">Sample Response:</div>
+                            <div class="text-sm">"Thank you for contacting support. I'll help you resolve this issue. Please provide your account details so I can assist you."</div>
+                        </div>
+                        
+                        <div class="metric-comparison">
+                            <div class="comparison-metric">
+                                <div class="metric-value">3.2</div>
+                                <div class="text-xs text-muted">Avg Rating</div>
+                                <div class="metric-change text-muted">Baseline</div>
+                            </div>
+                            <div class="comparison-metric">
+                                <div class="metric-value">1,423</div>
+                                <div class="text-xs text-muted">Interactions</div>
+                                <div class="metric-change text-muted">50%</div>
+                            </div>
+                            <div class="comparison-metric">
+                                <div class="metric-value">2.1s</div>
+                                <div class="text-xs text-muted">Response Time</div>
+                                <div class="metric-change text-muted">Baseline</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="text-xs text-muted mb-1">Customer Satisfaction</div>
+                            <div class="confidence-indicator">
+                                <div class="confidence-bar" style="width: 64%;"></div>
+                            </div>
+                            <div class="text-xs text-muted">64% satisfied</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Variant B (Test) -->
+                    <div class="test-variant winner">
+                        <div class="variant-header">
+                            <div>
+                                <h3 class="font-semibold text-primary">Variant B (Test)</h3>
+                                <p class="text-sm text-muted">Enhanced empathy template</p>
+                            </div>
+                            <div class="winner-badge">Winner</div>
+                        </div>
+                        
+                        <div class="p-4 bg-background rounded-md mb-4">
+                            <div class="text-xs text-muted mb-2">Sample Response:</div>
+                            <div class="text-sm">"I understand how frustrating this issue must be for you. I'm here to help and will make sure we get this resolved quickly. Let me gather some details to provide the best assistance."</div>
+                        </div>
+                        
+                        <div class="metric-comparison">
+                            <div class="comparison-metric">
+                                <div class="metric-value">3.6</div>
+                                <div class="text-xs text-muted">Avg Rating</div>
+                                <div class="metric-change positive">+12.5% ↗</div>
+                            </div>
+                            <div class="comparison-metric">
+                                <div class="metric-value">1,424</div>
+                                <div class="text-xs text-muted">Interactions</div>
+                                <div class="metric-change text-muted">50%</div>
+                            </div>
+                            <div class="comparison-metric">
+                                <div class="metric-value">2.3s</div>
+                                <div class="text-xs text-muted">Response Time</div>
+                                <div class="metric-change negative">+9.5% ↗</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="text-xs text-muted mb-1">Customer Satisfaction</div>
+                            <div class="confidence-indicator">
+                                <div class="confidence-bar" style="width: 78%;"></div>
+                            </div>
+                            <div class="text-xs text-success font-medium">78% satisfied (+14%)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Performance Charts -->
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="card">
+                        <h3 class="font-semibold text-primary mb-4">Satisfaction Over Time</h3>
+                        <div style="height: 300px;">
+                            <canvas id="satisfactionChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3 class="font-semibold text-primary mb-4">Response Distribution</h3>
+                        <div style="height: 300px;">
+                            <canvas id="responseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Test Details -->
+                <div class="card mt-6">
+                    <h3 class="font-semibold text-primary mb-4">Test Configuration</h3>
+                    <div class="grid grid-cols-3 gap-6">
+                        <div>
+                            <div class="text-sm font-medium text-secondary mb-2">Traffic Split</div>
+                            <div class="text-sm text-muted">50% / 50%</div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-secondary mb-2">Success Metric</div>
+                            <div class="text-sm text-muted">Customer Satisfaction Rating</div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-secondary mb-2">Minimum Sample Size</div>
+                            <div class="text-sm text-muted">2,500 interactions</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Satisfaction Chart
+            const satisfactionCtx = document.getElementById('satisfactionChart').getContext('2d');
+            new Chart(satisfactionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    datasets: [{
+                        label: 'Variant A',
+                        data: [3.1, 3.2, 3.0, 3.3, 3.1, 3.2, 3.2],
+                        borderColor: 'rgb(139, 154, 170)',
+                        backgroundColor: 'rgba(139, 154, 170, 0.1)',
+                        borderWidth: 2
+                    }, {
+                        label: 'Variant B',
+                        data: [3.4, 3.5, 3.6, 3.7, 3.5, 3.6, 3.6],
+                        borderColor: 'rgb(167, 180, 158)',
+                        backgroundColor: 'rgba(167, 180, 158, 0.1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false, min: 2.5, max: 4 } }
+                }
+            });
+            
+            // Response Chart
+            const responseCtx = document.getElementById('responseChart').getContext('2d');
+            new Chart(responseCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied'],
+                    datasets: [{
+                        data: [32, 46, 15, 7],
+                        backgroundColor: [
+                            'rgb(167, 180, 158)',
+                            'rgb(129, 140, 120)',
+                            'rgb(212, 176, 106)',
+                            'rgb(200, 84, 80)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

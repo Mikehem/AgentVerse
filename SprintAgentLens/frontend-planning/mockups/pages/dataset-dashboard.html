@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Agent Lens - Dataset Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/base.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .dataset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .dataset-card { border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); padding: 1.25rem; background-color: var(--color-background-card); transition: all var(--transition-fast); }
+        .dataset-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--shadow-medium); }
+        .dataset-header { display: flex; align-items: start; justify-content: between; margin-bottom: 1rem; }
+        .dataset-icon { width: 48px; height: 48px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; }
+        .dataset-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 1rem 0; }
+        .stat-item { text-align: center; padding: 0.75rem; background-color: var(--color-background); border-radius: var(--radius-base); }
+        .quality-indicator { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .quality-dots { display: flex; gap: 0.25rem; }
+        .quality-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-excellent { background-color: var(--color-success); }
+        .dot-good { background-color: var(--color-primary); }
+        .dot-fair { background-color: var(--color-warning); }
+        .dot-poor { background-color: var(--color-error); }
+    </style>
+</head>
+<body class="bg-background">
+    <div class="min-h-screen flex">
+        <nav class="sidebar w-64 bg-card border-r border-light flex flex-col">
+            <div class="p-6 border-b border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <span class="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+                </div>
+            </div>
+            <div class="flex-1 p-4">
+                <ul class="space-y-1">
+                    <li><a href="main-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Dashboard</a></li>
+                    <li><a href="individual-project-view.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="folder" class="w-4 h-4"></i>Projects</a></li>
+                    <li><a href="agent-monitoring.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="bot" class="w-4 h-4"></i>Agents</a></li>
+                    <li><a href="prompt-library.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="message-square" class="w-4 h-4"></i>Prompts</a></li>
+                    <li><a href="test-suite.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="flask" class="w-4 h-4"></i>Testing</a></li>
+                    <li><a href="dataset-dashboard.html" class="nav-item active flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary-alpha text-primary"><i data-lucide="database" class="w-4 h-4"></i>Datasets</a></li>
+                </ul>
+                <div class="mt-8 pt-6 border-t border-light">
+                    <p class="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">Administration</p>
+                    <ul class="space-y-1">
+                        <li><a href="user-management-admin.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="users" class="w-4 h-4"></i>User Management</a></li>
+                        <li><a href="llm-provider-management.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="cpu" class="w-4 h-4"></i>LLM Providers</a></li>
+                        <li><a href="admin-dashboard.html" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors"><i data-lucide="bar-chart" class="w-4 h-4"></i>Analytics</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="p-4 border-t border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-primary">JD</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-primary truncate">John Doe</p>
+                        <p class="text-xs text-muted truncate">john@company.com</p>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex-1 flex flex-col">
+            <header class="bg-card border-b border-light px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-primary">Dataset Dashboard</h1>
+                        <nav class="flex items-center gap-2 mt-1" aria-label="Breadcrumb">
+                            <span class="text-sm text-muted">Dashboard</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            <span class="text-sm text-primary">Datasets</span>
+                        </nav>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="btn btn-outline"><i data-lucide="upload" class="w-4 h-4"></i>Import Dataset</button>
+                        <button class="btn btn-primary"><i data-lucide="plus" class="w-4 h-4"></i>Create Dataset</button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 p-6 overflow-auto">
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-4 gap-6 mb-6">
+                    <div class="card text-center">
+                        <div class="text-2xl font-bold text-primary">24</div>
+                        <div class="text-sm text-muted">Total Datasets</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-2xl font-bold text-success">156K</div>
+                        <div class="text-sm text-muted">Data Points</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-2xl font-bold text-primary">89%</div>
+                        <div class="text-sm text-muted">Avg Quality Score</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-2xl font-bold text-secondary">12</div>
+                        <div class="text-sm text-muted">Active Trainings</div>
+                    </div>
+                </div>
+                
+                <!-- Dataset Grid -->
+                <div class="dataset-grid">
+                    <!-- Customer Support Dataset -->
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div class="flex">
+                                <div class="dataset-icon bg-primary">
+                                    <i data-lucide="headphones" class="w-6 h-6 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-primary">Customer Support Conversations</h3>
+                                    <p class="text-sm text-muted">Support ticket interactions and resolutions</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline text-xs px-2 py-1">
+                                <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">23.4K</div>
+                                <div class="text-xs text-muted">Conversations</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-secondary">94%</div>
+                                <div class="text-xs text-muted">Quality</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">2.4GB</div>
+                                <div class="text-xs text-muted">Size</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicator">
+                            <div class="text-xs text-muted">Quality:</div>
+                            <div class="quality-dots">
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-good"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 text-xs text-muted">
+                            <span>Updated 2 hours ago</span>
+                            <span>By Sarah Chen</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Product Knowledge Base -->
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div class="flex">
+                                <div class="dataset-icon bg-secondary">
+                                    <i data-lucide="book-open" class="w-6 h-6 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-primary">Product Knowledge Base</h3>
+                                    <p class="text-sm text-muted">Documentation and FAQ content</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline text-xs px-2 py-1">
+                                <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">8.7K</div>
+                                <div class="text-xs text-muted">Articles</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-secondary">91%</div>
+                                <div class="text-xs text-muted">Quality</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">1.8GB</div>
+                                <div class="text-xs text-muted">Size</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicator">
+                            <div class="text-xs text-muted">Quality:</div>
+                            <div class="quality-dots">
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-good"></div>
+                                <div class="quality-dot dot-good"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 text-xs text-muted">
+                            <span>Updated 1 day ago</span>
+                            <span>By Mike Johnson</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Training Conversations -->
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div class="flex">
+                                <div class="dataset-icon bg-warning">
+                                    <i data-lucide="message-circle" class="w-6 h-6 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-primary">Training Conversations</h3>
+                                    <p class="text-sm text-muted">Generated training scenarios</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline text-xs px-2 py-1">
+                                <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">45.2K</div>
+                                <div class="text-xs text-muted">Scenarios</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-secondary">87%</div>
+                                <div class="text-xs text-muted">Quality</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">3.2GB</div>
+                                <div class="text-xs text-muted">Size</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicator">
+                            <div class="text-xs text-muted">Quality:</div>
+                            <div class="quality-dots">
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-good"></div>
+                                <div class="quality-dot dot-good"></div>
+                                <div class="quality-dot dot-fair"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 text-xs text-muted">
+                            <span>Updated 3 hours ago</span>
+                            <span>By AI Generator</span>
+                        </div>
+                    </div>
+                    
+                    <!-- User Feedback Dataset -->
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div class="flex">
+                                <div class="dataset-icon bg-accent">
+                                    <i data-lucide="star" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-primary">User Feedback & Ratings</h3>
+                                    <p class="text-sm text-muted">Customer satisfaction data</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline text-xs px-2 py-1">
+                                <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">12.8K</div>
+                                <div class="text-xs text-muted">Ratings</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-secondary">96%</div>
+                                <div class="text-xs text-muted">Quality</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">567MB</div>
+                                <div class="text-xs text-muted">Size</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicator">
+                            <div class="text-xs text-muted">Quality:</div>
+                            <div class="quality-dots">
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 text-xs text-muted">
+                            <span>Updated 30 minutes ago</span>
+                            <span>By Emma Wilson</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Technical Documentation -->
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div class="flex">
+                                <div class="dataset-icon bg-primary">
+                                    <i data-lucide="code" class="w-6 h-6 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-primary">Technical Documentation</h3>
+                                    <p class="text-sm text-muted">API docs and technical guides</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline text-xs px-2 py-1">
+                                <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">3.4K</div>
+                                <div class="text-xs text-muted">Documents</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-secondary">89%</div>
+                                <div class="text-xs text-muted">Quality</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">890MB</div>
+                                <div class="text-xs text-muted">Size</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicator">
+                            <div class="text-xs text-muted">Quality:</div>
+                            <div class="quality-dots">
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-good"></div>
+                                <div class="quality-dot dot-fair"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 text-xs text-muted">
+                            <span>Updated 1 week ago</span>
+                            <span>By Alex Rivera</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Synthetic Data -->
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div class="flex">
+                                <div class="dataset-icon bg-secondary">
+                                    <i data-lucide="cpu" class="w-6 h-6 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-primary">Synthetic Training Data</h3>
+                                    <p class="text-sm text-muted">AI-generated training examples</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline text-xs px-2 py-1">
+                                <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">78.9K</div>
+                                <div class="text-xs text-muted">Examples</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-secondary">82%</div>
+                                <div class="text-xs text-muted">Quality</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="text-lg font-bold text-primary">4.1GB</div>
+                                <div class="text-xs text-muted">Size</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quality-indicator">
+                            <div class="text-xs text-muted">Quality:</div>
+                            <div class="quality-dots">
+                                <div class="quality-dot dot-excellent"></div>
+                                <div class="quality-dot dot-good"></div>
+                                <div class="quality-dot dot-good"></div>
+                                <div class="quality-dot dot-good"></div>
+                                <div class="quality-dot dot-fair"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 text-xs text-muted">
+                            <span>Generated 4 hours ago</span>
+                            <span>By GPT-4</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="card">
+                    <h3 class="font-semibold text-primary mb-4">Recent Dataset Activity</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-background rounded-md">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-success rounded-full flex items-center justify-center">
+                                    <i data-lucide="upload" class="w-4 h-4 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Customer Support Conversations updated</div>
+                                    <div class="text-xs text-muted">Added 247 new conversations from this week</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-muted">2 hours ago</div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-background rounded-md">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                    <i data-lucide="database" class="w-4 h-4 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">New dataset created: "Billing Inquiries"</div>
+                                    <div class="text-xs text-muted">Contains 1,234 billing-related conversations</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-muted">5 hours ago</div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-background rounded-md">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-warning rounded-full flex items-center justify-center">
+                                    <i data-lucide="zap" class="w-4 h-4 text-inverse"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">Synthetic data generation completed</div>
+                                    <div class="text-xs text-muted">Generated 15,000 new training examples</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-muted">8 hours ago</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

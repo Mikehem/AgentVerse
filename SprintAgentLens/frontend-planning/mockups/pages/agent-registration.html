@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Registration - Sprint Agent Lens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/base.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        .wizard-container {
+            max-width: 6xl;
+            margin: 0 auto;
+        }
+        
+        .wizard-header {
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wizard-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 50%, var(--color-accent) 100%);
+        }
+        
+        .wizard-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .wizard-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-full);
+            border: 2px solid var(--color-border);
+            background: var(--color-background);
+            transition: all var(--transition-normal);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .wizard-step.active {
+            border-color: var(--color-primary);
+            background: rgba(92, 114, 133, 0.1);
+            color: var(--color-primary);
+        }
+        
+        .wizard-step.completed {
+            border-color: var(--color-success);
+            background: rgba(167, 180, 158, 0.1);
+            color: var(--color-success);
+        }
+        
+        .wizard-step-number {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: var(--radius-full);
+            background: var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+        }
+        
+        .wizard-step.active .wizard-step-number {
+            background: var(--color-primary);
+            color: var(--color-inverse);
+        }
+        
+        .wizard-step.completed .wizard-step-number {
+            background: var(--color-success);
+            color: var(--color-inverse);
+        }
+        
+        .wizard-separator {
+            width: 2rem;
+            height: 2px;
+            background: var(--color-border);
+            border-radius: var(--radius-full);
+        }
+        
+        .wizard-separator.completed {
+            background: var(--color-success);
+        }
+        
+        .agent-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .agent-type-card {
+            background: var(--color-background-card);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+        }
+        
+        .agent-type-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 8px var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+        
+        .agent-type-card.selected {
+            border-color: var(--color-primary);
+            background: rgba(92, 114, 133, 0.05);
+        }
+        
+        .agent-type-card::before {
+            content: '';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-full);
+            transition: all var(--transition-fast);
+        }
+        
+        .agent-type-card.selected::before {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+        
+        .agent-type-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 1.75rem;
+            height: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-inverse);
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+        
+        .agent-icon {
+            width: 4rem;
+            height: 4rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .agent-icon.conversational {
+            background: rgba(92, 114, 133, 0.2);
+            color: var(--color-primary);
+        }
+        
+        .agent-icon.analytical {
+            background: rgba(129, 140, 120, 0.2);
+            color: var(--color-secondary);
+        }
+        
+        .agent-icon.creative {
+            background: rgba(167, 180, 158, 0.2);
+            color: var(--color-accent);
+        }
+        
+        .agent-icon.specialized {
+            background: rgba(212, 176, 106, 0.2);
+            color: var(--color-warning);
+        }
+        
+        .capabilities-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 0 0;
+        }
+        
+        .capabilities-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0;
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+        
+        .complexity-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--color-border-light);
+        }
+        
+        .complexity-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .complexity-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: var(--radius-full);
+            background: var(--color-border);
+        }
+        
+        .complexity-dot.filled {
+            background: var(--color-primary);
+        }
+        
+        .agent-preview {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 0.75rem;
+        }
+        
+        .preview-conversation {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .preview-message {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .preview-message.user {
+            align-self: flex-end;
+            background: var(--color-primary);
+            color: var(--color-inverse);
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .preview-message.agent {
+            align-self: flex-start;
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-bottom-left-radius: 0.25rem;
+        }
+        
+        .form-section-compact {
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .integration-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .integration-option {
+            background: var(--color-background);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+        
+        .integration-option:hover {
+            border-color: var(--color-primary);
+            background: var(--color-background-card);
+        }
+        
+        .integration-option.selected {
+            border-color: var(--color-primary);
+            background: rgba(92, 114, 133, 0.05);
+        }
+        
+        .integration-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border);
+        }
+        
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3rem;
+            padding: 2rem;
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .step-indicator {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .wizard-steps {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .wizard-separator {
+                width: 2px;
+                height: 2rem;
+            }
+            
+            .agent-type-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .integration-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .wizard-actions {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: stretch;
+            }
+            
+            .action-buttons {
+                justify-content: space-between;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background">
+    <div class="container mx-auto py-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <nav class="breadcrumb">
+                    <a href="main-dashboard.html" class="breadcrumb-item">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        Dashboard
+                    </a>
+                    <span class="breadcrumb-separator">
+                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                    </span>
+                    <a href="project-creation.html" class="breadcrumb-item">Create Project</a>
+                    <span class="breadcrumb-separator">
+                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                    </span>
+                    <span class="breadcrumb-current">Register Agents</span>
+                </nav>
+                <h1 class="text-3xl font-bold text-primary mt-2">Agent Registration</h1>
+                <p class="text-muted mt-1">Configure intelligent agents for your E-commerce Customer Support project</p>
+            </div>
+        </div>
+
+        <div class="wizard-container">
+            <!-- Wizard Header -->
+            <div class="wizard-header">
+                <div class="text-center">
+                    <h2 class="text-xl font-semibold text-primary mb-2">Step 2: Register Your Agents</h2>
+                    <p class="text-muted">Choose and configure AI agents that will power your customer support system</p>
+                </div>
+                
+                <!-- Wizard Steps -->
+                <div class="wizard-steps">
+                    <div class="wizard-step completed">
+                        <div class="wizard-step-number">✓</div>
+                        <span>Project Setup</span>
+                    </div>
+                    <div class="wizard-separator completed"></div>
+                    <div class="wizard-step active">
+                        <div class="wizard-step-number">2</div>
+                        <span>Agent Configuration</span>
+                    </div>
+                    <div class="wizard-separator"></div>
+                    <div class="wizard-step">
+                        <div class="wizard-step-number">3</div>
+                        <span>Testing & Deployment</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Type Selection -->
+            <div class="form-section-compact">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i data-lucide="bot" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-primary">Choose Agent Types</h3>
+                        <p class="text-sm text-muted">Select the types of agents you want to register for this project</p>
+                    </div>
+                </div>
+                
+                <div class="agent-type-grid">
+                    <!-- Conversational Agent -->
+                    <div class="agent-type-card selected" data-agent-type="conversational">
+                        <div class="agent-icon conversational">
+                            <i data-lucide="message-circle" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary mb-2">Conversational Agent</h4>
+                        <p class="text-sm text-muted mb-3">Handle customer conversations, FAQs, and general support inquiries with natural language understanding.</p>
+                        
+                        <ul class="capabilities-list">
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Natural language processing
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Intent recognition
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Context awareness
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Multi-turn conversations
+                            </li>
+                        </ul>
+                        
+                        <div class="complexity-indicator">
+                            <span class="text-sm text-muted">Complexity:</span>
+                            <div class="complexity-dots">
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot"></div>
+                                <div class="complexity-dot"></div>
+                                <div class="complexity-dot"></div>
+                            </div>
+                            <span class="text-xs text-muted">Medium</span>
+                        </div>
+                        
+                        <!-- Preview -->
+                        <div class="agent-preview">
+                            <div class="preview-header">
+                                <span class="text-sm font-medium text-primary">Preview Conversation</span>
+                                <i data-lucide="eye" class="w-4 h-4 text-muted"></i>
+                            </div>
+                            <div class="preview-conversation">
+                                <div class="preview-message user">
+                                    Hi, I can't find my order confirmation email
+                                </div>
+                                <div class="preview-message agent">
+                                    I'd be happy to help you locate your order confirmation. Could you please provide your email address or order number?
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytical Agent -->
+                    <div class="agent-type-card" data-agent-type="analytical">
+                        <div class="agent-icon analytical">
+                            <i data-lucide="bar-chart-3" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary mb-2">Analytical Agent</h4>
+                        <p class="text-sm text-muted mb-3">Analyze customer data, generate insights, and provide data-driven recommendations for support optimization.</p>
+                        
+                        <ul class="capabilities-list">
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Customer sentiment analysis
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Trend identification
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Performance metrics
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Predictive insights
+                            </li>
+                        </ul>
+                        
+                        <div class="complexity-indicator">
+                            <span class="text-sm text-muted">Complexity:</span>
+                            <div class="complexity-dots">
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot"></div>
+                            </div>
+                            <span class="text-xs text-muted">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Routing Agent -->
+                    <div class="agent-type-card selected" data-agent-type="routing">
+                        <div class="agent-icon creative">
+                            <i data-lucide="git-branch" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary mb-2">Routing Agent</h4>
+                        <p class="text-sm text-muted mb-3">Intelligently route customer inquiries to appropriate departments or escalate to human agents when needed.</p>
+                        
+                        <ul class="capabilities-list">
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Smart ticket routing
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Priority assessment
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Escalation logic
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Load balancing
+                            </li>
+                        </ul>
+                        
+                        <div class="complexity-indicator">
+                            <span class="text-sm text-muted">Complexity:</span>
+                            <div class="complexity-dots">
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot"></div>
+                                <div class="complexity-dot"></div>
+                            </div>
+                            <span class="text-xs text-muted">Moderate</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Knowledge Agent -->
+                    <div class="agent-type-card" data-agent-type="knowledge">
+                        <div class="agent-icon specialized">
+                            <i data-lucide="book-open" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary mb-2">Knowledge Agent</h4>
+                        <p class="text-sm text-muted mb-3">Access and retrieve information from knowledge bases, documentation, and product catalogs.</p>
+                        
+                        <ul class="capabilities-list">
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Knowledge base search
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Document retrieval
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                Product information
+                            </li>
+                            <li>
+                                <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                                FAQ automation
+                            </li>
+                        </ul>
+                        
+                        <div class="complexity-indicator">
+                            <span class="text-sm text-muted">Complexity:</span>
+                            <div class="complexity-dots">
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot filled"></div>
+                                <div class="complexity-dot"></div>
+                                <div class="complexity-dot"></div>
+                                <div class="complexity-dot"></div>
+                            </div>
+                            <span class="text-xs text-muted">Basic</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration Options -->
+            <div class="form-section-compact">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center">
+                        <i data-lucide="puzzle" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-primary">Integration Platforms</h3>
+                        <p class="text-sm text-muted">Select platforms your agents will integrate with</p>
+                    </div>
+                </div>
+                
+                <div class="integration-grid">
+                    <div class="integration-option selected">
+                        <div class="integration-icon">
+                            <i data-lucide="message-square" class="w-5 h-5 text-primary"></i>
+                        </div>
+                        <div class="text-sm font-medium">Live Chat</div>
+                        <div class="text-xs text-muted">Web widget</div>
+                    </div>
+                    
+                    <div class="integration-option selected">
+                        <div class="integration-icon">
+                            <i data-lucide="mail" class="w-5 h-5 text-primary"></i>
+                        </div>
+                        <div class="text-sm font-medium">Email</div>
+                        <div class="text-xs text-muted">Support tickets</div>
+                    </div>
+                    
+                    <div class="integration-option">
+                        <div class="integration-icon">
+                            <i data-lucide="phone" class="w-5 h-5 text-muted"></i>
+                        </div>
+                        <div class="text-sm font-medium">Phone</div>
+                        <div class="text-xs text-muted">Voice support</div>
+                    </div>
+                    
+                    <div class="integration-option">
+                        <div class="integration-icon">
+                            <i data-lucide="smartphone" class="w-5 h-5 text-muted"></i>
+                        </div>
+                        <div class="text-sm font-medium">WhatsApp</div>
+                        <div class="text-xs text-muted">Messaging</div>
+                    </div>
+                    
+                    <div class="integration-option">
+                        <div class="integration-icon">
+                            <i data-lucide="slack" class="w-5 h-5 text-muted"></i>
+                        </div>
+                        <div class="text-sm font-medium">Slack</div>
+                        <div class="text-xs text-muted">Team alerts</div>
+                    </div>
+                    
+                    <div class="integration-option selected">
+                        <div class="integration-icon">
+                            <i data-lucide="database" class="w-5 h-5 text-primary"></i>
+                        </div>
+                        <div class="text-sm font-medium">CRM</div>
+                        <div class="text-xs text-muted">Customer data</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Summary -->
+            <div class="form-section-compact">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                        <i data-lucide="settings" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-primary">Configuration Summary</h3>
+                        <p class="text-sm text-muted">Review your agent configuration before deployment</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card">
+                        <h4 class="font-semibold text-primary mb-3">Selected Agents</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="message-circle" class="w-4 h-4 text-primary"></i>
+                                <span class="text-sm">Conversational Agent</span>
+                                <span class="status-badge status-complete">Selected</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="git-branch" class="w-4 h-4 text-accent"></i>
+                                <span class="text-sm">Routing Agent</span>
+                                <span class="status-badge status-complete">Selected</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="font-semibold text-primary mb-3">Integration Platforms</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="message-square" class="w-4 h-4 text-primary"></i>
+                                <span class="text-sm">Live Chat Widget</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="mail" class="w-4 h-4 text-primary"></i>
+                                <span class="text-sm">Email Support</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="database" class="w-4 h-4 text-primary"></i>
+                                <span class="text-sm">CRM Integration</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-background border border-light rounded-lg">
+                    <div class="flex items-start gap-2">
+                        <i data-lucide="info" class="w-4 h-4 text-primary mt-0.5"></i>
+                        <div class="text-sm">
+                            <p class="text-muted">
+                                <strong>Estimated Setup Time:</strong> 15-20 minutes<br>
+                                <strong>Recommended LLM:</strong> GPT-4 or Claude 3 for optimal performance<br>
+                                <strong>Monthly Cost Estimate:</strong> $200-400 based on usage
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wizard Actions -->
+            <div class="wizard-actions">
+                <div class="step-indicator">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-success"></i>
+                    <span>2 agents configured • 3 integrations selected</span>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="goBack()">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Back to Project
+                    </button>
+                    
+                    <button type="button" class="btn btn-outline" onclick="saveConfiguration()">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        Save Configuration
+                    </button>
+                    
+                    <button type="button" class="btn btn-primary" onclick="deployAgents()">
+                        Deploy Agents
+                        <i data-lucide="rocket" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        // Agent type selection
+        document.querySelectorAll('.agent-type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                this.classList.toggle('selected');
+                updateSummary();
+            });
+        });
+        
+        // Integration selection
+        document.querySelectorAll('.integration-option').forEach(option => {
+            option.addEventListener('click', function() {
+                this.classList.toggle('selected');
+                updateSummary();
+            });
+        });
+        
+        // Update configuration summary
+        function updateSummary() {
+            const selectedAgents = document.querySelectorAll('.agent-type-card.selected');
+            const selectedIntegrations = document.querySelectorAll('.integration-option.selected');
+            
+            // Update step indicator
+            const stepIndicator = document.querySelector('.step-indicator span');
+            stepIndicator.textContent = `${selectedAgents.length} agents configured • ${selectedIntegrations.length} integrations selected`;
+            
+            // Update deploy button state
+            const deployButton = document.querySelector('.btn-primary');
+            if (selectedAgents.length === 0) {
+                deployButton.disabled = true;
+                deployButton.classList.add('opacity-50');
+            } else {
+                deployButton.disabled = false;
+                deployButton.classList.remove('opacity-50');
+            }
+        }
+        
+        // Navigation functions
+        function goBack() {
+            window.history.back();
+        }
+        
+        function saveConfiguration() {
+            // Simulate saving
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-success text-inverse p-4 rounded-lg shadow-lg z-50';
+            notification.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    Configuration saved successfully
+                </div>
+            `;
+            document.body.appendChild(notification);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        function deployAgents() {
+            const selectedAgents = document.querySelectorAll('.agent-type-card.selected');
+            
+            if (selectedAgents.length === 0) {
+                alert('Please select at least one agent type before deploying.');
+                return;
+            }
+            
+            // Simulate deployment process
+            const deployButton = document.querySelector('.btn-primary');
+            deployButton.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 border-2 border-inverse border-t-transparent rounded-full animate-spin"></div>
+                    Deploying...
+                </div>
+            `;
+            deployButton.disabled = true;
+            
+            // Update wizard step
+            const activeStep = document.querySelector('.wizard-step.active');
+            const nextStep = activeStep.nextElementSibling?.nextElementSibling;
+            
+            setTimeout(() => {
+                activeStep.classList.remove('active');
+                activeStep.classList.add('completed');
+                activeStep.querySelector('.wizard-step-number').textContent = '✓';
+                
+                if (nextStep) {
+                    nextStep.classList.add('active');
+                    activeStep.nextElementSibling.classList.add('completed');
+                }
+                
+                // Navigate to monitoring dashboard
+                window.location.href = 'agent-monitoring.html';
+            }, 3000);
+        }
+        
+        // Initialize
+        updateSummary();
+    </script>
+</body>
+</html>

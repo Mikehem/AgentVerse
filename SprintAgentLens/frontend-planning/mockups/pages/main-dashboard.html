@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Agent Lens - Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Base CSS Framework -->
+    <link rel="stylesheet" href="../assets/base.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        /* Custom styles for project tiles dashboard */
+        .project-tile {
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .project-tile:hover {
+            box-shadow: 0 8px 25px var(--shadow-medium);
+            transform: translateY(-2px);
+            border-color: var(--color-primary);
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .project-header {
+            display: flex;
+            items-start;
+            justify-content: between;
+            margin-bottom: 1rem;
+        }
+        
+        .project-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            items-center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .project-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            margin-top: 0.25rem;
+        }
+        
+        .project-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--color-border-light);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: rgba(167, 180, 158, 0.2);
+            color: var(--color-success);
+        }
+        
+        .status-warning {
+            background-color: rgba(212, 176, 106, 0.2);
+            color: var(--color-warning);
+        }
+        
+        .status-inactive {
+            background-color: rgba(129, 140, 120, 0.2);
+            color: var(--color-text-muted);
+        }
+        
+        .recent-activity {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+        
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .create-project-tile {
+            background: var(--color-background-card);
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            text-align: center;
+            color: var(--color-text-muted);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .create-project-tile:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-alpha);
+            color: var(--color-primary);
+        }
+        
+        .overview-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .overview-card {
+            background: var(--color-background-card);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+        }
+        
+        .overview-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        .overview-label {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-top: 0.5rem;
+        }
+        
+        .overview-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+        
+        .overview-change.positive {
+            color: var(--color-success);
+        }
+        
+        .overview-change.negative {
+            color: var(--color-error);
+        }
+    </style>
+</head>
+<body class="bg-background">
+    <!-- Main Layout Container -->
+    <div class="min-h-screen flex">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar w-64 bg-card border-r border-light flex flex-col">
+            <!-- Logo Section -->
+            <div class="p-6 border-b border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-inverse"></i>
+                    </div>
+                    <span class="font-semibold text-lg text-primary">Sprint Agent Lens</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <div class="flex-1 p-4">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#" class="nav-item active flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary-alpha text-primary">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="folder" class="w-4 h-4"></i>
+                            Projects
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="bot" class="w-4 h-4"></i>
+                            Agents
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            Prompts
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="flask" class="w-4 h-4"></i>
+                            Testing
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="database" class="w-4 h-4"></i>
+                            Datasets
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Secondary Navigation -->
+                <div class="mt-8 pt-6 border-t border-light">
+                    <p class="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                        Administration
+                    </p>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                                User Management
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                                <i data-lucide="cpu" class="w-4 h-4"></i>
+                                LLM Providers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-secondary hover:bg-accent-alpha hover:text-primary transition-colors">
+                                <i data-lucide="bar-chart" class="w-4 h-4"></i>
+                                Analytics
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- User Profile Section -->
+            <div class="p-4 border-t border-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-primary">JD</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-primary truncate">John Doe</p>
+                        <p class="text-xs text-muted truncate">john@company.com</p>
+                    </div>
+                    <button class="p-1 rounded-md hover:bg-accent-alpha transition-colors">
+                        <i data-lucide="more-horizontal" class="w-4 h-4 text-muted"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Top Header -->
+            <header class="bg-card border-b border-light px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <!-- Page Title and Breadcrumb -->
+                    <div>
+                        <h1 class="text-2xl font-semibold text-primary">Dashboard</h1>
+                        <nav class="flex items-center gap-2 mt-1" aria-label="Breadcrumb">
+                            <span class="text-sm text-muted">Overview of all your AI agent projects</span>
+                        </nav>
+                    </div>
+                    
+                    <!-- Header Actions -->
+                    <div class="flex items-center gap-3">
+                        <!-- Search -->
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                placeholder="Search projects..." 
+                                class="input w-64 pl-9"
+                            >
+                            <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted"></i>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <button class="btn btn-outline">
+                            <i data-lucide="filter" class="w-4 h-4"></i>
+                            Filter
+                        </button>
+                        
+                        <button class="btn btn-primary">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            New Project
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 p-6 overflow-auto">
+                <!-- Overview Statistics -->
+                <div class="overview-stats">
+                    <div class="overview-card">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="overview-value text-primary">6</div>
+                                <div class="overview-label">Active Projects</div>
+                                <div class="overview-change positive">
+                                    <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                    +2 this month
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 bg-primary-alpha rounded-lg flex items-center justify-center">
+                                <i data-lucide="folder" class="w-5 h-5 text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="overview-value text-secondary">24</div>
+                                <div class="overview-label">Total Agents</div>
+                                <div class="overview-change positive">
+                                    <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                    +8 this week
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 bg-secondary-alpha rounded-lg flex items-center justify-center">
+                                <i data-lucide="bot" class="w-5 h-5 text-secondary"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="overview-value text-accent">125.3K</div>
+                                <div class="overview-label">Total Conversations</div>
+                                <div class="overview-change positive">
+                                    <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                    +15% vs last month
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 bg-accent-alpha rounded-lg flex items-center justify-center">
+                                <i data-lucide="message-circle" class="w-5 h-5 text-accent"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="overview-value text-warning">92.4%</div>
+                                <div class="overview-label">Avg Success Rate</div>
+                                <div class="overview-change positive">
+                                    <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                    +3.2% improvement
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 bg-warning/10 rounded-lg flex items-center justify-center">
+                                <i data-lucide="target" class="w-5 h-5 text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Section -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-primary">Your Projects</h2>
+                        <div class="flex gap-2">
+                            <button class="text-sm px-3 py-1 rounded-md bg-primary-alpha text-primary">All</button>
+                            <button class="text-sm px-3 py-1 rounded-md text-muted hover:bg-accent-alpha">Active</button>
+                            <button class="text-sm px-3 py-1 rounded-md text-muted hover:bg-accent-alpha">Draft</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Project Grid -->
+                    <div class="project-grid">
+                        <!-- Create New Project Tile -->
+                        <div class="create-project-tile" onclick="alert('Create new project modal would open')">
+                            <i data-lucide="plus-circle" class="w-12 h-12 mb-3"></i>
+                            <h3 class="font-semibold mb-1">Create New Project</h3>
+                            <p class="text-sm">Start building your AI agent project</p>
+                        </div>
+                        
+                        <!-- E-commerce AI Assistant Project -->
+                        <a href="individual-project-view.html" class="project-tile">
+                            <div class="project-header">
+                                <div class="project-icon bg-primary/10">
+                                    <i data-lucide="shopping-cart" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-primary mb-1">E-commerce AI Assistant</h3>
+                                    <p class="text-sm text-muted mb-2">Customer support and shopping assistance</p>
+                                </div>
+                            </div>
+                            
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value text-primary">8</div>
+                                    <div class="stat-label">Agents</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-secondary">24.7K</div>
+                                    <div class="stat-label">Conversations</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-success">94.2%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-status">
+                                <span class="status-badge status-active">Active</span>
+                                <span class="recent-activity">Updated 2 hours ago</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Healthcare Assistant Project -->
+                        <a href="#" class="project-tile">
+                            <div class="project-header">
+                                <div class="project-icon bg-secondary/10">
+                                    <i data-lucide="heart-pulse" class="w-6 h-6 text-secondary"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-primary mb-1">Healthcare Assistant</h3>
+                                    <p class="text-sm text-muted mb-2">Patient support and medical information</p>
+                                </div>
+                            </div>
+                            
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value text-primary">5</div>
+                                    <div class="stat-label">Agents</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-secondary">18.2K</div>
+                                    <div class="stat-label">Conversations</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-success">91.8%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-status">
+                                <span class="status-badge status-active">Active</span>
+                                <span class="recent-activity">Updated 1 day ago</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Financial Advisor Project -->
+                        <a href="#" class="project-tile">
+                            <div class="project-header">
+                                <div class="project-icon bg-accent/10">
+                                    <i data-lucide="banknote" class="w-6 h-6 text-accent"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-primary mb-1">Financial Advisor</h3>
+                                    <p class="text-sm text-muted mb-2">Investment guidance and financial planning</p>
+                                </div>
+                            </div>
+                            
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value text-primary">3</div>
+                                    <div class="stat-label">Agents</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-secondary">12.5K</div>
+                                    <div class="stat-label">Conversations</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-success">89.3%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-status">
+                                <span class="status-badge status-active">Active</span>
+                                <span class="recent-activity">Updated 3 days ago</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Education Tutor Project -->
+                        <a href="#" class="project-tile">
+                            <div class="project-header">
+                                <div class="project-icon bg-warning/10">
+                                    <i data-lucide="graduation-cap" class="w-6 h-6 text-warning"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-primary mb-1">Education Tutor</h3>
+                                    <p class="text-sm text-muted mb-2">Personalized learning and homework assistance</p>
+                                </div>
+                            </div>
+                            
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value text-primary">4</div>
+                                    <div class="stat-label">Agents</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-secondary">9.8K</div>
+                                    <div class="stat-label">Conversations</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-warning">85.7%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-status">
+                                <span class="status-badge status-warning">Needs Attention</span>
+                                <span class="recent-activity">Updated 1 week ago</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Travel Assistant Project -->
+                        <a href="#" class="project-tile">
+                            <div class="project-header">
+                                <div class="project-icon bg-error/10">
+                                    <i data-lucide="plane" class="w-6 h-6 text-error"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-primary mb-1">Travel Assistant</h3>
+                                    <p class="text-sm text-muted mb-2">Trip planning and booking assistance</p>
+                                </div>
+                            </div>
+                            
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value text-primary">2</div>
+                                    <div class="stat-label">Agents</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-secondary">5.2K</div>
+                                    <div class="stat-label">Conversations</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-error">72.1%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-status">
+                                <span class="status-badge status-inactive">Inactive</span>
+                                <span class="recent-activity">Updated 2 weeks ago</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Real Estate Assistant Project -->
+                        <a href="#" class="project-tile">
+                            <div class="project-header">
+                                <div class="project-icon bg-primary/10">
+                                    <i data-lucide="home" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-primary mb-1">Real Estate Assistant</h3>
+                                    <p class="text-sm text-muted mb-2">Property search and market insights</p>
+                                </div>
+                            </div>
+                            
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value text-primary">2</div>
+                                    <div class="stat-label">Agents</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-secondary">7.1K</div>
+                                    <div class="stat-label">Conversations</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value text-success">88.9%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-status">
+                                <span class="status-badge status-active">Active</span>
+                                <span class="recent-activity">Updated 5 days ago</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button class="card hover:shadow-md transition-all text-left p-4">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i data-lucide="file-text" class="w-5 h-5 text-primary"></i>
+                            </div>
+                            <h4 class="font-semibold text-primary">View All Reports</h4>
+                        </div>
+                        <p class="text-sm text-muted">Access comprehensive analytics across all projects</p>
+                    </button>
+                    
+                    <button class="card hover:shadow-md transition-all text-left p-4">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                <i data-lucide="users" class="w-5 h-5 text-secondary"></i>
+                            </div>
+                            <h4 class="font-semibold text-primary">Team Management</h4>
+                        </div>
+                        <p class="text-sm text-muted">Manage user access and collaboration settings</p>
+                    </button>
+                    
+                    <button class="card hover:shadow-md transition-all text-left p-4">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                                <i data-lucide="settings" class="w-5 h-5 text-accent"></i>
+                            </div>
+                            <h4 class="font-semibold text-primary">System Settings</h4>
+                        </div>
+                        <p class="text-sm text-muted">Configure LLM providers and global preferences</p>
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Initialize Scripts -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Add smooth animations for project tiles
+        document.querySelectorAll('.project-tile').forEach(tile => {
+            tile.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px)';
+            });
+            
+            tile.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+        });
+        
+        // Handle create project tile
+        document.querySelector('.create-project-tile').addEventListener('click', function() {
+            alert('Project creation modal would open here');
+        });
+    </script>
+</body>
+</html>
