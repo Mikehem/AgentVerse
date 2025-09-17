@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Settings, Play, Pause, BarChart3, Users, MessageSquare, Zap, TrendingUp, Activity, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight, Plus, Brain, Code, Wrench, Copy, Check, Search, LayoutGrid, List, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Tag, Eye, ExternalLink, Database, TestTube, Star, Trash2 } from 'lucide-react'
+import { ArrowLeft, Settings, Play, Pause, BarChart3, Users, MessageSquare, Zap, TrendingUp, Activity, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight, Plus, Brain, Code, Wrench, Copy, Check, Search, LayoutGrid, List, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Tag, Eye, ExternalLink, Database, TestTube, Star, Trash2, DollarSign, Calculator, Filter, Download, GitBranch } from 'lucide-react'
 import { projectApi, agentApi, runApi, conversationApi } from '@/lib/api'
 import { Project, Agent, Run } from '@/lib/types'
 import { AgentCreationForm } from '@/components/agents/AgentCreationForm'
@@ -11,6 +11,7 @@ import { ConversationThread } from '@/components/conversations/ConversationThrea
 import { ConversationSpanDetail } from '@/components/conversations/ConversationSpanDetail'
 import { ConversationSearch } from '@/components/conversations/ConversationSearch'
 import { TraceFeedback } from '@/components/traces/TraceFeedback'
+import { CostAnalyticsChart } from '@/components/traces/CostAnalyticsChart'
 import { ConversationMetrics, ConversationTableRow, ConversationFilter, SpanData, TraceData, ConversationStatus } from '@/types/agent-lens'
 
 interface ProjectPageProps {
@@ -1381,6 +1382,82 @@ function ProjectExperiments({ project }: { project: Project }) {
 }
 
 function ProjectMetrics({ project }: { project: Project }) {
+  const [costAnalytics, setCostAnalytics] = useState<any>(null)
+  const [tracesData, setTracesData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  
+  // Filter states
+  const [timeRange, setTimeRange] = useState('30d')
+  const [selectedAgent, setSelectedAgent] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('')
+  const [searchTraceId, setSearchTraceId] = useState('')
+
+  // Fetch cost analytics data
+  useEffect(() => {
+    const fetchCostAnalytics = async () => {
+      try {
+        setLoading(true)
+        
+        // Build query parameters based on filters
+        const params = new URLSearchParams({
+          projectId: project.id,
+          includeAnalytics: 'true',
+          limit: '1000'
+        })
+        
+        // Time range filtering
+        if (timeRange !== 'all') {
+          const now = new Date()
+          let startTime = new Date()
+          switch (timeRange) {
+            case '1h':
+              startTime.setHours(now.getHours() - 1)
+              break
+            case '24h':
+              startTime.setDate(now.getDate() - 1)
+              break
+            case '7d':
+              startTime.setDate(now.getDate() - 7)
+              break
+            case '30d':
+              startTime.setDate(now.getDate() - 30)
+              break
+          }
+          params.append('startTime', startTime.toISOString())
+        }
+        
+        // Agent filtering
+        if (selectedAgent) {
+          params.append('agentId', selectedAgent)
+        }
+        
+        // Status filtering
+        if (selectedStatus) {
+          params.append('status', selectedStatus)
+        }
+        
+        // Trace ID search
+        if (searchTraceId) {
+          params.append('search', searchTraceId)
+        }
+        
+        const response = await fetch(`/api/v1/traces?${params}`)
+        const data = await response.json()
+        
+        if (data.success) {
+          setCostAnalytics(data.analytics?.costAnalytics)
+          setTracesData(data.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch cost analytics:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCostAnalytics()
+  }, [project.id, timeRange, selectedAgent, selectedStatus, searchTraceId])
+
   // Generate mock time-series data for charts
   const generateTimeSeriesData = (baseValue: number, points: number = 30) => {
     return Array.from({ length: points }, (_, i) => {
@@ -1396,6 +1473,10 @@ function ProjectMetrics({ project }: { project: Project }) {
   const conversationsData = generateTimeSeriesData(project.conversations / 30, 30)
   const successRateData = generateTimeSeriesData(project.successRate, 30)
   
+  // Generate cost trend data (mock for now, can be enhanced with real time-series data)
+  const costTrendData = generateTimeSeriesData((costAnalytics?.totalCost || 0.05) / 30, 30)
+  const tokenUsageData = generateTimeSeriesData((costAnalytics?.totalTokens || 1000) / 30, 30)
+  
   // Generate agent-specific metrics
   const agentMetrics = project.template === 'Autonomous' ? [
     { name: 'Task Coordinator', conversations: Math.floor(project.conversations * 0.4), successRate: project.successRate + 2, responseTime: 1.2 },
@@ -1407,23 +1488,86 @@ function ProjectMetrics({ project }: { project: Project }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-primary">Metrics & Analytics</h2>
-          <p className="text-muted">Performance insights and key metrics</p>
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-primary">Metrics & Analytics</h2>
+            <p className="text-muted">Performance insights and key metrics</p>
+          </div>
+          <button className="btn btn-outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export Data
+          </button>
         </div>
-        <div className="flex gap-2">
-          <select className="input text-sm">
-            <option>Last 30 days</option>
-            <option>Last 7 days</option>
-            <option>Last 24 hours</option>
-          </select>
-          <button className="btn btn-outline">Export Data</button>
+        
+        {/* Enhanced Filtering Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-background/50 rounded-lg border">
+          {/* Time Range Filter */}
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Time Range</label>
+            <select 
+              className="input text-sm w-full"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              <option value="1h">Last 1 hour</option>
+              <option value="24h">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="all">All time</option>
+            </select>
+          </div>
+
+          {/* Agent Filter */}
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Agent</label>
+            <select 
+              className="input text-sm w-full"
+              value={selectedAgent}
+              onChange={(e) => setSelectedAgent(e.target.value)}
+            >
+              <option value="">All agents</option>
+              <option value="enhanced_agent_prod">Enhanced Agent Prod</option>
+              <option value="test-agent-001">Test Agent 001</option>
+              <option value="sdk-agent">SDK Agent</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Status</label>
+            <select 
+              className="input text-sm w-full"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="">All statuses</option>
+              <option value="success">Success</option>
+              <option value="running">Running</option>
+              <option value="error">Error</option>
+              <option value="timeout">Timeout</option>
+            </select>
+          </div>
+
+          {/* Trace ID Search */}
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Trace ID</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted" />
+              <input
+                type="text"
+                placeholder="Search trace ID..."
+                className="input text-sm w-full pl-10"
+                value={searchTraceId}
+                onChange={(e) => setSearchTraceId(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Key Performance Indicators */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
         <div className="card p-6">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-medium text-muted">Total Conversations</h3>
@@ -1440,6 +1584,32 @@ function ProjectMetrics({ project }: { project: Project }) {
           </div>
           <p className="text-2xl font-bold text-primary">{project.successRate.toFixed(1)}%</p>
           <p className="text-sm text-success">+2.3% vs last month</p>
+        </div>
+
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-medium text-muted">Total Cost</h3>
+            <DollarSign className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-2xl font-bold text-primary">
+            ${loading ? '...' : (costAnalytics?.totalCost?.toFixed(4) || '0.0000')}
+          </p>
+          <p className="text-sm text-muted">
+            {costAnalytics?.totalTokens?.toLocaleString() || '0'} total tokens
+          </p>
+        </div>
+
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-medium text-muted">Avg Cost/Trace</h3>
+            <Calculator className="w-4 h-4 text-blue-500" />
+          </div>
+          <p className="text-2xl font-bold text-primary">
+            ${loading ? '...' : (costAnalytics?.averageCostPerTrace?.toFixed(6) || '0.000000')}
+          </p>
+          <p className="text-sm text-muted">
+            {costAnalytics?.averageTokensPerTrace || 0} avg tokens
+          </p>
         </div>
 
         <div className="card p-6">
@@ -1462,7 +1632,7 @@ function ProjectMetrics({ project }: { project: Project }) {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* Conversations Over Time */}
         <div className="card p-6">
           <h3 className="font-semibold text-primary mb-4">Conversations Over Time</h3>
@@ -1500,6 +1670,44 @@ function ProjectMetrics({ project }: { project: Project }) {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Cost Trend */}
+        <div className="card p-6">
+          <h3 className="font-semibold text-primary mb-4">Cost Trend (USD)</h3>
+          <div className="h-64 flex items-end justify-between gap-1 px-4">
+            {costTrendData.slice(-14).map((point, index) => (
+              <div key={index} className="flex flex-col items-center gap-1">
+                <div 
+                  className="bg-green-500/20 hover:bg-green-500/30 transition-colors rounded-sm cursor-pointer min-w-[20px]"
+                  style={{ height: `${Math.max(10, (point.value / Math.max(...costTrendData.map(d => d.value), 0.001)) * 200)}px` }}
+                  title={`${point.date}: $${point.value.toFixed(6)} cost`}
+                />
+                <span className="text-xs text-muted transform -rotate-45 origin-center mt-2">
+                  {point.date.split('-')[2]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Token Usage Trend */}
+        <div className="card p-6">
+          <h3 className="font-semibold text-primary mb-4">Token Usage Trend</h3>
+          <div className="h-64 flex items-end justify-between gap-1 px-4">
+            {tokenUsageData.slice(-14).map((point, index) => (
+              <div key={index} className="flex flex-col items-center gap-1">
+                <div 
+                  className="bg-blue-500/20 hover:bg-blue-500/30 transition-colors rounded-sm cursor-pointer min-w-[20px]"
+                  style={{ height: `${Math.max(10, (point.value / Math.max(...tokenUsageData.map(d => d.value), 1)) * 200)}px` }}
+                  title={`${point.date}: ${Math.round(point.value)} tokens`}
+                />
+                <span className="text-xs text-muted transform -rotate-45 origin-center mt-2">
+                  {point.date.split('-')[2]}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -1604,6 +1812,117 @@ function ProjectMetrics({ project }: { project: Project }) {
           </div>
         </div>
       </div>
+
+      {/* Cost Analytics Section */}
+      {costAnalytics && (
+        <div className="space-y-6">
+          <div className="card p-6">
+            <h3 className="font-semibold text-primary mb-4">Cost Analytics & Token Usage</h3>
+            
+            {/* Provider and Model Distribution */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Provider Distribution */}
+              <div>
+                <h4 className="font-medium text-primary mb-3">Provider Distribution</h4>
+                {costAnalytics.providerDistribution?.length > 0 ? (
+                  <div className="space-y-2">
+                    {costAnalytics.providerDistribution.map((provider: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                        <span className="text-sm font-medium">{provider.provider || 'Unknown'}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted">{provider.count} traces</span>
+                          <span className="text-sm font-medium">{provider.percentage}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">No provider data available</p>
+                )}
+              </div>
+
+              {/* Model Distribution */}
+              <div>
+                <h4 className="font-medium text-primary mb-3">Model Distribution</h4>
+                {costAnalytics.modelDistribution?.length > 0 ? (
+                  <div className="space-y-2">
+                    {costAnalytics.modelDistribution.map((model: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                        <span className="text-sm font-medium">{model.model || 'Unknown'}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted">{model.count} traces</span>
+                          <span className="text-sm font-medium">{model.percentage}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">No model data available</p>
+                )}
+              </div>
+            </div>
+
+            {/* Cost Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <h4 className="font-medium text-green-800 dark:text-green-200">Total Cost</h4>
+                </div>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                  ${costAnalytics.totalCost?.toFixed(4) || '0.0000'}
+                </p>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  ${costAnalytics.averageCostPerTrace?.toFixed(6) || '0.000000'} avg per trace
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calculator className="w-5 h-5 text-blue-600" />
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200">Token Usage</h4>
+                </div>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                  {costAnalytics.totalTokens?.toLocaleString() || '0'}
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  {costAnalytics.averageTokensPerTrace || 0} avg per trace
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="w-5 h-5 text-purple-600" />
+                  <h4 className="font-medium text-purple-800 dark:text-purple-200">Cost Efficiency</h4>
+                </div>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                  ${costAnalytics.costPerToken?.toFixed(8) || '0.00000000'}
+                </p>
+                <p className="text-sm text-purple-700 dark:text-purple-300">per token</p>
+              </div>
+            </div>
+
+            {/* Token Breakdown */}
+            <div className="mt-6">
+              <h4 className="font-medium text-primary mb-3">Token Breakdown</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                  <span className="text-sm font-medium">Prompt Tokens</span>
+                  <span className="text-sm text-primary font-bold">
+                    {costAnalytics.totalPromptTokens?.toLocaleString() || '0'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                  <span className="text-sm font-medium">Completion Tokens</span>
+                  <span className="text-sm text-primary font-bold">
+                    {costAnalytics.totalCompletionTokens?.toLocaleString() || '0'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -2072,6 +2391,7 @@ function TraceAnalyticsDashboard({ traces }: { traces: OpikTrace[] }) {
 function ProjectTraces({ project }: { project: Project }) {
   const [selectedTrace, setSelectedTrace] = useState<OpikTrace | null>(null)
   const [traces, setTraces] = useState<OpikTrace[]>([])
+  const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -2083,11 +2403,21 @@ function ProjectTraces({ project }: { project: Project }) {
   const [tagsFilter, setTagsFilter] = useState('')
   const [sortBy, setSortBy] = useState('startTime')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [filters, setFilters] = useState({
+    projectId: project.id,
+    status: '',
+    search: '',
+    startDate: '',
+    endDate: '',
+    provider: '',
+    model: ''
+  })
 
-  // Load real traces from API
+  // Load real traces and cost analytics from API
   useEffect(() => {
     loadTraces()
-  }, [project.id, statusFilter, dateRange, durationFilter, tagsFilter])
+    fetchCostAnalytics()
+  }, [project.id, filters, statusFilter, dateRange, durationFilter, tagsFilter])
 
   const loadTraces = async () => {
     setLoading(true)
@@ -2118,9 +2448,102 @@ function ProjectTraces({ project }: { project: Project }) {
     }
   }
 
+  const fetchCostAnalytics = async () => {
+    try {
+      const params = new URLSearchParams()
+      
+      if (filters.projectId) params.append('projectId', filters.projectId)
+      if (filters.provider) params.append('provider', filters.provider)
+      if (filters.model) params.append('model', filters.model)
+      if (filters.startDate) params.append('startDate', filters.startDate)
+      if (filters.endDate) params.append('endDate', filters.endDate)
+      
+      params.append('level', 'trace')
+      params.append('includeBreakdown', 'true')
+      params.append('granularity', 'day')
+
+      const response = await fetch(`/api/v1/cost-analytics?${params}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setAnalytics(data.analytics)
+      }
+    } catch (error) {
+      console.error('Failed to fetch cost analytics:', error)
+    }
+  }
+
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     loadTraces()
+  }
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const exportCostData = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (filters.projectId) params.append('projectId', filters.projectId)
+      if (filters.startDate) params.append('startDate', filters.startDate)
+      if (filters.endDate) params.append('endDate', filters.endDate)
+      
+      const response = await fetch(`/api/v1/cost-analytics?${params}&level=trace&includeBreakdown=true`)
+      const data = await response.json()
+      
+      if (data.success) {
+        const csvContent = convertToCsv(data.analytics)
+        downloadCsv(csvContent, 'cost-analytics.csv')
+      }
+    } catch (error) {
+      console.error('Failed to export cost data:', error)
+    }
+  }
+
+  const convertToCsv = (analytics: any) => {
+    const headers = ['Date', 'Total Cost', 'Input Cost', 'Output Cost', 'Total Tokens', 'Traces Count']
+    const rows = analytics.breakdown?.map((item: any) => [
+      new Date(item.timestamp).toISOString().split('T')[0],
+      item.totalCost.toFixed(6),
+      item.inputCost.toFixed(6),
+      item.outputCost.toFixed(6),
+      item.totalTokens,
+      item.count
+    ]) || []
+    
+    return [headers, ...rows].map(row => row.join(',')).join('\n')
+  }
+
+  const downloadCsv = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const formatCost = (cost: number) => {
+    if (cost === 0 || cost === null || cost === undefined) return '$0.000000'
+    return `$${Number(cost).toFixed(6)}`
+  }
+
+  const formatTokens = (tokens: number) => {
+    if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`
+    if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`
+    return tokens?.toString() || '0'
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success': return 'bg-green-100 text-green-800'
+      case 'error': return 'bg-red-100 text-red-800'
+      case 'running': return 'bg-blue-100 text-blue-800'
+      case 'timeout': return 'bg-yellow-100 text-yellow-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
   }
 
   const filteredTraces = useMemo(() => {
@@ -2419,7 +2842,177 @@ function ProjectTraces({ project }: { project: Project }) {
 
       {/* Analytics Dashboard */}
       {viewMode === 'analytics' && (
-        <TraceAnalyticsDashboard traces={filteredTraces} />
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+                <GitBranch className="w-6 h-6 text-primary" />
+                Traces & Cost Analytics
+              </h3>
+              <p className="text-muted-foreground">
+                Monitor trace execution and analyze cost patterns across your AI agents
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={exportCostData} 
+                className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+              <button 
+                onClick={() => { loadTraces(); fetchCostAnalytics(); }} 
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          {/* Cost Summary Cards */}
+          {analytics?.summary && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h4 className="text-sm font-medium">Total Cost</h4>
+                  <DollarSign className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{formatCost(analytics.summary.totalCost)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Input: {formatCost(analytics.summary.totalInputCost)} | Output: {formatCost(analytics.summary.totalOutputCost)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h4 className="text-sm font-medium">Total Tokens</h4>
+                  <Zap className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{formatTokens(analytics.summary.totalTokens)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Prompt: {formatTokens(analytics.summary.totalPromptTokens)} | Completion: {formatTokens(analytics.summary.totalCompletionTokens)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h4 className="text-sm font-medium">Avg Cost/Trace</h4>
+                  <BarChart3 className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{formatCost(analytics.summary.avgCostPerItem)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Across {analytics.summary.count} traces
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h4 className="text-sm font-medium">Active Traces</h4>
+                  <Activity className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{analytics.summary.count}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Total traces analyzed
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Cost Analytics Chart */}
+          {analytics?.breakdown && (
+            <div className="bg-white p-6 rounded-lg border">
+              <div className="mb-4">
+                <h4 className="text-lg font-semibold flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Cost Analytics Over Time
+                </h4>
+              </div>
+              <CostAnalyticsChart data={analytics.breakdown} />
+            </div>
+          )}
+
+          {/* Filters */}
+          <div className="bg-white p-6 rounded-lg border">
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold flex items-center gap-2">
+                <Filter className="w-5 h-5" />
+                Filters
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Search</label>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search traces..."
+                    value={filters.search}
+                    onChange={(e) => handleFilterChange('search', e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Provider</label>
+                <input
+                  type="text"
+                  placeholder="Provider"
+                  value={filters.provider}
+                  onChange={(e) => handleFilterChange('provider', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Model</label>
+                <input
+                  type="text"
+                  placeholder="Model"
+                  value={filters.model}
+                  onChange={(e) => handleFilterChange('model', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Start Date</label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">End Date</label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Legacy Analytics Dashboard for traces count etc */}
+          <TraceAnalyticsDashboard traces={filteredTraces} />
+        </div>
       )}
 
       {/* Traces table */}
@@ -2430,11 +3023,12 @@ function ProjectTraces({ project }: { project: Project }) {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left p-4 font-medium text-gray-700">ID</th>
-                <th className="text-left p-4 font-medium text-gray-700">Name</th>
-                <th className="text-left p-4 font-medium text-gray-700">Input</th>
-                <th className="text-left p-4 font-medium text-gray-700">Output</th>
+                <th className="text-left p-4 font-medium text-gray-700">Operation</th>
+                <th className="text-left p-4 font-medium text-gray-700">Status</th>
+                <th className="text-left p-4 font-medium text-gray-700">Start Time</th>
                 <th className="text-left p-4 font-medium text-gray-700">Duration</th>
-                <th className="text-left p-4 font-medium text-gray-700">Comments</th>
+                <th className="text-left p-4 font-medium text-gray-700">Cost</th>
+                <th className="text-left p-4 font-medium text-gray-700">Tokens</th>
               </tr>
             </thead>
             <tbody>
@@ -2459,35 +3053,37 @@ function ProjectTraces({ project }: { project: Project }) {
                     onClick={() => setSelectedTrace(trace)}
                   >
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(trace.status)}
-                        <span className="font-mono text-sm text-blue-600 hover:underline">
-                          {trace.id.substring(0, 12)}...
-                        </span>
-                      </div>
+                      <div className="font-mono text-xs">{trace.id?.slice(0, 12)}...</div>
                     </td>
                     <td className="p-4">
-                      <span className="text-sm font-medium">
-                        {trace.name || 'Unnamed trace'}
-                      </span>
-                    </td>
-                    <td className="p-4 max-w-xs">
-                      <div className="text-sm text-gray-600 truncate font-mono">
-                        {getInputPreview(trace.inputData)}
-                      </div>
-                    </td>
-                    <td className="p-4 max-w-xs">
-                      <div className="text-sm text-gray-600 truncate font-mono">
-                        {getOutputPreview(trace.outputData)}
-                      </div>
+                      <div className="font-medium">{trace.operationName || trace.name || 'Unknown'}</div>
+                      <div className="text-xs text-muted-foreground">{project.id}</div>
                     </td>
                     <td className="p-4">
-                      <span className="text-sm">
-                        {formatDuration(trace.duration)}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(trace.status)}`}>
+                        {trace.status}
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className="text-sm text-gray-500">-</span>
+                      <div className="text-xs">
+                        {trace.startTime ? new Date(trace.startTime).toLocaleString() : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-xs flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {trace.duration ? `${trace.duration}ms` : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-mono text-xs">
+                        {formatCost(trace.total_cost || 0)}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-xs">
+                        {formatTokens(trace.total_tokens || 0)}
+                      </div>
                     </td>
                   </tr>
                 ))

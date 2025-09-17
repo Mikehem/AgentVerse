@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { tracesDb } from '@/lib/database'
+import { calculateCost, type TokenUsage } from '@/lib/costCalculation'
 import { z } from 'zod'
 
 // Enhanced Opik-style validation schema for trace data
@@ -156,12 +157,32 @@ export async function GET(request: NextRequest) {
       status: trace.status,
       metadata: trace.metadata ? JSON.parse(trace.metadata) : {},
       tags: trace.tags ? JSON.parse(trace.tags) : [],
-      createdAt: trace.created_at
+      createdAt: trace.created_at,
+      // Cost tracking fields
+      totalCost: trace.total_cost || 0,
+      inputCost: trace.input_cost || 0,
+      outputCost: trace.output_cost || 0,
+      promptTokens: trace.prompt_tokens || 0,
+      completionTokens: trace.completion_tokens || 0,
+      totalTokens: trace.total_tokens || 0,
+      provider: trace.provider,
+      modelName: trace.model_name,
+      costCalculationMetadata: trace.cost_calculation_metadata ? JSON.parse(trace.cost_calculation_metadata) : null
     }))
 
     // Optional analytics aggregation
     let analytics = null
     if (includeAnalytics && transformedTraces.length > 0) {
+      // Calculate cost analytics
+      const totalCost = transformedTraces.reduce((sum, t) => sum + (t.totalCost || 0), 0)
+      const totalTokens = transformedTraces.reduce((sum, t) => sum + (t.totalTokens || 0), 0)
+      const totalPromptTokens = transformedTraces.reduce((sum, t) => sum + (t.promptTokens || 0), 0)
+      const totalCompletionTokens = transformedTraces.reduce((sum, t) => sum + (t.completionTokens || 0), 0)
+      
+      // Provider and model distribution
+      const providers = transformedTraces.filter(t => t.provider).map(t => t.provider)
+      const models = transformedTraces.filter(t => t.modelName).map(t => t.modelName)
+      
       analytics = {
         totalTraces: transformedTraces.length,
         statusDistribution: {
@@ -178,7 +199,27 @@ export async function GET(request: NextRequest) {
           earliest: Math.min(...transformedTraces.map(t => new Date(t.startTime).getTime())),
           latest: Math.max(...transformedTraces.map(t => new Date(t.startTime).getTime()))
         },
-        totalOperations: [...new Set(transformedTraces.map(t => t.operationName))].length
+        totalOperations: [...new Set(transformedTraces.map(t => t.operationName))].length,
+        // Cost analytics
+        costAnalytics: {
+          totalCost: Number(totalCost.toFixed(6)),
+          averageCostPerTrace: Number((totalCost / transformedTraces.length).toFixed(6)),
+          totalTokens,
+          totalPromptTokens,
+          totalCompletionTokens,
+          averageTokensPerTrace: Math.round(totalTokens / transformedTraces.length),
+          costPerToken: totalTokens > 0 ? Number((totalCost / totalTokens).toFixed(8)) : 0,
+          providerDistribution: [...new Set(providers)].map(provider => ({
+            provider,
+            count: providers.filter(p => p === provider).length,
+            percentage: Math.round((providers.filter(p => p === provider).length / providers.length) * 100)
+          })),
+          modelDistribution: [...new Set(models)].map(model => ({
+            model,
+            count: models.filter(m => m === model).length,
+            percentage: Math.round((models.filter(m => m === model).length / models.length) * 100)
+          }))
+        }
       }
     }
 
@@ -278,6 +319,39 @@ export async function POST(request: NextRequest) {
       metadata: body.metadata || {}
     }
     
+    // Calculate costs automatically if usage information is provided
+    let costCalculation = null
+    let finalCost = 0
+    let inputCost = 0
+    let outputCost = 0
+    let promptTokens = 0
+    let completionTokens = 0
+    let totalTokens = 0
+
+    if (validatedData.usage || body.usage || body.token_usage) {
+      const usage = validatedData.usage || body.usage || body.token_usage || {}
+      const model = validatedData.modelName || body.model || body.model_name || body.modelName || 'unknown'
+      const provider = body.provider || validatedData.metadata?.provider || 'unknown'
+
+      const tokenUsage: TokenUsage = {
+        promptTokens: usage.promptTokens || usage.prompt_tokens || 0,
+        completionTokens: usage.completionTokens || usage.completion_tokens || 0,
+        totalTokens: usage.totalTokens || usage.total_tokens || 0
+      }
+
+      if (tokenUsage.promptTokens || tokenUsage.completionTokens || tokenUsage.totalTokens) {
+        costCalculation = calculateCost(model, tokenUsage, provider)
+        finalCost = costCalculation.totalCost
+        inputCost = costCalculation.inputCost
+        outputCost = costCalculation.outputCost
+        promptTokens = tokenUsage.promptTokens || 0
+        completionTokens = tokenUsage.completionTokens || 0
+        totalTokens = tokenUsage.totalTokens || (promptTokens + completionTokens)
+        
+        console.log(`💰 Calculated cost for trace ${body.id}: $${finalCost} (${promptTokens} prompt + ${completionTokens} completion tokens)`)
+      }
+    }
+
     const trace = tracesDb.create({
       project_id: validatedData.projectId,
       agent_id: validatedData.agentId,
@@ -289,7 +363,17 @@ export async function POST(request: NextRequest) {
       duration: validatedData.duration,
       status: validatedData.status,
       metadata: validatedData.metadata ? JSON.stringify(validatedData.metadata) : '{}',
-      tags: validatedData.tags ? JSON.stringify(validatedData.tags) : '[]'
+      tags: validatedData.tags ? JSON.stringify(validatedData.tags) : '[]',
+      // Enhanced cost tracking fields
+      total_cost: finalCost,
+      input_cost: inputCost,
+      output_cost: outputCost,
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      total_tokens: totalTokens,
+      provider: body.provider || validatedData.metadata?.provider || null,
+      model_name: validatedData.modelName || body.model || body.model_name || null,
+      cost_calculation_metadata: costCalculation ? JSON.stringify(costCalculation) : null
     })
 
     return NextResponse.json({

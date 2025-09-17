@@ -17,7 +17,8 @@ import {
   MoreHorizontal,
   Building2,
   Star,
-  ThumbsUp
+  ThumbsUp,
+  GitBranch
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

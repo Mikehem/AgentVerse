@@ -163,8 +163,29 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // Validate input
-    const validatedData = projectCreationSchema.parse(body)
+    // Handle both full UI requests and simple API requests
+    let validatedData
+    try {
+      validatedData = projectCreationSchema.parse(body)
+    } catch (error) {
+      // Handle simple project creation from Python clients
+      validatedData = {
+        name: body.name || 'SimpleAgent Project',
+        code: body.code || body.id || `project_${Date.now()}`,
+        description: body.description || 'Created via API',
+        department: body.department || 'default',
+        priority: body.priority || 'medium',
+        tags: body.tags || [],
+        template: body.template || 'simple',
+        securityLevel: body.security_level || body.securityLevel || 'standard',
+        dataRetention: body.data_retention || body.dataRetention || '90',
+        defaultAccess: body.default_access || body.defaultAccess || 'collaborate',
+        piiHandling: body.pii_handling || body.piiHandling || false,
+        complianceMode: body.compliance_mode || body.complianceMode || false,
+        teamMembers: body.team_members || body.teamMembers || [],
+        visibility: body.visibility || 'private'
+      }
+    }
     
     // Map template to icon and color
     const templateConfig = {
@@ -173,7 +194,7 @@ export async function POST(request: NextRequest) {
       autonomous: { icon: 'bar-chart-3', color: 'secondary' }
     }
     
-    const config = templateConfig[validatedData.template as keyof typeof templateConfig] || templateConfig.blank
+    const config = templateConfig[validatedData.template as keyof typeof templateConfig] || templateConfig.simple
     
     // Create project data
     const projectData = {

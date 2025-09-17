@@ -226,9 +226,11 @@ class EnhancedSimpleAgent:
     - Advanced search and filtering support
     """
     
-    def __init__(self, project_name: str = "SimpleAgent Demo"):
+    def __init__(self, project_name: str = "SimpleAgent Production"):
         """Initialize the Enhanced Simple Agent."""
-        self.agent_id = f"enhanced_agent_{uuid.uuid4().hex[:8]}"
+        # Use the pre-created project and agent IDs
+        self.project_id = "simple_agent_prod"
+        self.agent_id = "enhanced_agent_prod"
         self.session_count = 0
         self.project_name = project_name
         
@@ -263,19 +265,11 @@ class EnhancedSimpleAgent:
         try:
             self.agent_lens = AgentLensSDK(base_url=os.getenv("SPRINTLENS_URL", "http://localhost:3000"))
             
-            # Create or get project
-            self.project_id = self.agent_lens.create_project(
-                name=self.project_name,
-                description="Enhanced SimpleAgent with Azure OpenAI and comprehensive Agent Lens tracing",
-                template="Advanced",
-                color="purple",
-                tags=["azure-openai", "python", "enhanced-agent", "opik-compatible", "advanced-tracing"]
-            )
+            # Use the existing project (no need to create)
+            self.agent_lens.project_id = self.project_id
             
-            if self.project_id:
-                logger.info(f"Agent Lens project ready: {self.project_name} (ID: {self.project_id})")
-            else:
-                logger.warning("Could not create/connect to Agent Lens project")
+            logger.info(f"Agent Lens connected to existing project: {self.project_name} (ID: {self.project_id})")
+            logger.info(f"Using agent ID: {self.agent_id}")
                 
         except Exception as e:
             logger.error(f"Failed to setup Agent Lens SDK: {e}")

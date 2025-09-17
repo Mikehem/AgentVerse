@@ -282,6 +282,87 @@ class Trace:
         """
         return self._spans.copy()
 
+    def add_span(
+        self,
+        name: str,
+        span_type: Optional[str] = None,
+        start_time: Optional[float] = None,
+        input_data: Optional[Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> 'Span':
+        """
+        Add a span to this trace (legacy compatibility method).
+        
+        Args:
+            name: Name of the span
+            span_type: Type of span operation
+            start_time: Start time (epoch timestamp)
+            input_data: Input data for the span
+            metadata: Additional metadata
+            **kwargs: Additional span parameters
+            
+        Returns:
+            New span object
+        """
+        # Create span using the standard span() method
+        span = self.span(name=name, span_type=span_type, **kwargs)
+        
+        # Set input data if provided
+        if input_data is not None:
+            span.set_input(input_data)
+        
+        # Set metadata if provided
+        if metadata is not None:
+            for key, value in metadata.items():
+                span.set_metadata(key, value)
+        
+        # Set custom start time if provided
+        if start_time is not None:
+            from datetime import datetime
+            span.start_time = datetime.fromtimestamp(start_time)
+        
+        return span
+
+    def finish_span(
+        self,
+        span_name: str,
+        end_time: Optional[float] = None,
+        output_data: Optional[Any] = None,
+        **kwargs
+    ) -> None:
+        """
+        Finish a span by name (legacy compatibility method).
+        
+        Args:
+            span_name: Name of the span to finish
+            end_time: End time (epoch timestamp)
+            output_data: Output data for the span
+            **kwargs: Additional parameters
+        """
+        # Find span by name
+        span = None
+        for s in self._spans:
+            if s.name == span_name and not s.is_finished:
+                span = s
+                break
+        
+        if span is None:
+            logger.warning(f"Span '{span_name}' not found or already finished")
+            return
+        
+        # Set output data if provided
+        if output_data is not None:
+            span.set_output(output_data)
+        
+        # Set custom end time if provided
+        if end_time is not None:
+            from datetime import datetime
+            span.end_time = datetime.fromtimestamp(end_time)
+        
+        # Finish the span
+        span.finish()
+
     def set_status(self, status: TraceStatus) -> None:
         """
         Set trace status.

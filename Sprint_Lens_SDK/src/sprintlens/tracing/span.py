@@ -441,6 +441,14 @@ class Span:
             cost=self.cost
         )
 
+    def finish(self) -> None:
+        """
+        Finish the span and calculate timing.
+        
+        This marks the span as complete and calculates the duration.
+        """
+        self._finish()
+
     @property
     def is_started(self) -> bool:
         """Check if span is started."""

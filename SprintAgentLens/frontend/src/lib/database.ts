@@ -81,6 +81,21 @@ const migrateTables = () => {
       console.log('📝 Adding runId column to traces table...')
       db.exec('ALTER TABLE traces ADD COLUMN runId TEXT')
     }
+
+    // Enhanced cost tracking fields for traces
+    const hasCostFieldsInTraces = traceColumns.some(col => col.name === 'total_cost')
+    if (!hasCostFieldsInTraces) {
+      console.log('📝 Adding enhanced cost tracking fields to traces table...')
+      db.exec('ALTER TABLE traces ADD COLUMN total_cost REAL DEFAULT 0')
+      db.exec('ALTER TABLE traces ADD COLUMN input_cost REAL DEFAULT 0')
+      db.exec('ALTER TABLE traces ADD COLUMN output_cost REAL DEFAULT 0')
+      db.exec('ALTER TABLE traces ADD COLUMN prompt_tokens INTEGER DEFAULT 0')
+      db.exec('ALTER TABLE traces ADD COLUMN completion_tokens INTEGER DEFAULT 0')
+      db.exec('ALTER TABLE traces ADD COLUMN total_tokens INTEGER DEFAULT 0')
+      db.exec('ALTER TABLE traces ADD COLUMN provider TEXT')
+      db.exec('ALTER TABLE traces ADD COLUMN model_name TEXT')
+      db.exec('ALTER TABLE traces ADD COLUMN cost_calculation_metadata TEXT') // JSON with detailed cost breakdown
+    }
     
     // Check if spans table exists
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='spans'").all()
@@ -117,6 +132,22 @@ const migrateTables = () => {
       db.exec(`CREATE INDEX IF NOT EXISTS idx_spans_span_id ON spans(span_id)`)
       db.exec(`CREATE INDEX IF NOT EXISTS idx_spans_parent_span_id ON spans(parent_span_id)`)
       db.exec(`CREATE INDEX IF NOT EXISTS idx_spans_start_time ON spans(start_time)`)
+    }
+
+    // Enhanced cost tracking fields for spans
+    const spanColumns = db.prepare("PRAGMA table_info(spans)").all() as any[]
+    const hasCostFieldsInSpans = spanColumns.some(col => col.name === 'total_cost')
+    if (!hasCostFieldsInSpans) {
+      console.log('📝 Adding enhanced cost tracking fields to spans table...')
+      db.exec('ALTER TABLE spans ADD COLUMN total_cost REAL DEFAULT 0')
+      db.exec('ALTER TABLE spans ADD COLUMN input_cost REAL DEFAULT 0')
+      db.exec('ALTER TABLE spans ADD COLUMN output_cost REAL DEFAULT 0')
+      db.exec('ALTER TABLE spans ADD COLUMN prompt_tokens INTEGER DEFAULT 0')
+      db.exec('ALTER TABLE spans ADD COLUMN completion_tokens INTEGER DEFAULT 0')
+      db.exec('ALTER TABLE spans ADD COLUMN total_tokens INTEGER DEFAULT 0')
+      db.exec('ALTER TABLE spans ADD COLUMN provider TEXT')
+      db.exec('ALTER TABLE spans ADD COLUMN model_name TEXT')
+      db.exec('ALTER TABLE spans ADD COLUMN cost_calculation_metadata TEXT') // JSON with detailed cost breakdown
     }
 
     // Check if datasets table exists
@@ -324,19 +355,19 @@ const initTables = () => {
       department TEXT,
       priority TEXT NOT NULL,
       tags TEXT NOT NULL DEFAULT '[]',
-      securityLevel TEXT NOT NULL,
-      dataRetention TEXT NOT NULL,
-      defaultAccess TEXT NOT NULL,
-      piiHandling INTEGER NOT NULL DEFAULT 0,
-      complianceMode INTEGER NOT NULL DEFAULT 0,
-      teamMembers TEXT NOT NULL DEFAULT '[]',
+      security_level TEXT NOT NULL,
+      data_retention TEXT NOT NULL,
+      default_access TEXT NOT NULL,
+      pii_handling INTEGER NOT NULL DEFAULT 0,
+      compliance_mode INTEGER NOT NULL DEFAULT 0,
+      team_members TEXT NOT NULL DEFAULT '[]',
       visibility TEXT NOT NULL DEFAULT 'private',
       status TEXT NOT NULL DEFAULT 'active',
       agents INTEGER NOT NULL DEFAULT 0,
       conversations INTEGER NOT NULL DEFAULT 0,
-      successRate REAL NOT NULL DEFAULT 0.0,
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL,
+      success_rate REAL NOT NULL DEFAULT 0.0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
       FOREIGN KEY (department) REFERENCES departments(code),
       FOREIGN KEY (priority) REFERENCES business_priorities(id)
     )
@@ -406,22 +437,22 @@ const initTables = () => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS conversations (
       id TEXT PRIMARY KEY,
-      projectId TEXT NOT NULL,
-      agentId TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      agent_id TEXT NOT NULL,
       runId TEXT, -- Links to runs table for session grouping
       userId TEXT, -- Optional user identifier
       sessionId TEXT, -- Group related conversations (legacy)
       input TEXT NOT NULL, -- User input/query
       output TEXT NOT NULL, -- Agent response
       status TEXT NOT NULL DEFAULT 'success', -- 'success', 'error', 'timeout'
-      responseTime INTEGER NOT NULL, -- milliseconds
-      tokenUsage INTEGER DEFAULT 0, -- tokens consumed
+      response_time INTEGER NOT NULL, -- milliseconds
+      token_usage INTEGER DEFAULT 0, -- tokens consumed
       cost REAL DEFAULT 0.0, -- cost in USD
       feedback TEXT, -- user feedback (thumbs up/down, rating)
       metadata TEXT, -- JSON object for additional context
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (projectId) REFERENCES projects(id) ON DELETE CASCADE,
-      FOREIGN KEY (agentId) REFERENCES agents(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+      FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE,
       FOREIGN KEY (runId) REFERENCES runs(id) ON DELETE SET NULL
     )
   `)
@@ -883,9 +914,9 @@ export const projectDb = {
     const stmt = db.prepare(`
       INSERT INTO projects (
         id, name, description, icon, color, template, department, priority,
-        tags, securityLevel, dataRetention, defaultAccess, piiHandling,
-        complianceMode, teamMembers, visibility, status, createdAt, updatedAt,
-        agents, conversations, successRate
+        tags, security_level, data_retention, default_access, pii_handling,
+        compliance_mode, team_members, visibility, status, created_at, updated_at,
+        agents, conversations, success_rate
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     
@@ -916,12 +947,12 @@ export const projectDb = {
     if (data.department !== undefined) { updates.push('department = ?'); values.push(data.department) }
     if (data.priority !== undefined) { updates.push('priority = ?'); values.push(data.priority) }
     if (data.tags !== undefined) { updates.push('tags = ?'); values.push(JSON.stringify(data.tags)) }
-    if (data.securityLevel !== undefined) { updates.push('securityLevel = ?'); values.push(data.securityLevel) }
-    if (data.dataRetention !== undefined) { updates.push('dataRetention = ?'); values.push(data.dataRetention) }
-    if (data.defaultAccess !== undefined) { updates.push('defaultAccess = ?'); values.push(data.defaultAccess) }
-    if (data.piiHandling !== undefined) { updates.push('piiHandling = ?'); values.push(data.piiHandling ? 1 : 0) }
-    if (data.complianceMode !== undefined) { updates.push('complianceMode = ?'); values.push(data.complianceMode ? 1 : 0) }
-    if (data.teamMembers !== undefined) { updates.push('teamMembers = ?'); values.push(JSON.stringify(data.teamMembers)) }
+    if (data.securityLevel !== undefined) { updates.push('security_level = ?'); values.push(data.securityLevel) }
+    if (data.dataRetention !== undefined) { updates.push('data_retention = ?'); values.push(data.dataRetention) }
+    if (data.defaultAccess !== undefined) { updates.push('default_access = ?'); values.push(data.defaultAccess) }
+    if (data.piiHandling !== undefined) { updates.push('pii_handling = ?'); values.push(data.piiHandling ? 1 : 0) }
+    if (data.complianceMode !== undefined) { updates.push('compliance_mode = ?'); values.push(data.complianceMode ? 1 : 0) }
+    if (data.teamMembers !== undefined) { updates.push('team_members = ?'); values.push(JSON.stringify(data.teamMembers)) }
     if (data.visibility !== undefined) { updates.push('visibility = ?'); values.push(data.visibility) }
     if (data.status !== undefined) { updates.push('status = ?'); values.push(data.status) }
     
@@ -1333,15 +1364,32 @@ export const conversationDb = {
     
     const stmt = db.prepare(`
       INSERT INTO conversations (
-        id, projectId, agentId, input, output, status,
-        responseTime, tokenUsage, cost, metadata, runId, feedback, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, project_id, agent_id, agent_name, input, output, status,
+        response_time, token_usage, cost, metadata, runId, feedback, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
+    
+    // Get agent name if agentId is available, always ensure we have a non-null agent_name
+    let agentName = data.agent_name || data.agentName || 'Unknown Agent'
+    if (agentId) {
+      try {
+        const agent = db.prepare('SELECT name FROM agents WHERE id = ?').get(agentId) as any
+        if (agent && agent.name) agentName = agent.name
+      } catch (e) {
+        console.warn('Could not fetch agent name:', e)
+      }
+    }
+    
+    // Ensure we always have a valid agent_name
+    if (!agentName || agentName.trim() === '') {
+      agentName = 'Unknown Agent'
+    }
     
     stmt.run(
       id,                                                                                                   // id
       projectId,                                                                                            // projectId
       agentId,                                                                                              // agentId
+      agentName,                                                                                            // agentName
       data.input || '',                                                                                     // input
       data.output || '',                                                                                    // output
       data.status || 'success',                                                                             // status
@@ -1582,31 +1630,29 @@ export const spansDb = {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     
-    const spanId = data.spanId || data.span_id || `span_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-    
     const result = stmt.run(
-      data.traceId || data.trace_id,                                                              // trace_id
-      data.parentSpanId || data.parent_span_id || null,                                         // parent_span_id  
-      spanId,                                                                                     // span_id
-      data.spanName || data.name,                                                               // span_name
-      data.spanType || data.type || 'function',                                                // span_type
-      data.startTime || data.start_time || now,                                                // start_time
-      data.endTime || data.end_time || null,                                                   // end_time
-      data.duration || null,                                                                     // duration
-      data.status || 'success',                                                                 // status
-      data.error_message || null,                                                               // error_message
-      typeof data.inputData === 'string' ? data.inputData : JSON.stringify(data.inputData || data.input || {}),     // input_data
-      typeof data.outputData === 'string' ? data.outputData : JSON.stringify(data.outputData || data.output || {}), // output_data
-      typeof data.metadata === 'string' ? data.metadata : JSON.stringify(data.metadata || {}), // metadata
-      typeof data.tags === 'string' ? data.tags : JSON.stringify(data.tags || []),            // tags
-      typeof data.usage === 'string' ? data.usage : JSON.stringify(data.usage || data.tokenUsage || data.token_usage || {}), // usage
-      data.model_name || data.modelName || null,                                               // model_name
-      typeof data.model_parameters === 'string' ? data.model_parameters : JSON.stringify(data.model_parameters || data.modelParameters || {}), // model_parameters
-      now,                                                                                       // created_at
-      now                                                                                        // updated_at
+      data.trace_id,                                                                            // trace_id
+      data.parent_span_id || null,                                                             // parent_span_id  
+      data.span_id || `span_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,     // span_id
+      data.span_name || data.name,                                                             // span_name
+      data.span_type || data.type || 'custom',                                                 // span_type
+      data.start_time || now,                                                                  // start_time
+      data.end_time || null,                                                                   // end_time
+      data.duration || null,                                                                   // duration
+      data.status || 'running',                                                                // status
+      data.error_message || null,                                                              // error_message
+      data.input_data || data.input || null,                                                   // input_data
+      data.output_data || data.output || null,                                                 // output_data
+      data.metadata || null,                                                                   // metadata
+      data.tags || null,                                                                       // tags
+      data.usage || null,                                                                      // usage
+      data.model_name || null,                                                                 // model_name
+      data.model_parameters || null,                                                           // model_parameters
+      data.created_at || now,                                                                  // created_at
+      now                                                                                      // updated_at
     )
     
-    return spansDb.getBySpanId(spanId)
+    return spansDb.getById(result.lastInsertRowid as number)
   },
 
   // Update span by span_id

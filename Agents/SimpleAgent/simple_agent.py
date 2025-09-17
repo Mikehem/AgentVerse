@@ -316,7 +316,7 @@ class SimpleAgent:
     
     def _calculate_cost(self, usage: Dict[str, int]) -> float:
         """
-        Calculate estimated cost for Azure OpenAI usage.
+        Calculate estimated cost for Azure OpenAI usage using enhanced cost tracking.
         
         Args:
             usage: Token usage information
@@ -324,14 +324,50 @@ class SimpleAgent:
         Returns:
             Estimated cost in USD
         """
-        # Approximate Azure OpenAI GPT-4 pricing (as of 2024)
-        prompt_cost_per_1k = 0.03  # $0.03 per 1K prompt tokens
-        completion_cost_per_1k = 0.06  # $0.06 per 1K completion tokens
-        
-        prompt_cost = (usage["prompt_tokens"] / 1000) * prompt_cost_per_1k
-        completion_cost = (usage["completion_tokens"] / 1000) * completion_cost_per_1k
-        
-        return round(prompt_cost + completion_cost, 6)
+        try:
+            # Import our enhanced cost calculation
+            import requests
+            
+            # Prepare cost calculation request
+            cost_data = {
+                "model": self.deployment_name,
+                "tokenUsage": {
+                    "promptTokens": usage["prompt_tokens"],
+                    "completionTokens": usage["completion_tokens"],
+                    "totalTokens": usage["total_tokens"]
+                },
+                "provider": "azure_openai"
+            }
+            
+            # Call our cost calculation API
+            try:
+                response = requests.post(
+                    "http://localhost:3000/api/v1/cost-calculation",
+                    json=cost_data,
+                    timeout=5
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("success"):
+                        return result["calculation"]["totalCost"]
+                        
+            except requests.RequestException as e:
+                logger.warning(f"Cost calculation API failed, using fallback: {e}")
+            
+            # Fallback to basic Azure OpenAI pricing if API fails
+            prompt_cost_per_1k = 0.03  # $0.03 per 1K prompt tokens  
+            completion_cost_per_1k = 0.06  # $0.06 per 1K completion tokens
+            
+            prompt_cost = (usage["prompt_tokens"] / 1000) * prompt_cost_per_1k
+            completion_cost = (usage["completion_tokens"] / 1000) * completion_cost_per_1k
+            
+            return round(prompt_cost + completion_cost, 6)
+            
+        except Exception as e:
+            logger.error(f"Cost calculation failed: {e}")
+            # Return minimal cost estimate
+            return round((usage["total_tokens"] / 1000) * 0.045, 6)  # Average cost estimate
     
     async def run_conversation_session(self, num_interactions: int = 3) -> Dict[str, Any]:
         """
