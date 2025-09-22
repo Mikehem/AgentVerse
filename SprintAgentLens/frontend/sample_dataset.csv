@@ -1,0 +1,6 @@
+input_text,expected_output,category
+"What is the capital of France?","Paris","geography"
+"Solve: 2 + 2","4","math"
+"Write a hello world program in Python","print('Hello, World!')","programming"
+"What is the largest planet in our solar system?","Jupiter","astronomy"
+"Translate 'hello' to Spanish","hola","translation"

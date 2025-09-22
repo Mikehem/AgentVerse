@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agent-lens
+  labels:
+    name: agent-lens
+    app.kubernetes.io/name: agent-lens
+    app.kubernetes.io/component: distributed-tracing
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: document-processing
+  labels:
+    name: document-processing
+    app.kubernetes.io/name: agent-lens
+    app.kubernetes.io/component: document-processing
+    scenario: collaborative-document-processing
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-pipeline
+  labels:
+    name: data-pipeline
+    app.kubernetes.io/name: agent-lens
+    app.kubernetes.io/component: data-pipeline
+    scenario: distributed-data-pipeline
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trading-system
+  labels:
+    name: trading-system
+    app.kubernetes.io/name: agent-lens
+    app.kubernetes.io/component: trading-system
+    scenario: realtime-trading-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: iot-management
+  labels:
+    name: iot-management
+    app.kubernetes.io/name: agent-lens
+    app.kubernetes.io/component: iot-management
+    scenario: iot-device-management

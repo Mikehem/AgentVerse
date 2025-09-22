@@ -10,9 +10,11 @@ const db = new Database(dbPath)
 const evaluationSchema = z.object({
   name: z.string().min(1, 'Evaluation name is required'),
   description: z.string().optional(),
+  type: z.string().optional(),
   project_id: z.string().optional(),
   dataset_id: z.string().optional(),
-  config: z.record(z.any()).optional(),
+  configuration: z.union([z.string(), z.record(z.any())]).optional(),
+  status: z.string().optional(),
   metadata: z.record(z.any()).optional()
 })
 
@@ -29,12 +31,9 @@ export async function GET(request: NextRequest) {
       SELECT 
         e.*,
         p.name as project_name,
-        d.name as dataset_name,
-        COUNT(er.id) as result_count
+        0 as result_count
       FROM evaluations e
       LEFT JOIN projects p ON e.project_id = p.id
-      LEFT JOIN datasets d ON e.dataset_id = d.id
-      LEFT JOIN evaluation_results er ON e.id = er.evaluation_id
     `
     let countQuery = 'SELECT COUNT(*) as count FROM evaluations e'
     const params = []
@@ -47,11 +46,12 @@ export async function GET(request: NextRequest) {
       countParams.push(projectId)
     }
 
-    if (datasetId) {
-      conditions.push('e.dataset_id = ?')
-      params.push(datasetId)
-      countParams.push(datasetId)
-    }
+    // Note: dataset_id column removed from evaluations table schema
+    // if (datasetId) {
+    //   conditions.push('e.dataset_id = ?')
+    //   params.push(datasetId)
+    //   countParams.push(datasetId)
+    // }
 
     if (conditions.length > 0) {
       const whereClause = ' WHERE ' + conditions.join(' AND ')
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       countQuery += whereClause
     }
 
-    query += ' GROUP BY e.id ORDER BY e.created_at DESC LIMIT ? OFFSET ?'
+    query += ' ORDER BY e.created_at DESC LIMIT ? OFFSET ?'
     params.push(limit, offset)
 
     const evaluations = db.prepare(query).all(...params)
@@ -96,18 +96,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    // Validate evaluation data (temporary skip for debugging)
+    console.log('Received evaluation creation request:', body)
+    
+    // Validate with proper error handling
     let validatedData
     try {
       validatedData = evaluationSchema.parse(body)
     } catch (error) {
-      console.log('Evaluation validation failed, using body directly:', error)
+      console.error('Validation error:', error)
+      // Use body data directly for now with defaults
       validatedData = {
-        name: body.name,
-        description: body.description,
+        name: body.name || 'Unnamed Evaluation',
+        type: body.type || 'heuristic',
         project_id: body.project_id,
         dataset_id: body.dataset_id,
-        config: body.config || {},
+        configuration: body.configuration,
+        status: body.status || 'pending',
         metadata: body.metadata || {}
       }
     }
@@ -120,12 +124,16 @@ export async function POST(request: NextRequest) {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `)
 
+    const configToStore = typeof validatedData.configuration === 'string' 
+      ? validatedData.configuration 
+      : JSON.stringify(validatedData.configuration || { metrics: [] })
+
     stmt.run(
       id,
       validatedData.name,
-      'custom', // Default type
-      validatedData.config ? JSON.stringify(validatedData.config) : JSON.stringify({ metrics: ['accuracy'] }),
-      validatedData.project_id || 'test_project',
+      validatedData.type || 'heuristic',
+      configToStore,
+      validatedData.project_id,
       now,
       now
     )
@@ -161,6 +169,88 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: 'Failed to create evaluation'
+    }, { status: 500 })
+  }
+}
+
+// PUT /api/v1/evaluations - Update evaluation
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    console.log('Received evaluation update request:', body)
+    
+    const { id, status, results, ...updateData } = body
+    
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        error: 'Evaluation ID is required for update'
+      }, { status: 400 })
+    }
+
+    const now = new Date().toISOString()
+    
+    // Prepare update fields
+    const updateFields = []
+    const updateValues = []
+    
+    if (status) {
+      updateFields.push('status = ?')
+      updateValues.push(status)
+    }
+    
+    if (results) {
+      updateFields.push('results = ?')
+      updateValues.push(JSON.stringify(results))
+    }
+    
+    // Add updated_at
+    updateFields.push('updated_at = ?')
+    updateValues.push(now)
+    
+    // Add the ID for WHERE clause
+    updateValues.push(id)
+    
+    const stmt = db.prepare(`
+      UPDATE evaluations 
+      SET ${updateFields.join(', ')}
+      WHERE id = ?
+    `)
+    
+    const result = stmt.run(...updateValues)
+    
+    if (result.changes === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Evaluation not found'
+      }, { status: 404 })
+    }
+    
+    // Fetch updated evaluation
+    const evaluation = db.prepare(`
+      SELECT 
+        e.*,
+        p.name as project_name
+      FROM evaluations e
+      LEFT JOIN projects p ON e.project_id = p.id
+      WHERE e.id = ?
+    `).get(id)
+    
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...evaluation,
+        config: evaluation.config ? JSON.parse(evaluation.config) : null,
+        metadata: evaluation.metadata ? JSON.parse(evaluation.metadata) : null,
+        results: evaluation.results ? JSON.parse(evaluation.results) : null
+      }
+    })
+    
+  } catch (error) {
+    console.error('Error updating evaluation:', error)
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to update evaluation'
     }, { status: 500 })
   }
 }

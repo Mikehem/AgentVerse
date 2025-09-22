@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (runId) {
-      query += ' AND runId = ?'
+      query += ' AND run_id = ?'
       params.push(runId)
     }
 
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query += ' AND (name LIKE ? OR metadata LIKE ?)'
+      query += ' AND (operation_name LIKE ? OR metadata LIKE ?)'
       const searchPattern = `%${search}%`
       params.push(searchPattern, searchPattern)
     }
@@ -148,15 +148,16 @@ export async function GET(request: NextRequest) {
       id: trace.id,
       projectId: trace.project_id,
       agentId: trace.agent_id,
-      runId: trace.runId,
+      runId: trace.run_id,
       conversationId: trace.conversation_id,
-      operationName: trace.name,
+      operationName: trace.operation_name,
       startTime: trace.start_time,
       endTime: trace.end_time,
       duration: trace.duration,
       status: trace.status,
       metadata: trace.metadata ? JSON.parse(trace.metadata) : {},
       tags: trace.tags ? JSON.parse(trace.tags) : [],
+      spans: trace.spans ? JSON.parse(trace.spans) : [],
       createdAt: trace.created_at,
       // Cost tracking fields
       totalCost: trace.total_cost || 0,
@@ -280,9 +281,9 @@ export async function POST(request: NextRequest) {
       const traces = validatedTraces.map(trace => tracesDb.create({
         project_id: trace.projectId,
         agent_id: trace.agentId,
-        runId: trace.runId,
+        runId: trace.run_id,
         conversation_id: trace.conversationId,
-        name: trace.operationName,
+        operation_name: trace.operationName,
         start_time: trace.startTime,
         end_time: trace.endTime,
         duration: trace.duration,
@@ -316,7 +317,11 @@ export async function POST(request: NextRequest) {
       inputData: body.inputData || {},
       outputData: body.outputData || {},
       spans: body.spans || [],
-      metadata: body.metadata || {}
+      metadata: body.metadata || {},
+      // Add model and provider fields
+      modelName: body.modelName || body.model || body.model_name,
+      provider: body.provider,
+      usage: body.usage
     }
     
     // Calculate costs automatically if usage information is provided
@@ -355,9 +360,9 @@ export async function POST(request: NextRequest) {
     const trace = tracesDb.create({
       project_id: validatedData.projectId,
       agent_id: validatedData.agentId,
-      runId: validatedData.runId,
+      run_id: validatedData.runId,
       conversation_id: validatedData.conversationId,
-      name: validatedData.operationName,
+      operation_name: validatedData.operationName,
       start_time: validatedData.startTime || new Date().toISOString(),
       end_time: validatedData.endTime,
       duration: validatedData.duration,

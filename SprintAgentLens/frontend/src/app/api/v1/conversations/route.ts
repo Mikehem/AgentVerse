@@ -36,36 +36,43 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
     const includeThread = searchParams.get('includeThread') === 'true' // Include full thread context
 
-    // Build base query for counting total records
-    let countQuery = 'SELECT COUNT(*) as total FROM conversations WHERE 1=1'
-    let dataQuery = 'SELECT * FROM conversations WHERE 1=1'
+    // Build base query for counting total records with agent information
+    let countQuery = 'SELECT COUNT(*) as total FROM conversations c WHERE 1=1'
+    let dataQuery = `
+      SELECT c.*, 
+             a.name as agent_name,
+             p.name as project_name
+      FROM conversations c 
+      LEFT JOIN agents a ON c.agent_id = a.id 
+      LEFT JOIN projects p ON c.project_id = p.id 
+      WHERE 1=1`
     const params: any[] = []
     const countParams: any[] = []
 
     if (projectId) {
-      countQuery += ' AND project_id = ?'
-      dataQuery += ' AND project_id = ?'
+      countQuery += ' AND c.project_id = ?'
+      dataQuery += ' AND c.project_id = ?'
       params.push(projectId)
       countParams.push(projectId)
     }
 
     if (agentId) {
-      countQuery += ' AND agent_id = ?'
-      dataQuery += ' AND agent_id = ?'
+      countQuery += ' AND c.agent_id = ?'
+      dataQuery += ' AND c.agent_id = ?'
       params.push(agentId)
       countParams.push(agentId)
     }
 
     if (runId) {
-      countQuery += ' AND runId = ?'
-      dataQuery += ' AND runId = ?'
+      countQuery += ' AND c.runId = ?'
+      dataQuery += ' AND c.runId = ?'
       params.push(runId)
       countParams.push(runId)
     }
 
     if (threadId) {
       // Search in metadata JSON field for threadId
-      const threadCondition = ' AND (JSON_EXTRACT(metadata, "$.threadId") = ? OR JSON_EXTRACT(metadata, "$.thread_id") = ?)'
+      const threadCondition = ' AND (JSON_EXTRACT(c.metadata, "$.threadId") = ? OR JSON_EXTRACT(c.metadata, "$.thread_id") = ?)'
       countQuery += threadCondition
       dataQuery += threadCondition
       params.push(threadId, threadId)
@@ -73,14 +80,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      countQuery += ' AND status = ?'
-      dataQuery += ' AND status = ?'
+      countQuery += ' AND c.status = ?'
+      dataQuery += ' AND c.status = ?'
       params.push(status)
       countParams.push(status)
     }
 
     if (search && search.trim()) {
-      const searchCondition = ' AND (input LIKE ? OR output LIKE ? OR id LIKE ?)'
+      const searchCondition = ' AND (c.input LIKE ? OR c.output LIKE ? OR c.id LIKE ?)'
       const searchTerm = `%${search.trim()}%`
       countQuery += searchCondition
       dataQuery += searchCondition
@@ -93,7 +100,7 @@ export async function GET(request: NextRequest) {
     const totalCount = countResults.length > 0 ? countResults[0].total : 0
 
     // Get paginated data
-    dataQuery += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    dataQuery += ' ORDER BY c.created_at DESC LIMIT ? OFFSET ?'
     params.push(limit, offset)
 
     let conversations = conversationDb.getAll(dataQuery, params)
@@ -107,7 +114,13 @@ export async function GET(request: NextRequest) {
         if (threadId) {
           // Get all conversations in this thread
           const threadConversations = conversationDb.getAll(
-            'SELECT * FROM conversations WHERE (JSON_EXTRACT(metadata, "$.threadId") = ? OR JSON_EXTRACT(metadata, "$.thread_id") = ?) AND project_id = ? ORDER BY created_at ASC',
+            `SELECT c.*, a.name as agent_name, p.name as project_name 
+             FROM conversations c
+             LEFT JOIN agents a ON c.agent_id = a.id 
+             LEFT JOIN projects p ON c.project_id = p.id 
+             WHERE (JSON_EXTRACT(c.metadata, "$.threadId") = ? OR JSON_EXTRACT(c.metadata, "$.thread_id") = ?) 
+             AND c.project_id = ? 
+             ORDER BY c.created_at ASC`,
             [threadId, threadId, conv.project_id]
           )
           

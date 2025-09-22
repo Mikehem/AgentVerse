@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { tracesDb, spansDb } from '@/lib/database'
+import { tracesDb, spansDb, conversationDb } from '@/lib/database'
 import { calculateCost, aggregateCosts, type TokenUsage, type CostAggregation } from '@/lib/costCalculation'
 
 // Cost analytics API following Opik cost tracking specifications
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     const granularity = searchParams.get('granularity') || 'day' // day, hour, minute
-    const level = searchParams.get('level') || 'project' // project, trace, span
+    const level = searchParams.get('level') || 'project' // project, trace, span, conversation
     const includeBreakdown = searchParams.get('includeBreakdown') === 'true'
 
     // Build base query
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     if (level === 'trace') {
       query = `
         SELECT 
-          id, project_id, agent_id, runId, name, start_time, end_time,
+          id, project_id, agent_id, runId, operation_name, start_time, end_time,
           total_cost, input_cost, output_cost, prompt_tokens, completion_tokens, total_tokens,
           provider, model_name, cost_calculation_metadata
         FROM traces WHERE 1=1
@@ -32,17 +32,28 @@ export async function GET(request: NextRequest) {
     } else if (level === 'span') {
       query = `
         SELECT 
-          id, trace_id, span_id, name, type, start_time, end_time,
+          id, trace_id, span_id, span_name, span_type, start_time, end_time,
           total_cost, input_cost, output_cost, prompt_tokens, completion_tokens, total_tokens,
           provider, model_name, cost_calculation_metadata
         FROM spans WHERE 1=1
       `
-    } else {
-      // Project level - aggregate from traces
+    } else if (level === 'conversation') {
       query = `
         SELECT 
+          id, project_id, agent_id, runId, input, output, created_at as start_time,
+          cost as total_cost, 0 as input_cost, 0 as output_cost, 
+          token_usage as total_tokens, 0 as prompt_tokens, 0 as completion_tokens,
+          JSON_EXTRACT(metadata, '$.provider') as provider,
+          JSON_EXTRACT(metadata, '$.model') as model_name
+        FROM conversations WHERE 1=1
+      `
+    } else {
+      // Project level - aggregate from both traces and conversations
+      // First get traces data
+      const tracesQuery = `
+        SELECT 
           project_id, 
-          COUNT(*) as trace_count,
+          COUNT(*) as item_count,
           SUM(total_cost) as total_cost,
           SUM(input_cost) as total_input_cost,
           SUM(output_cost) as total_output_cost,
@@ -51,9 +62,31 @@ export async function GET(request: NextRequest) {
           SUM(total_tokens) as total_tokens,
           provider,
           model_name,
-          DATE(start_time) as date
+          DATE(start_time) as date,
+          'trace' as source_type
         FROM traces WHERE 1=1
       `
+      
+      // Then get conversations data
+      const conversationsQuery = `
+        SELECT 
+          project_id, 
+          COUNT(*) as item_count,
+          SUM(cost) as total_cost,
+          0 as total_input_cost,
+          0 as total_output_cost,
+          0 as total_prompt_tokens,
+          0 as total_completion_tokens,
+          SUM(token_usage) as total_tokens,
+          JSON_EXTRACT(metadata, '$.provider') as provider,
+          JSON_EXTRACT(metadata, '$.model') as model_name,
+          DATE(created_at) as date,
+          'conversation' as source_type
+        FROM conversations WHERE 1=1
+      `
+      
+      // For now, let's focus on conversations since they have the actual cost data
+      query = conversationsQuery
     }
 
     // Add filters
@@ -62,46 +95,72 @@ export async function GET(request: NextRequest) {
       params.push(projectId)
     }
 
-    if (agentId && level === 'trace') {
+    if (agentId && (level === 'trace' || level === 'conversation' || level === 'project')) {
       query += ' AND agent_id = ?'
       params.push(agentId)
     }
 
-    if (runId && level === 'trace') {
+    if (runId && (level === 'trace' || level === 'conversation' || level === 'project')) {
       query += ' AND runId = ?'
       params.push(runId)
     }
 
     if (provider) {
-      query += ' AND provider = ?'
+      if (level === 'conversation' || level === 'project') {
+        query += ' AND JSON_EXTRACT(metadata, "$.provider") = ?'
+      } else {
+        query += ' AND provider = ?'
+      }
       params.push(provider)
     }
 
     if (model) {
-      query += ' AND model_name = ?'
+      if (level === 'conversation' || level === 'project') {
+        query += ' AND JSON_EXTRACT(metadata, "$.model") = ?'
+      } else {
+        query += ' AND model_name = ?'
+      }
       params.push(model)
     }
 
     if (startDate) {
-      query += ' AND start_time >= ?'
+      if (level === 'conversation' || level === 'project') {
+        query += ' AND created_at >= ?'
+      } else {
+        query += ' AND start_time >= ?'
+      }
       params.push(startDate)
     }
 
     if (endDate) {
-      query += ' AND start_time <= ?'
+      if (level === 'conversation' || level === 'project') {
+        query += ' AND created_at <= ?'
+      } else {
+        query += ' AND start_time <= ?'
+      }
       params.push(endDate)
     }
 
     // Add grouping for project level
     if (level === 'project') {
-      query += ' GROUP BY project_id, provider, model_name, DATE(start_time)'
+      query += ' GROUP BY project_id, provider, model_name, DATE(created_at)'
       query += ' ORDER BY date DESC'
+    } else if (level === 'conversation') {
+      query += ' ORDER BY created_at DESC'
     } else {
       query += ' ORDER BY start_time DESC'
     }
 
-    // Execute query
-    const db = level === 'span' ? spansDb : tracesDb
+    // Execute query based on level
+    let db
+    if (level === 'span') {
+      db = spansDb
+    } else if (level === 'conversation' || level === 'project') {
+      db = conversationDb  // Use conversations for project level and conversation level
+    } else {
+      db = tracesDb
+    }
+    
     const results = db.getAll(query, params)
 
     // Calculate detailed analytics
@@ -306,18 +365,45 @@ function generateTimeSeriesBreakdown(results: any[], granularity: string, level:
   const breakdown: Record<string, any> = {}
 
   results.forEach(item => {
-    const startTime = new Date(item.start_time)
+    // More robust date parsing
+    let startTime: Date
+    const timeValue = item.start_time || item.created_at
+    
+    if (!timeValue) {
+      return // Skip items without timestamp
+    }
+    
+    // Try parsing the date value
+    if (typeof timeValue === 'string') {
+      startTime = new Date(timeValue)
+    } else if (typeof timeValue === 'number') {
+      startTime = new Date(timeValue)
+    } else {
+      return // Skip invalid time values
+    }
+    
+    // Skip invalid dates
+    if (isNaN(startTime.getTime())) {
+      console.warn('Invalid date found:', timeValue)
+      return
+    }
+    
     let timeKey: string
 
-    switch (granularity) {
-      case 'hour':
-        timeKey = startTime.toISOString().substring(0, 13) + ':00:00.000Z'
-        break
-      case 'minute':
-        timeKey = startTime.toISOString().substring(0, 16) + ':00.000Z'
-        break
-      default: // day
-        timeKey = startTime.toISOString().substring(0, 10) + 'T00:00:00.000Z'
+    try {
+      switch (granularity) {
+        case 'hour':
+          timeKey = startTime.toISOString().substring(0, 13) + ':00:00.000Z'
+          break
+        case 'minute':
+          timeKey = startTime.toISOString().substring(0, 16) + ':00.000Z'
+          break
+        default: // day
+          timeKey = startTime.toISOString().substring(0, 10) + 'T00:00:00.000Z'
+      }
+    } catch (error) {
+      console.warn('Error creating time key for date:', startTime, error)
+      return
     }
 
     if (!breakdown[timeKey]) {

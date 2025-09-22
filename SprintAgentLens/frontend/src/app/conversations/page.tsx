@@ -48,7 +48,21 @@ export default function ConversationsPage() {
         const conversationsData = await conversationsResponse.json()
         
         if (conversationsData.success) {
-          const convs = conversationsData.data || []
+          const rawConvs = conversationsData.data || []
+          // Transform API data to match ConversationTableRow interface
+          const convs = rawConvs.map((conv: any) => ({
+            ...conv,
+            // Ensure proper timestamp handling
+            created_at: conv.created_at,
+            // Add missing required fields for ConversationTableRow
+            agent_name: conv.agent_name || 'Unknown Agent',
+            turn_count: 1, // Default to 1 for now
+            is_thread: false, // Default to false for now
+            // Normalize field names if needed
+            response_time: conv.response_time || 0,
+            token_usage: conv.token_usage || 0,
+            cost: conv.cost || 0
+          }))
           setConversations(convs)
           
           // Calculate metrics from conversations data

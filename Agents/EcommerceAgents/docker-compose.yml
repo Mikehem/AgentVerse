@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  order_coordinator_agent:
+    build:
+      context: ./Agents/EcommerceAgents
+      dockerfile: Dockerfile.orchestrator
+    environment:
+      - PROJECT_ID=project-1758269313646
+      - AGENT_ID=agent_coordinator_1758273642_65d2ee
+      - AGENT_NAME=Order Coordinator Agent
+      - AGENT_TYPE=orchestrator
+      - SPRINT_LENS_URL=http://host.docker.internal:3000
+    ports:
+      - "8080:8080"
+    networks:
+      - ecommerce_network
+    depends_on:
+      - sprintlens_backend
+
+  payment_processor_agent:
+    build:
+      context: ./Agents/EcommerceAgents
+      dockerfile: Dockerfile.specialist
+    environment:
+      - PROJECT_ID=project-1758269313646
+      - AGENT_ID=agent_payment_processor_1758273642_14bfc0
+      - AGENT_NAME=Payment Processor Agent
+      - AGENT_TYPE=specialist
+      - SPRINT_LENS_URL=http://host.docker.internal:3000
+    ports:
+      - "8081:8081"
+    networks:
+      - ecommerce_network
+    depends_on:
+      - sprintlens_backend
+
+  inventory_management_agent:
+    build:
+      context: ./Agents/EcommerceAgents
+      dockerfile: Dockerfile.specialist
+    environment:
+      - PROJECT_ID=project-1758269313646
+      - AGENT_ID=agent_inventory_manager_1758273642_31b402
+      - AGENT_NAME=Inventory Management Agent
+      - AGENT_TYPE=specialist
+      - SPRINT_LENS_URL=http://host.docker.internal:3000
+    ports:
+      - "8082:8082"
+    networks:
+      - ecommerce_network
+    depends_on:
+      - sprintlens_backend
+
+  shipping_management_agent:
+    build:
+      context: ./Agents/EcommerceAgents
+      dockerfile: Dockerfile.specialist
+    environment:
+      - PROJECT_ID=project-1758269313646
+      - AGENT_ID=agent_shipping_manager_1758273642_a8cf3f
+      - AGENT_NAME=Shipping Management Agent
+      - AGENT_TYPE=specialist
+      - SPRINT_LENS_URL=http://host.docker.internal:3000
+    ports:
+      - "8083:8083"
+    networks:
+      - ecommerce_network
+    depends_on:
+      - sprintlens_backend
+
+  notification_service_agent:
+    build:
+      context: ./Agents/EcommerceAgents
+      dockerfile: Dockerfile.specialist
+    environment:
+      - PROJECT_ID=project-1758269313646
+      - AGENT_ID=agent_notification_service_1758273642_ee7b05
+      - AGENT_NAME=Notification Service Agent
+      - AGENT_TYPE=specialist
+      - SPRINT_LENS_URL=http://host.docker.internal:3000
+    ports:
+      - "8084:8084"
+    networks:
+      - ecommerce_network
+    depends_on:
+      - sprintlens_backend
+
+  sprintlens_backend:
+    image: sprintlens/backend:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - ecommerce_network
+
+networks:
+  ecommerce_network:
+    driver: bridge

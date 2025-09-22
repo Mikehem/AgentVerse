@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { spansDb } from '@/lib/database'
 import { calculateCost, type TokenUsage } from '@/lib/costCalculation'
+import { generateSpanId } from '@/lib/idGenerator'
 import { z } from 'zod'
 
 // Validation schema for span data
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest) {
     const validatedData = {
       traceId: body.trace_id || body.traceId,
       parentSpanId: body.parent_span_id || body.parentSpanId,
-      spanId: body.id || body.span_id || body.spanId,
+      spanId: body.id || body.span_id || body.spanId || generateSpanId(),
       spanName: body.name || body.span_name || body.spanName,
       spanType: body.type || body.span_type || body.spanType || 'custom',
       startTime: body.start_time || body.startTime,

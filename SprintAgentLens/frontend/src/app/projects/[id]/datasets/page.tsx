@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { 
   Database, 
   Plus, 
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { DatasetCreateModal } from '@/components/datasets/DatasetCreateModal'
 
 interface Dataset {
   id: string
@@ -34,8 +35,10 @@ interface Project {
   description?: string
 }
 
-export default function ProjectDatasetsPage({ params }: { params: { id: string } }) {
+export default function ProjectDatasetsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const resolvedParams = use(params)
+  const projectId = resolvedParams.id
   const [project, setProject] = useState<Project | null>(null)
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,11 +48,11 @@ export default function ProjectDatasetsPage({ params }: { params: { id: string }
   useEffect(() => {
     fetchProject()
     fetchProjectDatasets()
-  }, [params.id])
+  }, [projectId])
 
   const fetchProject = async () => {
     try {
-      const response = await fetch(`/api/v1/projects/${params.id}`)
+      const response = await fetch(`/api/v1/projects/${projectId}`)
       const result = await response.json()
       
       if (result.success) {
@@ -63,7 +66,7 @@ export default function ProjectDatasetsPage({ params }: { params: { id: string }
   const fetchProjectDatasets = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/v1/datasets?projectId=${params.id}`)
+      const response = await fetch(`/api/v1/datasets?projectId=${projectId}`)
       const result = await response.json()
       
       if (result.success) {
@@ -115,7 +118,7 @@ export default function ProjectDatasetsPage({ params }: { params: { id: string }
               </button>
               <ChevronRight className="w-4 h-4" />
               <button 
-                onClick={() => router.push(`/projects/${params.id}`)}
+                onClick={() => router.push(`/projects/${projectId}`)}
                 className="hover:text-primary"
               >
                 {project.name}
@@ -125,7 +128,7 @@ export default function ProjectDatasetsPage({ params }: { params: { id: string }
             </nav>
             <div className="flex items-center gap-3">
               <button 
-                onClick={() => router.push(`/projects/${params.id}`)}
+                onClick={() => router.push(`/projects/${projectId}`)}
                 className="p-1 text-gray-400 hover:text-primary"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -229,7 +232,12 @@ export default function ProjectDatasetsPage({ params }: { params: { id: string }
                           <div className="flex items-center gap-3">
                             <Database className="w-5 h-5 text-primary" />
                             <div>
-                              <div className="font-medium text-gray-900">{dataset.name}</div>
+                              <button
+                                onClick={() => router.push(`/projects/${projectId}/datasets/${dataset.id}`)}
+                                className="font-medium text-gray-900 hover:text-primary text-left"
+                              >
+                                {dataset.name}
+                              </button>
                               {dataset.description && (
                                 <div className="text-sm text-gray-500 truncate max-w-md">
                                   {dataset.description}
@@ -251,13 +259,17 @@ export default function ProjectDatasetsPage({ params }: { params: { id: string }
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button className="p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded">
+                            <button 
+                              onClick={() => router.push(`/projects/${projectId}/datasets/${dataset.id}`)}
+                              className="p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded"
+                              title="View Dataset"
+                            >
                               <FileText className="w-4 h-4" />
                             </button>
-                            <button className="p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded">
+                            <button className="p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded" title="Download Dataset">
                               <Download className="w-4 h-4" />
                             </button>
-                            <button className="p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded">
+                            <button className="p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded" title="More Options">
                               <MoreHorizontal className="w-4 h-4" />
                             </button>
                           </div>
@@ -271,6 +283,18 @@ export default function ProjectDatasetsPage({ params }: { params: { id: string }
           )}
         </div>
       </div>
+
+      {/* Dataset Create Modal */}
+      <DatasetCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={(dataset) => {
+          console.log('Dataset created:', dataset)
+          fetchProjectDatasets()
+        }}
+        projectId={projectId}
+        projectName={project.name}
+      />
     </div>
   )
 }

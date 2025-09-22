@@ -2,6 +2,21 @@
 export { AgentLensClient } from './client'
 export type { TraceConfig, SpanData, TraceData } from './client'
 
+// Opik Integration exports
+export {
+  OpikClient,
+  OpikDatasetManager,
+  initializeOpik,
+  setGlobalOpikClient,
+  getGlobalOpikClient,
+  getOrCreateDataset
+} from './opik-integration'
+export type {
+  OpikSDKConfig,
+  OpikDataset,
+  OpikDatasetItem
+} from './opik-integration'
+
 // Enhanced Context Management (Opik-compatible)
 export { 
   AgentLensContext,

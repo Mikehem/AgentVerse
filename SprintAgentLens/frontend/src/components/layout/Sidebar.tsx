@@ -18,7 +18,8 @@ import {
   Building2,
   Star,
   ThumbsUp,
-  GitBranch
+  GitBranch,
+  Network
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,8 +28,8 @@ const navigation = [
   { name: 'Projects', href: '/projects', icon: Folder, current: false },
   { name: 'Agents', href: '/agents', icon: Bot, current: false },
   { name: 'Conversations', href: '/conversations', icon: MessageCircle, current: false },
+  { name: 'Distributed Traces', href: '/distributed-traces', icon: Network, current: false },
   { name: 'Prompts', href: '/prompts', icon: MessageSquare, current: false },
-  { name: 'Evaluations', href: '/evaluations', icon: TestTube, current: false },
   { name: 'Experiments', href: '/experiments', icon: Zap, current: false },
   { name: 'Datasets', href: '/datasets', icon: Database, current: false },
   { name: 'Settings', href: '/settings', icon: Settings, current: false },

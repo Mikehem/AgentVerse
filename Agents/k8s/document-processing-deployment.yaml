@@ -1,0 +1,501 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doc-coordinator
+  namespace: document-processing
+  labels:
+    app: doc-coordinator
+    component: coordinator
+    scenario: collaborative-document-processing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: doc-coordinator
+  template:
+    metadata:
+      labels:
+        app: doc-coordinator
+        component: coordinator
+        scenario: collaborative-document-processing
+    spec:
+      containers:
+      - name: doc-coordinator
+        image: agent-lens/distributed-test-agent:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: AGENT_ID
+          value: "doc-coordinator"
+        - name: AGENT_TYPE
+          value: "coordinator"
+        - name: AGENT_NAME
+          value: "Document Coordinator"
+        - name: AGENT_ROLE
+          value: "Orchestrates document processing workflow"
+        - name: AGENT_CAPABILITIES
+          value: "workflow_management,task_distribution,result_aggregation"
+        - name: AGENT_PORT
+          value: "8001"
+        - name: AGENT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: AGENT_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: AGENT_API_URL
+          value: "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        command:
+        - python
+        - agent.py
+        - --agent-id
+        - doc-coordinator
+        - --agent-type
+        - coordinator
+        - --agent-name
+        - "Document Coordinator"
+        - --role
+        - "Orchestrates document processing workflow"
+        - --capabilities
+        - "workflow_management,task_distribution,result_aggregation"
+        - --port
+        - "8001"
+        - --api-url
+        - "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doc-coordinator-service
+  namespace: document-processing
+  labels:
+    app: doc-coordinator
+spec:
+  selector:
+    app: doc-coordinator
+  ports:
+  - protocol: TCP
+    port: 8001
+    targetPort: 8001
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-extractor
+  namespace: document-processing
+  labels:
+    app: text-extractor
+    component: specialist
+    scenario: collaborative-document-processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: text-extractor
+  template:
+    metadata:
+      labels:
+        app: text-extractor
+        component: specialist
+        scenario: collaborative-document-processing
+    spec:
+      containers:
+      - name: text-extractor
+        image: agent-lens/distributed-test-agent:latest
+        ports:
+        - containerPort: 8002
+        env:
+        - name: AGENT_ID
+          value: "text-extractor"
+        - name: AGENT_TYPE
+          value: "specialist"
+        - name: AGENT_NAME
+          value: "Text Extraction Agent"
+        - name: AGENT_ROLE
+          value: "Extracts text content from various document formats"
+        - name: AGENT_CAPABILITIES
+          value: "pdf_extraction,ocr,text_parsing,format_detection"
+        - name: AGENT_PORT
+          value: "8002"
+        - name: AGENT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: AGENT_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: AGENT_API_URL
+          value: "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        command:
+        - python
+        - agent.py
+        - --agent-id
+        - text-extractor
+        - --agent-type
+        - specialist
+        - --agent-name
+        - "Text Extraction Agent"
+        - --role
+        - "Extracts text content from various document formats"
+        - --capabilities
+        - "pdf_extraction,ocr,text_parsing,format_detection"
+        - --port
+        - "8002"
+        - --api-url
+        - "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1000m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-extractor-service
+  namespace: document-processing
+  labels:
+    app: text-extractor
+spec:
+  selector:
+    app: text-extractor
+  ports:
+  - protocol: TCP
+    port: 8002
+    targetPort: 8002
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentiment-analyzer
+  namespace: document-processing
+  labels:
+    app: sentiment-analyzer
+    component: specialist
+    scenario: collaborative-document-processing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sentiment-analyzer
+  template:
+    metadata:
+      labels:
+        app: sentiment-analyzer
+        component: specialist
+        scenario: collaborative-document-processing
+    spec:
+      containers:
+      - name: sentiment-analyzer
+        image: agent-lens/distributed-test-agent:latest
+        ports:
+        - containerPort: 8003
+        env:
+        - name: AGENT_ID
+          value: "sentiment-analyzer"
+        - name: AGENT_TYPE
+          value: "specialist"
+        - name: AGENT_NAME
+          value: "Sentiment Analysis Agent"
+        - name: AGENT_ROLE
+          value: "Analyzes sentiment and emotional tone of text"
+        - name: AGENT_CAPABILITIES
+          value: "sentiment_analysis,emotion_detection,nlp"
+        - name: AGENT_PORT
+          value: "8003"
+        - name: AGENT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: AGENT_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: AGENT_API_URL
+          value: "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        command:
+        - python
+        - agent.py
+        - --agent-id
+        - sentiment-analyzer
+        - --agent-type
+        - specialist
+        - --agent-name
+        - "Sentiment Analysis Agent"
+        - --role
+        - "Analyzes sentiment and emotional tone of text"
+        - --capabilities
+        - "sentiment_analysis,emotion_detection,nlp"
+        - --port
+        - "8003"
+        - --api-url
+        - "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        resources:
+          requests:
+            memory: "1.5Gi"
+            cpu: "1000m"
+          limits:
+            memory: "2Gi"
+            cpu: "1500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentiment-analyzer-service
+  namespace: document-processing
+  labels:
+    app: sentiment-analyzer
+spec:
+  selector:
+    app: sentiment-analyzer
+  ports:
+  - protocol: TCP
+    port: 8003
+    targetPort: 8003
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: entity-extractor
+  namespace: document-processing
+  labels:
+    app: entity-extractor
+    component: specialist
+    scenario: collaborative-document-processing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: entity-extractor
+  template:
+    metadata:
+      labels:
+        app: entity-extractor
+        component: specialist
+        scenario: collaborative-document-processing
+    spec:
+      containers:
+      - name: entity-extractor
+        image: agent-lens/distributed-test-agent:latest
+        ports:
+        - containerPort: 8004
+        env:
+        - name: AGENT_ID
+          value: "entity-extractor"
+        - name: AGENT_TYPE
+          value: "specialist"
+        - name: AGENT_NAME
+          value: "Entity Extraction Agent"
+        - name: AGENT_ROLE
+          value: "Identifies and extracts named entities from text"
+        - name: AGENT_CAPABILITIES
+          value: "named_entity_recognition,entity_linking,knowledge_graphs"
+        - name: AGENT_PORT
+          value: "8004"
+        - name: AGENT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: AGENT_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: AGENT_API_URL
+          value: "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        command:
+        - python
+        - agent.py
+        - --agent-id
+        - entity-extractor
+        - --agent-type
+        - specialist
+        - --agent-name
+        - "Entity Extraction Agent"
+        - --role
+        - "Identifies and extracts named entities from text"
+        - --capabilities
+        - "named_entity_recognition,entity_linking,knowledge_graphs"
+        - --port
+        - "8004"
+        - --api-url
+        - "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        resources:
+          requests:
+            memory: "1.5Gi"
+            cpu: "1000m"
+          limits:
+            memory: "2Gi"
+            cpu: "1500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: entity-extractor-service
+  namespace: document-processing
+  labels:
+    app: entity-extractor
+spec:
+  selector:
+    app: entity-extractor
+  ports:
+  - protocol: TCP
+    port: 8004
+    targetPort: 8004
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quality-monitor
+  namespace: document-processing
+  labels:
+    app: quality-monitor
+    component: monitor
+    scenario: collaborative-document-processing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quality-monitor
+  template:
+    metadata:
+      labels:
+        app: quality-monitor
+        component: monitor
+        scenario: collaborative-document-processing
+    spec:
+      containers:
+      - name: quality-monitor
+        image: agent-lens/distributed-test-agent:latest
+        ports:
+        - containerPort: 8005
+        env:
+        - name: AGENT_ID
+          value: "quality-monitor"
+        - name: AGENT_TYPE
+          value: "monitor"
+        - name: AGENT_NAME
+          value: "Quality Monitoring Agent"
+        - name: AGENT_ROLE
+          value: "Monitors processing quality and validates results"
+        - name: AGENT_CAPABILITIES
+          value: "quality_assessment,validation,error_detection"
+        - name: AGENT_PORT
+          value: "8005"
+        - name: AGENT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: AGENT_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: AGENT_API_URL
+          value: "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        command:
+        - python
+        - agent.py
+        - --agent-id
+        - quality-monitor
+        - --agent-type
+        - monitor
+        - --agent-name
+        - "Quality Monitoring Agent"
+        - --role
+        - "Monitors processing quality and validates results"
+        - --capabilities
+        - "quality_assessment,validation,error_detection"
+        - --port
+        - "8005"
+        - --api-url
+        - "http://agent-lens-frontend.agent-lens.svc.cluster.local:3000"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quality-monitor-service
+  namespace: document-processing
+  labels:
+    app: quality-monitor
+spec:
+  selector:
+    app: quality-monitor
+  ports:
+  - protocol: TCP
+    port: 8005
+    targetPort: 8005
+  type: ClusterIP

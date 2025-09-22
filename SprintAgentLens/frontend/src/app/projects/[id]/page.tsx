@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Settings, Play, Pause, BarChart3, Users, MessageSquare, Zap, TrendingUp, Activity, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight, Plus, Brain, Code, Wrench, Copy, Check, Search, LayoutGrid, List, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Tag, Eye, ExternalLink, Database, TestTube, Star, Trash2, DollarSign, Calculator, Filter, Download, GitBranch } from 'lucide-react'
+import { ArrowLeft, Settings, Play, Pause, BarChart3, Users, MessageSquare, Zap, TrendingUp, Activity, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight, Plus, Brain, Code, Wrench, Copy, Check, Search, LayoutGrid, List, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Tag, Eye, ExternalLink, Database, TestTube, Star, Trash2, DollarSign, Calculator, Filter, Download, GitBranch, FileText, MoreHorizontal, X, Edit } from 'lucide-react'
 import { projectApi, agentApi, runApi, conversationApi } from '@/lib/api'
 import { Project, Agent, Run } from '@/lib/types'
 import { AgentCreationForm } from '@/components/agents/AgentCreationForm'
@@ -12,7 +12,9 @@ import { ConversationSpanDetail } from '@/components/conversations/ConversationS
 import { ConversationSearch } from '@/components/conversations/ConversationSearch'
 import { TraceFeedback } from '@/components/traces/TraceFeedback'
 import { CostAnalyticsChart } from '@/components/traces/CostAnalyticsChart'
+import { ProjectPrompts } from '@/components/prompts/ProjectPrompts'
 import { ConversationMetrics, ConversationTableRow, ConversationFilter, SpanData, TraceData, ConversationStatus } from '@/types/agent-lens'
+import { SpanTimeline } from '@/components/spans/SpanTimeline'
 
 interface ProjectPageProps {
   params: Promise<{ id: string }>
@@ -116,12 +118,13 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const tabs = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
     { id: 'agents', name: 'Agents', icon: Users },
+    { id: 'prompts', name: 'Prompts', icon: FileText },
+    { id: 'metrics', name: 'Metrics', icon: TrendingUp },
+    { id: 'traces', name: 'Traces', icon: Activity },
     { id: 'conversations', name: 'Conversations', icon: MessageSquare },
     { id: 'datasets', name: 'Datasets', icon: Database },
     { id: 'evaluations', name: 'Evaluations', icon: TestTube },
     { id: 'experiments', name: 'Experiments', icon: Zap },
-    { id: 'metrics', name: 'Metrics', icon: TrendingUp },
-    { id: 'traces', name: 'Traces', icon: Activity },
     { id: 'settings', name: 'Settings', icon: Settings }
   ]
 
@@ -219,7 +222,10 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           <ProjectOverview project={project} />
         )}
         {activeTab === 'agents' && (
-          <ProjectAgents project={project} />
+          <ProjectAgents project={project} onNavigateToPrompts={() => setActiveTab('prompts')} />
+        )}
+        {activeTab === 'prompts' && (
+          <ProjectPrompts project={project} />
         )}
         {activeTab === 'conversations' && (
           <ProjectConversations project={project} />
@@ -249,10 +255,54 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
 // Project Overview Component
 function ProjectOverview({ project }: { project: Project }) {
+  const [liveMetrics, setLiveMetrics] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch live metrics from database
+  useEffect(() => {
+    const fetchLiveMetrics = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch cost analytics for this project
+        const costResponse = await fetch(`/api/v1/cost-analytics?projectId=${project.id}&level=conversation&includeBreakdown=true`)
+        const costData = await costResponse.json()
+        
+        // Fetch conversation count and success rate
+        const conversationsResponse = await fetch(`/api/v1/conversations?projectId=${project.id}&limit=1000`)
+        const conversationsData = await conversationsResponse.json()
+        
+        if (costData.success && conversationsData.success) {
+          const conversations = conversationsData.data || []
+          const successfulConversations = conversations.filter((c: any) => c.status === 'success').length
+          const successRate = conversations.length > 0 ? (successfulConversations / conversations.length) * 100 : 0
+          
+          setLiveMetrics({
+            totalCost: costData.analytics?.summary?.totalCost || 0,
+            totalTokens: costData.analytics?.summary?.totalTokens || 0,
+            avgCostPerConversation: costData.analytics?.summary?.avgCostPerItem || 0,
+            conversationCount: conversations.length,
+            successRate: successRate,
+            costByAgent: costData.analytics?.data?.reduce((acc: any, item: any) => {
+              acc[item.agent_id] = (acc[item.agent_id] || 0) + item.total_cost
+              return acc
+            }, {}) || {}
+          })
+        }
+      } catch (error) {
+        console.error('Failed to fetch live metrics:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLiveMetrics()
+  }, [project.id])
+
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="card p-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -271,7 +321,9 @@ function ProjectOverview({ project }: { project: Project }) {
               <MessageSquare className="w-5 h-5 text-secondary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-secondary">{project.conversations.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-secondary">
+                {loading ? '...' : (liveMetrics?.conversationCount?.toLocaleString() || project.conversations.toLocaleString())}
+              </p>
               <p className="text-sm text-muted">Conversations</p>
             </div>
           </div>
@@ -283,8 +335,24 @@ function ProjectOverview({ project }: { project: Project }) {
               <BarChart3 className="w-5 h-5 text-accent" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-accent">{project.successRate.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-accent">
+                {loading ? '...' : (liveMetrics?.successRate?.toFixed(1) || project.successRate.toFixed(1))}%
+              </p>
               <p className="text-sm text-muted">Success Rate</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-green-600">
+                ${loading ? '...' : (liveMetrics?.totalCost?.toFixed(4) || '0.0000')}
+              </p>
+              <p className="text-sm text-muted">Total Cost</p>
             </div>
           </div>
         </div>
@@ -295,8 +363,10 @@ function ProjectOverview({ project }: { project: Project }) {
               <Zap className="w-5 h-5 text-warning" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-warning">{project.template}</p>
-              <p className="text-sm text-muted">Template</p>
+              <p className="text-2xl font-bold text-warning">
+                {loading ? '...' : (liveMetrics?.totalTokens?.toLocaleString() || '0')}
+              </p>
+              <p className="text-sm text-muted">Total Tokens</p>
             </div>
           </div>
         </div>
@@ -331,20 +401,85 @@ function ProjectOverview({ project }: { project: Project }) {
         </div>
 
         <div className="card p-6">
-          <h3 className="font-semibold text-primary mb-4">Tags</h3>
-          <div className="flex flex-wrap gap-2">
-            {project.tags.map((tag, index) => (
-              <span 
-                key={index}
-                className="px-3 py-1 bg-accent/20 text-accent rounded-full text-sm"
-              >
-                {tag}
-              </span>
-            ))}
-            {project.tags.length === 0 && (
-              <span className="text-muted">No tags assigned</span>
-            )}
+          <h3 className="font-semibold text-primary mb-4">Cost Breakdown by Agent</h3>
+          {loading ? (
+            <div className="space-y-2">
+              <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+              <div className="animate-pulse bg-gray-200 h-4 rounded w-3/4"></div>
+              <div className="animate-pulse bg-gray-200 h-4 rounded w-1/2"></div>
+            </div>
+          ) : liveMetrics?.costByAgent && Object.keys(liveMetrics.costByAgent).length > 0 ? (
+            <div className="space-y-3">
+              {Object.entries(liveMetrics.costByAgent)
+                .sort(([,a], [,b]) => (b as number) - (a as number))
+                .slice(0, 5)
+                .map(([agentId, cost]) => (
+                <div key={agentId} className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span className="text-sm font-medium">{agentId.replace('agent_', '').replace(/_/g, ' ')}</span>
+                  </div>
+                  <span className="text-sm font-bold text-green-600">${(cost as number).toFixed(4)}</span>
+                </div>
+              ))}
+              {Object.keys(liveMetrics.costByAgent).length > 5 && (
+                <div className="text-xs text-muted pt-2 border-t">
+                  +{Object.keys(liveMetrics.costByAgent).length - 5} more agents
+                </div>
+              )}
+            </div>
+          ) : (
+            <span className="text-muted">No cost data available</span>
+          )}
+        </div>
+      </div>
+
+      {/* Performance Metrics Section */}
+      {liveMetrics && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="card p-6">
+            <h3 className="font-semibold text-primary mb-4">Average Cost Per Conversation</h3>
+            <div className="text-3xl font-bold text-green-600">
+              ${liveMetrics.avgCostPerConversation.toFixed(6)}
+            </div>
+            <p className="text-sm text-muted mt-2">
+              Based on {liveMetrics.conversationCount} conversations
+            </p>
           </div>
+          
+          <div className="card p-6">
+            <h3 className="font-semibold text-primary mb-4">Token Efficiency</h3>
+            <div className="text-3xl font-bold text-warning">
+              {liveMetrics.totalTokens > 0 ? (liveMetrics.totalCost / liveMetrics.totalTokens * 1000).toFixed(6) : '0.000000'}
+            </div>
+            <p className="text-sm text-muted mt-2">Cost per 1K tokens</p>
+          </div>
+          
+          <div className="card p-6">
+            <h3 className="font-semibold text-primary mb-4">Agent Utilization</h3>
+            <div className="text-3xl font-bold text-primary">
+              {Object.keys(liveMetrics.costByAgent).length}
+            </div>
+            <p className="text-sm text-muted mt-2">Active agents with cost data</p>
+          </div>
+        </div>
+      )}
+
+      {/* Tags Section */}
+      <div className="card p-6">
+        <h3 className="font-semibold text-primary mb-4">Project Tags</h3>
+        <div className="flex flex-wrap gap-2">
+          {project.tags.map((tag, index) => (
+            <span 
+              key={index}
+              className="px-3 py-1 bg-accent/20 text-accent rounded-full text-sm"
+            >
+              {tag}
+            </span>
+          ))}
+          {project.tags.length === 0 && (
+            <span className="text-muted">No tags assigned</span>
+          )}
         </div>
       </div>
     </div>
@@ -352,11 +487,13 @@ function ProjectOverview({ project }: { project: Project }) {
 }
 
 // Project Agents Component
-function ProjectAgents({ project }: { project: Project }) {
+function ProjectAgents({ project, onNavigateToPrompts }: { project: Project; onNavigateToPrompts: () => void }) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [agentPromptLinks, setAgentPromptLinks] = useState<Record<string, any>>({})
+  const [prompts, setPrompts] = useState<any[]>([])
 
   // Load agents for this project
   useEffect(() => {
@@ -396,6 +533,42 @@ function ProjectAgents({ project }: { project: Project }) {
       isMounted = false
     }
   }, [project?.id]) // Only re-run when project.id changes
+
+  // Load prompts and agent-prompt links
+  useEffect(() => {
+    const loadPromptData = async () => {
+      if (!project?.id) return
+      
+      try {
+        // Load prompts for this project
+        const promptsResponse = await fetch(`/api/v1/prompts?projectId=${project.id}&includeActiveVersion=true`)
+        const promptsData = await promptsResponse.json()
+        
+        if (promptsData.success) {
+          setPrompts(promptsData.prompts)
+        }
+
+        // Load agent-prompt links
+        const linksResponse = await fetch(`/api/v1/agent-prompt-links?projectId=${project.id}`)
+        const linksData = await linksResponse.json()
+        
+        if (linksData.success) {
+          const linksMap: Record<string, any> = {}
+          linksData.links.forEach((link: any) => {
+            linksMap[link.agent_id] = {
+              ...link,
+              prompt: promptsData.prompts?.find((p: any) => p.id === link.prompt_id)
+            }
+          })
+          setAgentPromptLinks(linksMap)
+        }
+      } catch (error) {
+        console.error('Failed to load prompt data:', error)
+      }
+    }
+
+    loadPromptData()
+  }, [project?.id, agents.length]) // Re-run when agents change
 
   const loadAgents = async () => {
     if (!project?.id) return
@@ -639,6 +812,56 @@ function ProjectAgents({ project }: { project: Project }) {
                     </span>
                   )}
                 </div>
+              </div>
+
+              {/* Current Prompt */}
+              <div className="mb-4 p-3 bg-accent/5 rounded-lg border border-accent/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-primary">Current Prompt</p>
+                  <FileText className="w-4 h-4 text-accent" />
+                </div>
+                {agentPromptLinks[agent.id] ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-primary font-medium">
+                        {agentPromptLinks[agent.id].prompt?.name || 'Unknown Prompt'}
+                      </span>
+                      {agentPromptLinks[agent.id].prompt?.activeVersion && (
+                        <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                          <CheckCircle className="w-3 h-3" />
+                          v{agentPromptLinks[agent.id].prompt.activeVersion.version_number}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={onNavigateToPrompts}
+                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary/90"
+                      >
+                        <Eye className="w-3 h-3" />
+                        View
+                      </button>
+                      <button
+                        onClick={onNavigateToPrompts}
+                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs border border-border rounded hover:bg-accent"
+                      >
+                        <Edit className="w-3 h-3" />
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-sm text-muted mb-2">No prompt assigned</p>
+                    <button
+                      onClick={onNavigateToPrompts}
+                      className="flex items-center justify-center gap-1 px-3 py-1 text-xs bg-primary text-white rounded hover:bg-primary/90 mx-auto"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Create Prompt
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -987,12 +1210,15 @@ function ProjectConversations({ project }: { project: Project }) {
         onExport={handleExport}
         onConversationSelect={handleConversationSelect}
         projectAgents={agents} // Pass project agents for filtering
+        projectId={project.id}
+        projectName={project.name}
       />
     </div>
   )
 }
 
 function ProjectDatasets({ project }: { project: Project }) {
+  const router = useRouter()
   const [datasets, setDatasets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -1091,7 +1317,11 @@ function ProjectDatasets({ project }: { project: Project }) {
               </thead>
               <tbody className="divide-y divide-light">
                 {filteredDatasets.map((dataset) => (
-                  <tr key={dataset.id} className="hover:bg-accent-alpha">
+                  <tr 
+                    key={dataset.id} 
+                    className="hover:bg-accent-alpha cursor-pointer"
+                    onClick={() => router.push(`/projects/${project.id}/datasets/${dataset.id}`)}
+                  >
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <Database className="w-5 h-5 text-primary" />
@@ -1118,13 +1348,28 @@ function ProjectDatasets({ project }: { project: Project }) {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded">
+                        <button 
+                          className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/projects/${project.id}/datasets/${dataset.id}`)
+                          }}
+                          title="View dataset details"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded">
+                        <button 
+                          className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Export dataset"
+                        >
                           <Download className="w-4 h-4" />
                         </button>
-                        <button className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded">
+                        <button 
+                          className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded"
+                          onClick={(e) => e.stopPropagation()}
+                          title="More options"
+                        >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
                       </div>
@@ -1141,9 +1386,12 @@ function ProjectDatasets({ project }: { project: Project }) {
 }
 
 function ProjectEvaluations({ project }: { project: Project }) {
+  const [activeEvalTab, setActiveEvalTab] = useState('evaluations')
   const [evaluations, setEvaluations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedEvaluation, setSelectedEvaluation] = useState<any>(null)
+  const [showEvaluationDetailModal, setShowEvaluationDetailModal] = useState(false)
 
   useEffect(() => {
     fetchProjectEvaluations()
@@ -1165,10 +1413,29 @@ function ProjectEvaluations({ project }: { project: Project }) {
     }
   }
 
-  const filteredEvaluations = evaluations.filter(evaluation =>
-    evaluation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    evaluation.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredEvaluations = evaluations.filter(evaluation => {
+    // First filter by search term
+    const matchesSearch = evaluation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      evaluation.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    // Exclude heuristic evaluations from regular evaluations tab
+    try {
+      const config = typeof evaluation.configuration === 'string' 
+        ? JSON.parse(evaluation.configuration) 
+        : evaluation.configuration;
+      
+      const isHeuristic = config?.metrics && Array.isArray(config.metrics) && 
+                         config.metrics.some((metric: string) => 
+                           ['contains', 'equals', 'regex', 'is_json', 'levenshtein'].includes(metric)
+                         );
+      
+      return !isHeuristic; // Only show non-heuristic evaluations in Evaluations tab
+    } catch {
+      return true; // If parsing fails, show in regular evaluations
+    }
+  })
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -1185,76 +1452,471 @@ function ProjectEvaluations({ project }: { project: Project }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-primary">Project Evaluations</h2>
-          <p className="text-muted mt-1">Manage evaluations for this project</p>
+          <p className="text-muted mt-1">Manage evaluations and heuristic metrics for this project</p>
         </div>
+      </div>
+
+      {/* Evaluation Tab Navigation */}
+      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+        <button
+          onClick={() => setActiveEvalTab('evaluations')}
+          className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeEvalTab === 'evaluations'
+              ? 'bg-white text-primary shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <TestTube className="w-4 h-4" />
+            Evaluations
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveEvalTab('metrics')}
+          className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeEvalTab === 'metrics'
+              ? 'bg-white text-primary shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Heuristic Metrics
+          </div>
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeEvalTab === 'evaluations' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search evaluations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-light rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-inverse rounded-md hover:bg-primary/90 transition-colors">
+                <Plus className="w-4 h-4" />
+                Create Evaluation
+              </button>
+            </div>
+          </div>
+
+          <div className="card">
+            {loading ? (
+              <div className="p-8 text-center text-muted">Loading evaluations...</div>
+            ) : filteredEvaluations.length === 0 ? (
+              <div className="p-8 text-center">
+                <TestTube className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-primary mb-2">No evaluations found</h3>
+                <p className="text-muted mb-4">
+                  {searchTerm ? 'Try adjusting your search terms.' : 'Create your first evaluation for this project.'}
+                </p>
+                <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-inverse rounded-md hover:bg-primary/90 transition-colors">
+                  <Plus className="w-4 h-4" />
+                  Create Evaluation
+                </button>
+              </div>
+            ) : (
+              <div className="divide-y divide-light">
+                {filteredEvaluations.map((evaluation) => (
+                  <div 
+                    key={evaluation.id} 
+                    className="p-4 hover:bg-accent-alpha cursor-pointer"
+                    onClick={() => {
+                      setSelectedEvaluation(evaluation)
+                      setShowEvaluationDetailModal(true)
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <TestTube className="w-5 h-5 text-primary" />
+                          <h4 className="font-medium text-primary">{evaluation.name}</h4>
+                          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(evaluation.status || 'pending')}`}>
+                            {evaluation.status || 'pending'}
+                          </div>
+                        </div>
+                        {evaluation.description && (
+                          <p className="text-sm text-muted mb-2 line-clamp-2">{evaluation.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-sm text-muted">
+                          <span>{evaluation.result_count || 0} results</span>
+                          <span>{new Date(evaluation.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedEvaluation(evaluation)
+                            setShowEvaluationDetailModal(true)
+                          }}
+                          className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded"
+                          title="View Results"
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log('More options for:', evaluation);
+                          }}
+                          className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded"
+                          title="More Options"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeEvalTab === 'metrics' && <HeuristicMetricsSection project={project} />}
+      
+      {/* Evaluation Detail Modal */}
+      {showEvaluationDetailModal && selectedEvaluation && (
+        <EvaluationDetailModal
+          isOpen={showEvaluationDetailModal}
+          onClose={() => setShowEvaluationDetailModal(false)}
+          evaluation={selectedEvaluation}
+        />
+      )}
+    </div>
+  )
+}
+
+// Heuristic Metrics Section Component
+function HeuristicMetricsSection({ project }: { project: Project }) {
+  const [metrics, setMetrics] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [selectedMetric, setSelectedMetric] = useState<any>(null)
+  const [showMetricModal, setShowMetricModal] = useState(false)
+
+  useEffect(() => {
+    fetchMetrics()
+  }, [])
+
+  const fetchMetrics = async () => {
+    try {
+      setLoading(true)
+      // Fetch evaluations and filter for heuristic metrics
+      const response = await fetch(`/api/v1/evaluations?projectId=${project.id}`)
+      const result = await response.json()
+      
+      if (result.success) {
+        // Filter evaluations that contain heuristic metrics
+        const heuristicEvaluations = result.data.filter((evaluation: any) => {
+          try {
+            const config = typeof evaluation.configuration === 'string' 
+              ? JSON.parse(evaluation.configuration) 
+              : evaluation.configuration;
+            
+            return config?.metrics && Array.isArray(config.metrics) && 
+                   config.metrics.some((metric: string) => 
+                     ['contains', 'equals', 'regex', 'regexmatch', 'is_json', 'isjson', 'levenshtein', 'levenshteinratio', 'sentencebleu', 'corpusbleu', 'sentiment', 'rouge', 'aggregatedmetric'].includes(metric.toLowerCase())
+                   );
+          } catch {
+            return false;
+          }
+        });
+        setMetrics(heuristicEvaluations)
+      }
+    } catch (error) {
+      console.error('Error fetching metrics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredMetrics = metrics.filter(metric =>
+    metric.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    metric.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const getMetricTypeIcon = (type: string) => {
+    switch (type) {
+      case 'contains': return <Search className="w-4 h-4" />
+      case 'equals': return <CheckCircle className="w-4 h-4" />
+      case 'regex': return <Code className="w-4 h-4" />
+      case 'is_json': return <FileText className="w-4 h-4" />
+      case 'levenshtein': return <TrendingUp className="w-4 h-4" />
+      default: return <BarChart3 className="w-4 h-4" />
+    }
+  }
+
+  const getMetricTypeName = (type: string) => {
+    switch (type) {
+      case 'contains': return 'Contains Text'
+      case 'equals': return 'Exact Match'
+      case 'regex': return 'Regex Pattern'
+      case 'is_json': return 'Valid JSON'
+      case 'levenshtein': return 'Text Similarity'
+      default: return type
+    }
+  }
+
+  const getMetricTypes = (evaluation: any) => {
+    try {
+      const config = typeof evaluation.configuration === 'string' 
+        ? JSON.parse(evaluation.configuration) 
+        : evaluation.configuration;
+      
+      return config?.metrics || [];
+    } catch {
+      return [];
+    }
+  }
+
+  const handleMetricClick = (metric: any) => {
+    setSelectedMetric(metric);
+    setShowMetricModal(true);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search evaluations..."
+              placeholder="Search metrics..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 border border-light rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-inverse rounded-md hover:bg-primary/90 transition-colors">
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-inverse rounded-md hover:bg-primary/90 transition-colors"
+          >
             <Plus className="w-4 h-4" />
-            Create Evaluation
+            Create Metric
           </button>
         </div>
       </div>
 
       <div className="card">
         {loading ? (
-          <div className="p-8 text-center text-muted">Loading evaluations...</div>
-        ) : filteredEvaluations.length === 0 ? (
+          <div className="p-8 text-center text-muted">Loading metrics...</div>
+        ) : filteredMetrics.length === 0 ? (
           <div className="p-8 text-center">
-            <TestTube className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-primary mb-2">No evaluations found</h3>
+            <BarChart3 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-primary mb-2">No heuristic metrics found</h3>
             <p className="text-muted mb-4">
-              {searchTerm ? 'Try adjusting your search terms.' : 'Create your first evaluation for this project.'}
+              {searchTerm ? 'Try adjusting your search terms.' : 'Create your first heuristic metric for evaluations.'}
             </p>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-inverse rounded-md hover:bg-primary/90 transition-colors">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-inverse rounded-md hover:bg-primary/90 transition-colors"
+            >
               <Plus className="w-4 h-4" />
-              Create Evaluation
+              Create Metric
             </button>
           </div>
         ) : (
           <div className="divide-y divide-light">
-            {filteredEvaluations.map((evaluation) => (
-              <div key={evaluation.id} className="p-4 hover:bg-accent-alpha cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <TestTube className="w-5 h-5 text-primary" />
-                      <h4 className="font-medium text-primary">{evaluation.name}</h4>
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(evaluation.status)}`}>
-                        {evaluation.status}
+            {filteredMetrics.map((metric) => {
+              const metricTypes = getMetricTypes(metric);
+              const primaryType = metricTypes[0] || 'custom';
+              
+              return (
+                <div 
+                  key={metric.id} 
+                  className="p-4 hover:bg-accent-alpha cursor-pointer"
+                  onClick={() => handleMetricClick(metric)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        {getMetricTypeIcon(primaryType)}
+                        <h4 className="font-medium text-primary">{metric.name}</h4>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Heuristic Evaluation
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {metricTypes.length} Metric{metricTypes.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {metric.description && (
+                        <p className="text-sm text-muted mb-2 line-clamp-2">{metric.description}</p>
+                      )}
+                      <div className="flex items-center gap-4 text-sm text-muted">
+                        <span>Metrics: {metricTypes.map(getMetricTypeName).join(', ')}</span>
+                        <span>Created: {new Date(metric.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    {evaluation.description && (
-                      <p className="text-sm text-muted mb-2 line-clamp-2">{evaluation.description}</p>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-muted">
-                      <span>{evaluation.result_count || 0} results</span>
-                      <span>{new Date(evaluation.created_at).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMetricClick(metric);
+                        }}
+                        className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('More options for:', metric);
+                        }}
+                        className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded"
+                        title="More Options"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded">
-                      <BarChart3 className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 text-muted hover:text-primary hover:bg-accent-alpha rounded">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Create Metric Modal placeholder */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Create Heuristic Metric</h3>
+            <p className="text-muted mb-4">Metric creation form would go here...</p>
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 text-muted hover:text-primary border border-light rounded-md"
+              >
+                Cancel
+              </button>
+              <button className="px-4 py-2 bg-primary text-inverse rounded-md hover:bg-primary/90">
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Metric Details Modal */}
+      {showMetricModal && selectedMetric && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-light">
+              <div className="flex items-center gap-3">
+                {getMetricTypeIcon(getMetricTypes(selectedMetric)[0] || 'custom')}
+                <h2 className="text-xl font-semibold text-primary">{selectedMetric.name}</h2>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Heuristic Evaluation
+                </span>
+              </div>
+              <button 
+                onClick={() => setShowMetricModal(false)}
+                className="p-2 text-muted hover:text-primary hover:bg-accent-alpha rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-primary mb-2">Basic Information</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted">Name:</span>
+                        <span className="font-medium">{selectedMetric.name}</span>
+                      </div>
+                      {selectedMetric.description && (
+                        <div className="flex justify-between">
+                          <span className="text-muted">Description:</span>
+                          <span className="font-medium">{selectedMetric.description}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted">Type:</span>
+                        <span className="font-medium">{selectedMetric.type || 'Custom'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted">Created:</span>
+                        <span className="font-medium">{new Date(selectedMetric.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Metric Types */}
+                  <div>
+                    <h3 className="font-medium text-primary mb-2">Heuristic Metrics</h3>
+                    <div className="space-y-2">
+                      {getMetricTypes(selectedMetric).map((metricType, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-accent/5 rounded-lg">
+                          {getMetricTypeIcon(metricType)}
+                          <span className="font-medium">{getMetricTypeName(metricType)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Configuration */}
+                <div>
+                  <h3 className="font-medium text-primary mb-2">Configuration</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap overflow-auto">
+                      {JSON.stringify(
+                        typeof selectedMetric.configuration === 'string' 
+                          ? JSON.parse(selectedMetric.configuration) 
+                          : selectedMetric.configuration,
+                        null,
+                        2
+                      )}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-light">
+                <button
+                  onClick={() => console.log('Run evaluation:', selectedMetric)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  <Play className="w-4 h-4" />
+                  Run Evaluation
+                </button>
+                <button
+                  onClick={() => console.log('Edit metric:', selectedMetric)}
+                  className="flex items-center gap-2 px-4 py-2 border border-light rounded-md hover:bg-accent-alpha transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => setShowMetricModal(false)}
+                  className="px-4 py-2 text-muted hover:text-primary"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1441,12 +2103,56 @@ function ProjectMetrics({ project }: { project: Project }) {
           params.append('search', searchTraceId)
         }
         
-        const response = await fetch(`/api/v1/traces?${params}`)
-        const data = await response.json()
+        // Fetch cost analytics from the dedicated endpoint
+        const costParams = new URLSearchParams({
+          projectId: project.id,
+          level: 'conversation',
+          includeBreakdown: 'true'
+        })
         
-        if (data.success) {
-          setCostAnalytics(data.analytics?.costAnalytics)
-          setTracesData(data.data)
+        // Add time filtering for cost analytics
+        if (timeRange !== 'all') {
+          const now = new Date()
+          let startDate = new Date()
+          switch (timeRange) {
+            case '1h':
+              startDate.setHours(now.getHours() - 1)
+              break
+            case '24h':
+              startDate.setDate(now.getDate() - 1)
+              break
+            case '7d':
+              startDate.setDate(now.getDate() - 7)
+              break
+            case '30d':
+              startDate.setDate(now.getDate() - 30)
+              break
+          }
+          costParams.append('startDate', startDate.toISOString())
+        }
+        
+        if (selectedAgent) {
+          costParams.append('agentId', selectedAgent)
+        }
+        
+        if (selectedStatus) {
+          costParams.append('status', selectedStatus)
+        }
+
+        const costResponse = await fetch(`/api/v1/cost-analytics?${costParams}`)
+        const costData = await costResponse.json()
+        
+        // Also fetch traces for additional data
+        const tracesResponse = await fetch(`/api/v1/traces?${params}`)
+        const tracesData = await tracesResponse.json()
+        
+        if (costData.success) {
+          setCostAnalytics(costData.analytics?.summary)
+          setTracesData(costData.analytics?.data || [])
+        } else if (tracesData.success) {
+          // Fallback to traces data if cost analytics fails
+          setCostAnalytics(tracesData.analytics?.costAnalytics)
+          setTracesData(tracesData.data)
         }
       } catch (error) {
         console.error('Failed to fetch cost analytics:', error)
@@ -1527,9 +2233,13 @@ function ProjectMetrics({ project }: { project: Project }) {
               onChange={(e) => setSelectedAgent(e.target.value)}
             >
               <option value="">All agents</option>
-              <option value="enhanced_agent_prod">Enhanced Agent Prod</option>
-              <option value="test-agent-001">Test Agent 001</option>
-              <option value="sdk-agent">SDK Agent</option>
+              <option value="agent_analytics_specialist">Analytics Specialist</option>
+              <option value="agent_performance_optimizer">Performance Optimizer</option>
+              <option value="agent_customer_support">Customer Support</option>
+              <option value="agent_debug_assistant">Debug Assistant</option>
+              <option value="agent_strategic_planner">Strategic Planner</option>
+              <option value="agent_security_auditor">Security Auditor</option>
+              <option value="agent_data_scientist">Data Scientist</option>
             </select>
           </div>
 
@@ -1634,17 +2344,17 @@ function ProjectMetrics({ project }: { project: Project }) {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* Conversations Over Time */}
-        <div className="card p-6">
+        <div className="card p-6 overflow-hidden">
           <h3 className="font-semibold text-primary mb-4">Conversations Over Time</h3>
-          <div className="h-64 flex items-end justify-between gap-1 px-4">
+          <div className="h-48 flex items-end justify-between gap-1 px-2 mb-8">
             {conversationsData.slice(-14).map((point, index) => (
-              <div key={index} className="flex flex-col items-center gap-1">
+              <div key={index} className="flex flex-col items-center gap-1 relative">
                 <div 
-                  className="bg-primary/20 hover:bg-primary/30 transition-colors rounded-sm cursor-pointer min-w-[20px]"
-                  style={{ height: `${(point.value / Math.max(...conversationsData.map(d => d.value))) * 200}px` }}
+                  className="bg-primary/20 hover:bg-primary/30 transition-colors rounded-sm cursor-pointer min-w-[16px] w-4"
+                  style={{ height: `${Math.max(8, (point.value / Math.max(...conversationsData.map(d => d.value))) * 160)}px` }}
                   title={`${point.date}: ${Math.round(point.value)} conversations`}
                 />
-                <span className="text-xs text-muted transform -rotate-45 origin-center mt-2">
+                <span className="text-[10px] text-muted absolute top-full mt-1 whitespace-nowrap">
                   {point.date.split('-')[2]}
                 </span>
               </div>
@@ -1653,38 +2363,36 @@ function ProjectMetrics({ project }: { project: Project }) {
         </div>
 
         {/* Success Rate Trend */}
-        <div className="card p-6">
+        <div className="card p-6 overflow-hidden">
           <h3 className="font-semibold text-primary mb-4">Success Rate Trend</h3>
-          <div className="h-64 relative">
-            <div className="absolute inset-0 flex items-end justify-between">
-              {successRateData.slice(-14).map((point, index) => (
-                <div key={index} className="flex flex-col items-center gap-1">
-                  <div 
-                    className="bg-success/20 hover:bg-success/30 transition-colors rounded-sm cursor-pointer min-w-[20px]"
-                    style={{ height: `${(point.value / 100) * 200}px` }}
-                    title={`${point.date}: ${point.value.toFixed(1)}% success rate`}
-                  />
-                  <span className="text-xs text-muted transform -rotate-45 origin-center mt-2">
-                    {point.date.split('-')[2]}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className="h-48 flex items-end justify-between gap-1 px-2 mb-8">
+            {successRateData.slice(-14).map((point, index) => (
+              <div key={index} className="flex flex-col items-center gap-1 relative">
+                <div 
+                  className="bg-success/20 hover:bg-success/30 transition-colors rounded-sm cursor-pointer min-w-[16px] w-4"
+                  style={{ height: `${Math.max(8, (point.value / 100) * 160)}px` }}
+                  title={`${point.date}: ${point.value.toFixed(1)}% success rate`}
+                />
+                <span className="text-[10px] text-muted absolute top-full mt-1 whitespace-nowrap">
+                  {point.date.split('-')[2]}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Cost Trend */}
-        <div className="card p-6">
+        <div className="card p-6 overflow-hidden">
           <h3 className="font-semibold text-primary mb-4">Cost Trend (USD)</h3>
-          <div className="h-64 flex items-end justify-between gap-1 px-4">
+          <div className="h-48 flex items-end justify-between gap-1 px-2 mb-8">
             {costTrendData.slice(-14).map((point, index) => (
-              <div key={index} className="flex flex-col items-center gap-1">
+              <div key={index} className="flex flex-col items-center gap-1 relative">
                 <div 
-                  className="bg-green-500/20 hover:bg-green-500/30 transition-colors rounded-sm cursor-pointer min-w-[20px]"
-                  style={{ height: `${Math.max(10, (point.value / Math.max(...costTrendData.map(d => d.value), 0.001)) * 200)}px` }}
+                  className="bg-green-500/20 hover:bg-green-500/30 transition-colors rounded-sm cursor-pointer min-w-[16px] w-4"
+                  style={{ height: `${Math.max(8, (point.value / Math.max(...costTrendData.map(d => d.value), 0.001)) * 160)}px` }}
                   title={`${point.date}: $${point.value.toFixed(6)} cost`}
                 />
-                <span className="text-xs text-muted transform -rotate-45 origin-center mt-2">
+                <span className="text-[10px] text-muted absolute top-full mt-1 whitespace-nowrap">
                   {point.date.split('-')[2]}
                 </span>
               </div>
@@ -1693,17 +2401,17 @@ function ProjectMetrics({ project }: { project: Project }) {
         </div>
 
         {/* Token Usage Trend */}
-        <div className="card p-6">
+        <div className="card p-6 overflow-hidden">
           <h3 className="font-semibold text-primary mb-4">Token Usage Trend</h3>
-          <div className="h-64 flex items-end justify-between gap-1 px-4">
+          <div className="h-48 flex items-end justify-between gap-1 px-2 mb-8">
             {tokenUsageData.slice(-14).map((point, index) => (
-              <div key={index} className="flex flex-col items-center gap-1">
+              <div key={index} className="flex flex-col items-center gap-1 relative">
                 <div 
-                  className="bg-blue-500/20 hover:bg-blue-500/30 transition-colors rounded-sm cursor-pointer min-w-[20px]"
-                  style={{ height: `${Math.max(10, (point.value / Math.max(...tokenUsageData.map(d => d.value), 1)) * 200)}px` }}
+                  className="bg-blue-500/20 hover:bg-blue-500/30 transition-colors rounded-sm cursor-pointer min-w-[16px] w-4"
+                  style={{ height: `${Math.max(8, (point.value / Math.max(...tokenUsageData.map(d => d.value), 1)) * 160)}px` }}
                   title={`${point.date}: ${Math.round(point.value)} tokens`}
                 />
-                <span className="text-xs text-muted transform -rotate-45 origin-center mt-2">
+                <span className="text-[10px] text-muted absolute top-full mt-1 whitespace-nowrap">
                   {point.date.split('-')[2]}
                 </span>
               </div>
@@ -3202,112 +3910,14 @@ function ProjectTraces({ project }: { project: Project }) {
                 </>
               )}
 
-              {/* Timeline Tab - Gantt-style view */}
+              {/* Timeline Tab - Distributed Spans View */}
               {activeTab === 'timeline' && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-4">Trace Timeline</h4>
-                  
-                  {/* Timeline Header */}
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="border-b border-gray-200 bg-gray-50 px-4 py-2">
-                      <div className="flex items-center justify-between text-xs font-medium text-gray-600">
-                        <span>Execution Flow</span>
-                        <span>Duration: {formatDuration(selectedTrace.duration)}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Timeline Content */}
-                    <div className="p-4">
-                      {/* Main Trace Bar */}
-                      <div className="mb-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-4 h-4 rounded bg-blue-500"></div>
-                          <span className="text-sm font-medium text-gray-900">{selectedTrace.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(selectedTrace.startTime).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        
-                        {/* Gantt Bar */}
-                        <div className="relative ml-7">
-                          <div className="h-6 bg-gray-100 rounded relative">
-                            <div 
-                              className={`h-full rounded ${
-                                selectedTrace.status === 'success' ? 'bg-green-500' :
-                                selectedTrace.status === 'error' ? 'bg-red-500' :
-                                selectedTrace.status === 'running' ? 'bg-blue-500' :
-                                'bg-yellow-500'
-                              }`}
-                              style={{ 
-                                width: selectedTrace.duration ? '100%' : '60%',
-                                animation: selectedTrace.status === 'running' ? 'pulse 2s infinite' : 'none'
-                              }}
-                            >
-                              <div className="absolute inset-0 flex items-center px-2">
-                                <span className="text-xs text-white font-medium">
-                                  {selectedTrace.status === 'running' ? 'Running...' : formatDuration(selectedTrace.duration)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Timeline markers */}
-                          <div className="flex justify-between text-xs text-gray-400 mt-1">
-                            <span>0ms</span>
-                            <span>{formatDuration(selectedTrace.duration)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Simulated Sub-steps based on trace type */}
-                      {selectedTrace.name?.includes('rag') && (
-                        <div className="space-y-3 ml-4 border-l-2 border-gray-200 pl-4">
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-3 h-3 rounded bg-purple-500"></div>
-                            <span className="font-medium">Vector Retrieval</span>
-                            <span className="text-xs text-gray-500">~15ms</span>
-                            <div className="h-2 bg-purple-500 rounded" style={{width: '20px'}}></div>
-                          </div>
-                          
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-3 h-3 rounded bg-orange-500"></div>
-                            <span className="font-medium">Context Processing</span>
-                            <span className="text-xs text-gray-500">~8ms</span>
-                            <div className="h-2 bg-orange-500 rounded" style={{width: '12px'}}></div>
-                          </div>
-                          
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-3 h-3 rounded bg-green-500"></div>
-                            <span className="font-medium">LLM Generation</span>
-                            <span className="text-xs text-gray-500">~120ms</span>
-                            <div className="h-2 bg-green-500 rounded" style={{width: '80px'}}></div>
-                          </div>
-                          
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-3 h-3 rounded bg-blue-500"></div>
-                            <span className="font-medium">Response Validation</span>
-                            <span className="text-xs text-gray-500">~5ms</span>
-                            <div className="h-2 bg-blue-500 rounded" style={{width: '8px'}}></div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Basic step for non-RAG traces */}
-                      {!selectedTrace.name?.includes('rag') && (
-                        <div className="space-y-3 ml-4 border-l-2 border-gray-200 pl-4">
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-3 h-3 rounded bg-green-500"></div>
-                            <span className="font-medium">Processing</span>
-                            <span className="text-xs text-gray-500">{formatDuration(selectedTrace.duration)}</span>
-                            <div 
-                              className="h-2 bg-green-500 rounded" 
-                              style={{width: `${Math.min(100, (selectedTrace.duration || 50) / 2)}px`}}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <SpanTimeline 
+                    traceId={selectedTrace.id} 
+                    spans={selectedTrace.spans}
+                    className="mt-4"
+                  />
                 </div>
               )}
 
@@ -3605,6 +4215,172 @@ function ProjectSettings({ project, onUpdate }: { project: Project; onUpdate: (p
           </div>
           <button className="btn btn-error">
             Delete Project
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Evaluation Detail Modal Component
+interface EvaluationDetailModalProps {
+  isOpen: boolean
+  onClose: () => void
+  evaluation: any
+}
+
+function EvaluationDetailModal({ isOpen, onClose, evaluation }: EvaluationDetailModalProps) {
+  if (!isOpen) return null
+
+  const results = evaluation.results ? JSON.parse(evaluation.results) : null
+  const config = evaluation.configuration ? JSON.parse(evaluation.configuration) : null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-background rounded-lg border shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b">
+          <div>
+            <h2 className="text-xl font-semibold text-primary">{evaluation.name}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                evaluation.status === 'completed' ? 'bg-success/10 text-success' :
+                evaluation.status === 'running' ? 'bg-warning/10 text-warning' :
+                'bg-muted/20 text-muted'
+              }`}>
+                {evaluation.status || 'pending'}
+              </span>
+              <span className="text-sm text-muted">
+                {new Date(evaluation.created_at).toLocaleString()}
+              </span>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-accent-alpha rounded-lg"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Evaluation Configuration */}
+          <div>
+            <h3 className="text-lg font-medium text-primary mb-3">Configuration</h3>
+            <div className="bg-accent-alpha p-4 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Type:</span>
+                  <span className="ml-2 text-muted">{evaluation.type || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="font-medium">Project:</span>
+                  <span className="ml-2 text-muted">{evaluation.project_name || 'N/A'}</span>
+                </div>
+                {config?.metrics && (
+                  <div className="col-span-2">
+                    <span className="font-medium">Metrics:</span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {config.metrics.map((metric: string, index: number) => (
+                        <span key={index} className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
+                          {metric}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Evaluation Results */}
+          {results ? (
+            <div>
+              <h3 className="text-lg font-medium text-primary mb-3">Results</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="bg-accent-alpha p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
+                    {results.items_evaluated || 0}
+                  </div>
+                  <div className="text-sm text-muted">Items Evaluated</div>
+                </div>
+                <div className="bg-accent-alpha p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-success">
+                    {results.average_score ? `${(results.average_score * 100).toFixed(1)}%` : 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted">Average Score</div>
+                </div>
+                <div className="bg-accent-alpha p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
+                    {results.pass_rate ? `${(results.pass_rate * 100).toFixed(1)}%` : 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted">Pass Rate</div>
+                </div>
+              </div>
+
+              {results.metric_summaries && (
+                <div>
+                  <h4 className="font-medium text-primary mb-3">Metric Performance</h4>
+                  <div className="space-y-3">
+                    {Object.entries(results.metric_summaries).map(([metric, summary]: [string, any]) => (
+                      <div key={metric} className="bg-accent-alpha p-3 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-primary">{metric}</span>
+                          <span className="text-sm text-muted">
+                            {summary.passedExecutions || 0}/{summary.totalExecutions || 0} passed
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted">Average Score:</span>
+                            <span className="ml-2 font-medium">
+                              {summary.averageScore ? `${(summary.averageScore * 100).toFixed(1)}%` : 'N/A'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted">Pass Rate:</span>
+                            <span className="ml-2 font-medium">
+                              {summary.passRate ? `${(summary.passRate * 100).toFixed(1)}%` : 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <h3 className="text-lg font-medium text-primary mb-3">Results</h3>
+              <div className="bg-accent-alpha p-8 rounded-lg text-center">
+                <TestTube className="w-12 h-12 text-muted mx-auto mb-3" />
+                <p className="text-muted">
+                  {evaluation.status === 'pending' 
+                    ? 'This evaluation has not been executed yet.'
+                    : 'No results available for this evaluation.'
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Raw Configuration (for debugging) */}
+          {config && (
+            <details className="bg-accent-alpha p-4 rounded-lg">
+              <summary className="font-medium text-primary cursor-pointer">Raw Configuration</summary>
+              <pre className="mt-3 text-xs text-muted overflow-x-auto">
+                {JSON.stringify(config, null, 2)}
+              </pre>
+            </details>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 p-6 border-t">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-muted hover:text-primary hover:bg-accent-alpha rounded-md transition-colors"
+          >
+            Close
           </button>
         </div>
       </div>

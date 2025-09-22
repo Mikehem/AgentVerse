@@ -10,9 +10,12 @@ import {
   AlertCircle,
   ExternalLink,
   Hash,
-  User
+  User,
+  Database,
+  Plus
 } from 'lucide-react'
 import { ConversationTableRow, ConversationStatus } from '@/types/agent-lens'
+import { safeFormatDateTime } from '@/lib/dateUtils'
 import { cn, formatNumber } from '@/lib/utils'
 import { ConversationFeedback } from './ConversationFeedback'
 
@@ -20,9 +23,59 @@ interface ConversationTableProps {
   conversations: ConversationTableRow[]
   loading: boolean
   onConversationSelect?: (conversation: ConversationTableRow) => void
+  projectId?: string
+  projectName?: string
+  selectedConversations?: Set<string>
+  onConversationSelectionChange?: (selectedIds: Set<string>) => void
+  onAddToDataset?: (conversations: ConversationTableRow[]) => void
 }
 
-export function ConversationTable({ conversations, loading, onConversationSelect }: ConversationTableProps) {
+export function ConversationTable({ 
+  conversations, 
+  loading, 
+  onConversationSelect,
+  projectId,
+  projectName,
+  selectedConversations = new Set(),
+  onConversationSelectionChange,
+  onAddToDataset
+}: ConversationTableProps) {
+  const handleSelectAll = (checked: boolean) => {
+    if (!onConversationSelectionChange) return
+    
+    if (checked) {
+      const allIds = new Set(conversations.map(conv => conv.id))
+      onConversationSelectionChange(allIds)
+    } else {
+      onConversationSelectionChange(new Set())
+    }
+  }
+
+  const handleSelectConversation = (conversationId: string, checked: boolean) => {
+    if (!onConversationSelectionChange) return
+    
+    const newSelection = new Set(selectedConversations)
+    if (checked) {
+      newSelection.add(conversationId)
+    } else {
+      newSelection.delete(conversationId)
+    }
+    onConversationSelectionChange(newSelection)
+  }
+
+  const handleAddToDataset = () => {
+    if (!onAddToDataset || selectedConversations.size === 0) return
+    
+    const selectedConversationData = conversations.filter(conv => 
+      selectedConversations.has(conv.id)
+    )
+    onAddToDataset(selectedConversationData)
+  }
+
+  const isAllSelected = conversations.length > 0 && selectedConversations.size === conversations.length
+  const isPartiallySelected = selectedConversations.size > 0 && selectedConversations.size < conversations.length
+  const showSelectionControls = onConversationSelectionChange && onAddToDataset
+
   const getStatusIcon = (status: ConversationStatus) => {
     switch (status) {
       case ConversationStatus.SUCCESS:
@@ -89,9 +142,50 @@ export function ConversationTable({ conversations, loading, onConversationSelect
 
   return (
     <div className="overflow-x-auto">
+      {/* Bulk Actions Bar */}
+      {showSelectionControls && selectedConversations.size > 0 && (
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-primary">
+                {selectedConversations.size} conversation{selectedConversations.size !== 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAddToDataset}
+                className="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add to Dataset
+              </button>
+              <button
+                onClick={() => onConversationSelectionChange?.(new Set())}
+                className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm"
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <table className="w-full">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
+            {showSelectionControls && (
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(input) => {
+                    if (input) input.indeterminate = isPartiallySelected
+                  }}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+              </th>
+            )}
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Conversation
             </th>
@@ -127,6 +221,18 @@ export function ConversationTable({ conversations, loading, onConversationSelect
         <tbody className="bg-white divide-y divide-gray-200">
           {conversations.map((conversation) => (
             <tr key={conversation.id} className="hover:bg-gray-50 transition-colors">
+              {/* Selection Column */}
+              {showSelectionControls && (
+                <td className="px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedConversations.has(conversation.id)}
+                    onChange={(e) => handleSelectConversation(conversation.id, e.target.checked)}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  />
+                </td>
+              )}
+              
               {/* Conversation Column */}
               <td className="px-4 py-4 max-w-md">
                 <div className="space-y-1">
@@ -229,7 +335,7 @@ export function ConversationTable({ conversations, loading, onConversationSelect
               {/* Time Column */}
               <td className="px-4 py-4">
                 <div className="text-sm text-gray-900">
-                  {formatTimestamp(conversation.created_at)}
+                  {safeFormatDateTime(conversation.created_at)}
                 </div>
               </td>
 
@@ -265,6 +371,15 @@ export function ConversationTable({ conversations, loading, onConversationSelect
                   >
                     <ExternalLink className="w-4 h-4" />
                   </button>
+                  {onAddToDataset && (
+                    <button 
+                      onClick={() => onAddToDataset([conversation])}
+                      className="p-1 text-gray-400 hover:text-primary transition-colors"
+                      title="Add to Dataset"
+                    >
+                      <Database className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

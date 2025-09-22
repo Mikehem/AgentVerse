@@ -19,6 +19,7 @@ import { ConversationMetrics, ConversationTableRow, ConversationFilter, Conversa
 import { cn, formatNumber } from '@/lib/utils'
 import { ConversationFilters } from './ConversationFilters'
 import { ConversationTable } from './ConversationTable'
+import { DatasetSelectionModal } from '../datasets/DatasetSelectionModal'
 
 interface ConversationsDashboardProps {
   metrics: ConversationMetrics
@@ -30,6 +31,8 @@ interface ConversationsDashboardProps {
   onExport: () => void
   onConversationSelect?: (conversation: ConversationTableRow) => void
   projectAgents?: { id: string; name: string }[]
+  projectId?: string
+  projectName?: string
 }
 
 export function ConversationsDashboard({
@@ -41,9 +44,31 @@ export function ConversationsDashboard({
   onRefresh,
   onExport,
   onConversationSelect,
-  projectAgents
+  projectAgents,
+  projectId,
+  projectName
 }: ConversationsDashboardProps) {
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedConversations, setSelectedConversations] = useState<Set<string>>(new Set())
+  const [showDatasetModal, setShowDatasetModal] = useState(false)
+  const [conversationsToAdd, setConversationsToAdd] = useState<ConversationTableRow[]>([])
+
+  const handleAddToDataset = (conversations: ConversationTableRow[]) => {
+    if (!projectId || !projectName) return
+    
+    setConversationsToAdd(conversations)
+    setShowDatasetModal(true)
+  }
+
+  const handleDatasetSuccess = (datasetId: string, addedCount: number) => {
+    // Clear selection after successful addition
+    setSelectedConversations(new Set())
+    setShowDatasetModal(false)
+    setConversationsToAdd([])
+    
+    // Show success message or trigger refresh
+    onRefresh()
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,6 +189,11 @@ export function ConversationsDashboard({
             conversations={conversations}
             loading={loading}
             onConversationSelect={onConversationSelect}
+            projectId={projectId}
+            projectName={projectName}
+            selectedConversations={selectedConversations}
+            onConversationSelectionChange={setSelectedConversations}
+            onAddToDataset={handleAddToDataset}
           />
           
           {/* Load More */}
@@ -174,6 +204,18 @@ export function ConversationsDashboard({
           </div>
         </div>
       </div>
+
+      {/* Dataset Selection Modal */}
+      {projectId && projectName && (
+        <DatasetSelectionModal
+          isOpen={showDatasetModal}
+          onClose={() => setShowDatasetModal(false)}
+          projectId={projectId}
+          projectName={projectName}
+          conversations={conversationsToAdd}
+          onSuccess={handleDatasetSuccess}
+        />
+      )}
     </div>
   )
 }

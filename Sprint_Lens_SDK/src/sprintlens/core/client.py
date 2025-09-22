@@ -355,7 +355,7 @@ class SprintLensClient:
     async def close(self) -> None:
         """Close the client and clean up resources."""
         if self._http_client:
-            await self._http_client.aclose()
+            await self._http_client.close()
             self._http_client = None
         
         if hasattr(self, '_raw_client') and self._raw_client:
@@ -532,7 +532,7 @@ class SprintLensClient:
                 "Trace sent to backend successfully",
                 extra={
                     "trace_id": trace_data.get("id"),
-                    "response_status": response.status_code
+                    "response_data": "success"
                 }
             )
             

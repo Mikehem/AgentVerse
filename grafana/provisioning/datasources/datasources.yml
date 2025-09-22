@@ -1,0 +1,40 @@
+apiVersion: 1
+
+datasources:
+  # PostgreSQL for operational data
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: sprintlens
+    user: sprintlens
+    secureJsonData:
+      password: sprintlens_password
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
+    isDefault: false
+
+  # ClickHouse for analytics
+  - name: ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    database: sprintlens_analytics
+    user: sprintlens_analytics
+    secureJsonData:
+      password: analytics_password
+    jsonData:
+      defaultDatabase: sprintlens_analytics
+      timeout: 30
+    isDefault: true
+
+  # MinIO metrics (if monitoring enabled)
+  - name: MinIO
+    type: prometheus
+    access: proxy
+    url: http://minio:9000/minio/v2/metrics/cluster
+    isDefault: false
+    jsonData:
+      httpMethod: GET

@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3'
 import { Department, BusinessPriority, Project, Agent } from './types'
 import path from 'path'
+import { generateSpanId, generateTraceId, generateConversationId, generateMetricId, generateRunId, generateProjectId, generateDepartmentId, generatePriorityId, generateDistributedTraceId, generateDistributedSpanId, generateA2AId } from './idGenerator'
 
 // Database file path
 const dbPath = path.join(process.cwd(), 'data', 'sprintlens.db')
@@ -65,12 +66,16 @@ const migrateTables = () => {
       db.exec('ALTER TABLE conversations ADD COLUMN annotations TEXT') // JSON object with key-value pairs
     }
 
-    // Check if project_id column exists in experiments table
-    const experimentColumns = db.prepare("PRAGMA table_info(experiments)").all() as any[]
-    const hasProjectIdInExperiments = experimentColumns.some(col => col.name === 'project_id')
-    if (!hasProjectIdInExperiments) {
-      console.log('📝 Adding project_id column to experiments table...')
-      db.exec('ALTER TABLE experiments ADD COLUMN project_id TEXT')
+    // Check if experiments table exists before migrating
+    const experimentsTableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='experiments'").get()
+    if (experimentsTableExists) {
+      // Check if project_id column exists in experiments table
+      const experimentColumns = db.prepare("PRAGMA table_info(experiments)").all() as any[]
+      const hasProjectIdInExperiments = experimentColumns.some(col => col.name === 'project_id')
+      if (!hasProjectIdInExperiments) {
+        console.log('📝 Adding project_id column to experiments table...')
+        db.exec('ALTER TABLE experiments ADD COLUMN project_id TEXT')
+      }
     }
     
     // Check if runId column exists in traces table
@@ -134,19 +139,35 @@ const migrateTables = () => {
       db.exec(`CREATE INDEX IF NOT EXISTS idx_spans_start_time ON spans(start_time)`)
     }
 
-    // Enhanced cost tracking fields for spans
+    // Enhanced cost tracking fields for spans - check each column individually
     const spanColumns = db.prepare("PRAGMA table_info(spans)").all() as any[]
-    const hasCostFieldsInSpans = spanColumns.some(col => col.name === 'total_cost')
-    if (!hasCostFieldsInSpans) {
+    
+    if (!spanColumns.some(col => col.name === 'total_cost')) {
       console.log('📝 Adding enhanced cost tracking fields to spans table...')
       db.exec('ALTER TABLE spans ADD COLUMN total_cost REAL DEFAULT 0')
+    }
+    if (!spanColumns.some(col => col.name === 'input_cost')) {
       db.exec('ALTER TABLE spans ADD COLUMN input_cost REAL DEFAULT 0')
+    }
+    if (!spanColumns.some(col => col.name === 'output_cost')) {
       db.exec('ALTER TABLE spans ADD COLUMN output_cost REAL DEFAULT 0')
+    }
+    if (!spanColumns.some(col => col.name === 'prompt_tokens')) {
       db.exec('ALTER TABLE spans ADD COLUMN prompt_tokens INTEGER DEFAULT 0')
+    }
+    if (!spanColumns.some(col => col.name === 'completion_tokens')) {
       db.exec('ALTER TABLE spans ADD COLUMN completion_tokens INTEGER DEFAULT 0')
+    }
+    if (!spanColumns.some(col => col.name === 'total_tokens')) {
       db.exec('ALTER TABLE spans ADD COLUMN total_tokens INTEGER DEFAULT 0')
+    }
+    if (!spanColumns.some(col => col.name === 'provider')) {
       db.exec('ALTER TABLE spans ADD COLUMN provider TEXT')
+    }
+    if (!spanColumns.some(col => col.name === 'model_name')) {
       db.exec('ALTER TABLE spans ADD COLUMN model_name TEXT')
+    }
+    if (!spanColumns.some(col => col.name === 'cost_calculation_metadata')) {
       db.exec('ALTER TABLE spans ADD COLUMN cost_calculation_metadata TEXT') // JSON with detailed cost breakdown
     }
 
@@ -246,6 +267,86 @@ const migrateTables = () => {
       `)
     }
 
+    // Check if heuristic_metrics table exists
+    const heuristicMetricTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='heuristic_metrics'").all()
+    if (heuristicMetricTables.length === 0) {
+      console.log('📝 Creating heuristic_metrics table...')
+      db.exec(`
+        CREATE TABLE heuristic_metrics (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          description TEXT,
+          type TEXT NOT NULL, -- 'contains', 'equals', 'regex', 'is_json', 'levenshtein'
+          config TEXT NOT NULL, -- JSON object with metric-specific parameters
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      
+      // Create indexes for heuristic_metrics
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_heuristic_metrics_type ON heuristic_metrics(type)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_heuristic_metrics_is_active ON heuristic_metrics(is_active)`)
+    }
+
+    // Check if evaluation_runs table exists
+    const evaluationRunTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='evaluation_runs'").all()
+    if (evaluationRunTables.length === 0) {
+      console.log('📝 Creating evaluation_runs table...')
+      db.exec(`
+        CREATE TABLE evaluation_runs (
+          id TEXT PRIMARY KEY,
+          evaluation_id TEXT NOT NULL,
+          dataset_id TEXT,
+          status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'running', 'completed', 'failed'
+          total_items INTEGER DEFAULT 0,
+          processed_items INTEGER DEFAULT 0,
+          start_time TEXT,
+          end_time TEXT,
+          duration INTEGER, -- milliseconds
+          metrics_config TEXT, -- JSON array of heuristic metric configs
+          summary_stats TEXT, -- JSON object with aggregate results
+          error_message TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+          FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE SET NULL
+        )
+      `)
+      
+      // Create indexes for evaluation_runs
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_evaluation_runs_evaluation_id ON evaluation_runs(evaluation_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_evaluation_runs_status ON evaluation_runs(status)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_evaluation_runs_created_at ON evaluation_runs(created_at)`)
+    }
+
+    // Check if metric_results table exists
+    const metricResultTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='metric_results'").all()
+    if (metricResultTables.length === 0) {
+      console.log('📝 Creating metric_results table...')
+      db.exec(`
+        CREATE TABLE metric_results (
+          id TEXT PRIMARY KEY,
+          evaluation_run_id TEXT NOT NULL,
+          dataset_item_id TEXT,
+          metric_id TEXT NOT NULL,
+          score REAL NOT NULL,
+          passed INTEGER NOT NULL, -- boolean: 1 for pass, 0 for fail
+          details TEXT, -- JSON object with detailed results
+          execution_time INTEGER, -- milliseconds
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (evaluation_run_id) REFERENCES evaluation_runs(id) ON DELETE CASCADE,
+          FOREIGN KEY (dataset_item_id) REFERENCES dataset_items(id) ON DELETE CASCADE,
+          FOREIGN KEY (metric_id) REFERENCES heuristic_metrics(id) ON DELETE CASCADE
+        )
+      `)
+      
+      // Create indexes for metric_results
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_metric_results_evaluation_run_id ON metric_results(evaluation_run_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_metric_results_metric_id ON metric_results(metric_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_metric_results_passed ON metric_results(passed)`)
+    }
+
     // Check if attachments table exists (for media logging with MinIO support)
     const attachmentTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='attachments'").all()
     if (attachmentTables.length === 0) {
@@ -307,6 +408,27 @@ const migrateTables = () => {
         )
       `)
     }
+
+    // Check if variable_definitions column exists in prompt_versions table
+    const promptVersionsColumns = db.prepare("PRAGMA table_info(prompt_versions)").all() as any[]
+    const hasVariableDefinitions = promptVersionsColumns.some(col => col.name === 'variable_definitions')
+    const hasStatus = promptVersionsColumns.some(col => col.name === 'status')
+    const hasComments = promptVersionsColumns.some(col => col.name === 'comments')
+    
+    if (!hasVariableDefinitions) {
+      console.log('📝 Adding variable_definitions column to prompt_versions table...')
+      db.exec('ALTER TABLE prompt_versions ADD COLUMN variable_definitions TEXT') // JSON array of VariableDefinition objects
+    }
+    
+    if (!hasStatus) {
+      console.log('📝 Adding status column to prompt_versions table...')
+      db.exec('ALTER TABLE prompt_versions ADD COLUMN status TEXT DEFAULT "draft"') // draft, current, deactivated
+    }
+    
+    if (!hasComments) {
+      console.log('📝 Adding comments column to prompt_versions table...')
+      db.exec('ALTER TABLE prompt_versions ADD COLUMN comments TEXT') // Comments/notes for this version
+    }
     
     console.log('✅ Database migration completed')
   } catch (error) {
@@ -367,9 +489,9 @@ const initTables = () => {
       conversations INTEGER NOT NULL DEFAULT 0,
       success_rate REAL NOT NULL DEFAULT 0.0,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY (department) REFERENCES departments(code),
-      FOREIGN KEY (priority) REFERENCES business_priorities(id)
+      updated_at TEXT NOT NULL
+      -- FOREIGN KEY (department) REFERENCES departments(code),
+      -- FOREIGN KEY (priority) REFERENCES business_priorities(id)
     )
   `)
 
@@ -377,29 +499,29 @@ const initTables = () => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS agents (
       id TEXT PRIMARY KEY,
-      projectId TEXT NOT NULL,
+      project_id TEXT NOT NULL,
       name TEXT NOT NULL,
       description TEXT NOT NULL,
       type TEXT NOT NULL,
       role TEXT NOT NULL,
       capabilities TEXT NOT NULL DEFAULT '[]',
-      systemPrompt TEXT,
+      system_prompt TEXT,
       model TEXT NOT NULL,
       temperature REAL NOT NULL DEFAULT 0.7,
-      maxTokens INTEGER NOT NULL DEFAULT 2000,
+      max_tokens INTEGER NOT NULL DEFAULT 2000,
       status TEXT NOT NULL DEFAULT 'active',
-      isActive INTEGER NOT NULL DEFAULT 1,
+      is_active INTEGER NOT NULL DEFAULT 1,
       version TEXT NOT NULL DEFAULT '1.0.0',
       conversations INTEGER NOT NULL DEFAULT 0,
-      successRate REAL NOT NULL DEFAULT 0.0,
-      avgResponseTime INTEGER NOT NULL DEFAULT 0,
-      lastActiveAt TEXT,
+      success_rate REAL NOT NULL DEFAULT 0.0,
+      avg_response_time INTEGER NOT NULL DEFAULT 0,
+      last_active_at TEXT,
       config TEXT NOT NULL,
       tags TEXT NOT NULL DEFAULT '[]',
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL,
-      createdBy TEXT NOT NULL DEFAULT 'system',
-      FOREIGN KEY (projectId) REFERENCES projects(id) ON DELETE CASCADE
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      created_by TEXT NOT NULL DEFAULT 'system'
+      -- FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
     )
   `)
 
@@ -481,29 +603,282 @@ const initTables = () => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS traces (
       id TEXT PRIMARY KEY,
-      projectId TEXT NOT NULL,
-      agentId TEXT NOT NULL,
-      runId TEXT, -- Links to runs table for session grouping
-      conversationId TEXT, -- Link to conversation if applicable
-      parentTraceId TEXT, -- For nested/child traces
-      traceType TEXT NOT NULL, -- 'conversation', 'task', 'function_call', 'api_request'
-      operationName TEXT NOT NULL,
-      startTime TEXT NOT NULL,
-      endTime TEXT,
+      project_id TEXT NOT NULL,
+      agent_id TEXT,
+      run_id TEXT, -- Links to runs table for session grouping
+      conversation_id TEXT, -- Link to conversation if applicable
+      parent_trace_id TEXT, -- For nested/child traces
+      trace_type TEXT, -- 'conversation', 'task', 'function_call', 'api_request'
+      operation_name TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT,
       duration INTEGER, -- milliseconds
       status TEXT NOT NULL DEFAULT 'running', -- 'running', 'success', 'error', 'timeout'
-      errorMessage TEXT,
-      inputData TEXT, -- JSON object
-      outputData TEXT, -- JSON object
+      error_message TEXT,
+      input_data TEXT, -- JSON object
+      output_data TEXT, -- JSON object
       spans TEXT, -- JSON array of spans for detailed tracing
       metadata TEXT, -- JSON object for additional context
-      createdAt TEXT NOT NULL,
-      FOREIGN KEY (projectId) REFERENCES projects(id) ON DELETE CASCADE,
-      FOREIGN KEY (agentId) REFERENCES agents(id) ON DELETE CASCADE,
-      FOREIGN KEY (runId) REFERENCES runs(id) ON DELETE SET NULL,
-      FOREIGN KEY (conversationId) REFERENCES conversations(id) ON DELETE SET NULL
+      tags TEXT, -- JSON array for tags
+      created_at TEXT NOT NULL,
+      -- Enhanced cost tracking columns
+      total_cost REAL DEFAULT 0,
+      input_cost REAL DEFAULT 0,
+      output_cost REAL DEFAULT 0,
+      prompt_tokens INTEGER DEFAULT 0,
+      completion_tokens INTEGER DEFAULT 0,
+      total_tokens INTEGER DEFAULT 0,
+      provider TEXT,
+      model_name TEXT,
+      cost_calculation_metadata TEXT
     )
   `)
+
+  // Distributed Traces table - for distributed tracing across multiple agents/services
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS distributed_traces (
+      id TEXT PRIMARY KEY,
+      root_span_id TEXT NOT NULL,
+      service_name TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT,
+      duration INTEGER, -- milliseconds
+      status TEXT NOT NULL DEFAULT 'running', -- 'running', 'success', 'error', 'timeout'
+      agent_count INTEGER DEFAULT 0,
+      service_count INTEGER DEFAULT 0,
+      container_count INTEGER DEFAULT 0,
+      total_cost REAL DEFAULT 0,
+      total_tokens INTEGER DEFAULT 0,
+      total_requests INTEGER DEFAULT 0,
+      error_count INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL,
+      metadata TEXT -- JSON object for additional trace-level data
+    )
+  `)
+
+  // Distributed Spans table - for individual spans in distributed traces
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS distributed_spans (
+      id TEXT PRIMARY KEY,
+      trace_id TEXT NOT NULL,
+      parent_span_id TEXT,
+      operation_name TEXT NOT NULL,
+      service_name TEXT NOT NULL,
+      service_version TEXT,
+      start_time TEXT NOT NULL,
+      end_time TEXT,
+      duration INTEGER, -- milliseconds
+      status TEXT NOT NULL DEFAULT 'running', -- 'running', 'success', 'error', 'timeout'
+      tags TEXT, -- JSON object
+      logs TEXT, -- JSON array of log entries
+      
+      -- Agent-specific fields
+      agent_id TEXT,
+      agent_type TEXT,
+      agent_version TEXT,
+      
+      -- Container/deployment info
+      container_id TEXT,
+      container_name TEXT,
+      hostname TEXT,
+      pod_name TEXT,
+      namespace TEXT,
+      
+      -- A2A communication
+      source_agent_id TEXT,
+      target_agent_id TEXT,
+      communication_type TEXT, -- 'http', 'grpc', 'message_queue', 'websocket', 'direct'
+      
+      -- Cost tracking
+      total_cost REAL DEFAULT 0,
+      input_cost REAL DEFAULT 0,
+      output_cost REAL DEFAULT 0,
+      prompt_tokens INTEGER DEFAULT 0,
+      completion_tokens INTEGER DEFAULT 0,
+      total_tokens INTEGER DEFAULT 0,
+      provider TEXT,
+      model_name TEXT,
+      
+      created_at TEXT NOT NULL,
+      
+      FOREIGN KEY (trace_id) REFERENCES distributed_traces(id) ON DELETE CASCADE
+    )
+  `)
+
+  // A2A Communications table - for tracking agent-to-agent communications
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS a2a_communications (
+      id TEXT PRIMARY KEY,
+      trace_id TEXT NOT NULL,
+      source_span_id TEXT NOT NULL,
+      target_span_id TEXT NOT NULL,
+      source_agent_id TEXT NOT NULL,
+      target_agent_id TEXT NOT NULL,
+      communication_type TEXT NOT NULL, -- 'http', 'grpc', 'message_queue', 'websocket', 'direct'
+      protocol TEXT,
+      endpoint TEXT,
+      method TEXT,
+      payload TEXT, -- JSON
+      response TEXT, -- JSON
+      start_time TEXT NOT NULL,
+      end_time TEXT,
+      duration INTEGER, -- milliseconds
+      status TEXT NOT NULL DEFAULT 'running', -- 'running', 'success', 'error', 'timeout'
+      error_message TEXT,
+      
+      -- Network info
+      source_host TEXT,
+      target_host TEXT,
+      source_port INTEGER,
+      target_port INTEGER,
+      
+      created_at TEXT NOT NULL,
+      
+      FOREIGN KEY (trace_id) REFERENCES distributed_traces(id) ON DELETE CASCADE,
+      FOREIGN KEY (source_span_id) REFERENCES distributed_spans(id) ON DELETE CASCADE,
+      FOREIGN KEY (target_span_id) REFERENCES distributed_spans(id) ON DELETE CASCADE
+    )
+  `)
+
+  // Create indexes for better query performance
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_distributed_spans_trace_id ON distributed_spans(trace_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_distributed_spans_parent_span_id ON distributed_spans(parent_span_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_distributed_spans_agent_id ON distributed_spans(agent_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_distributed_spans_start_time ON distributed_spans(start_time)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_distributed_spans_communication_type ON distributed_spans(communication_type)`)
+  
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_a2a_communications_trace_id ON a2a_communications(trace_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_a2a_communications_source_agent ON a2a_communications(source_agent_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_a2a_communications_target_agent ON a2a_communications(target_agent_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_a2a_communications_start_time ON a2a_communications(start_time)`)
+
+  // Prompt Management and Provider Tables
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS llm_providers (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      description TEXT,
+      config TEXT NOT NULL,
+      credentials TEXT NOT NULL,
+      status TEXT DEFAULT 'active',
+      health_status TEXT DEFAULT 'unknown',
+      last_health_check TEXT,
+      usage_limits TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_by TEXT,
+      updated_by TEXT
+    )
+  `)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prompts (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      template TEXT NOT NULL,
+      variables TEXT,
+      metadata TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_by TEXT,
+      updated_by TEXT,
+      is_archived INTEGER DEFAULT 0,
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+    )
+  `)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prompt_versions (
+      id TEXT PRIMARY KEY,
+      prompt_id TEXT NOT NULL,
+      version TEXT NOT NULL,
+      template TEXT NOT NULL,
+      variables TEXT,
+      changelog TEXT,
+      is_active INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_by TEXT,
+      FOREIGN KEY (prompt_id) REFERENCES prompts(id) ON DELETE CASCADE,
+      UNIQUE(prompt_id, version)
+    )
+  `)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prompt_tests (
+      id TEXT PRIMARY KEY,
+      prompt_version_id TEXT NOT NULL,
+      provider_id TEXT NOT NULL,
+      model_name TEXT NOT NULL,
+      test_inputs TEXT NOT NULL,
+      expected_output TEXT,
+      actual_output TEXT,
+      execution_time_ms INTEGER,
+      token_usage TEXT,
+      cost REAL,
+      status TEXT,
+      error_message TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_by TEXT,
+      FOREIGN KEY (prompt_version_id) REFERENCES prompt_versions(id) ON DELETE CASCADE,
+      FOREIGN KEY (provider_id) REFERENCES llm_providers(id)
+    )
+  `)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_prompt_links (
+      id TEXT PRIMARY KEY,
+      agent_id TEXT NOT NULL,
+      prompt_version_id TEXT NOT NULL,
+      link_type TEXT DEFAULT 'primary',
+      is_active INTEGER DEFAULT 1,
+      linked_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      linked_by TEXT,
+      FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE,
+      FOREIGN KEY (prompt_version_id) REFERENCES prompt_versions(id) ON DELETE CASCADE,
+      UNIQUE(agent_id, prompt_version_id, link_type)
+    )
+  `)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prompt_analytics (
+      id TEXT PRIMARY KEY,
+      prompt_version_id TEXT NOT NULL,
+      conversation_id TEXT,
+      trace_id TEXT,
+      agent_id TEXT,
+      provider_id TEXT,
+      model_name TEXT,
+      input_variables TEXT,
+      output TEXT,
+      token_usage TEXT,
+      cost REAL,
+      execution_time_ms INTEGER,
+      feedback_score REAL,
+      user_rating INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (prompt_version_id) REFERENCES prompt_versions(id),
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+      FOREIGN KEY (trace_id) REFERENCES traces(id),
+      FOREIGN KEY (agent_id) REFERENCES agents(id),
+      FOREIGN KEY (provider_id) REFERENCES llm_providers(id)
+    )
+  `)
+
+  // Create indexes for prompt management tables
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prompts_project_id ON prompts(project_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prompts_created_at ON prompts(created_at)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prompt_versions_prompt_id ON prompt_versions(prompt_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prompt_versions_is_active ON prompt_versions(is_active)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prompt_tests_prompt_version_id ON prompt_tests(prompt_version_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_prompt_links_agent_id ON agent_prompt_links(agent_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_prompt_links_is_active ON agent_prompt_links(is_active)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prompt_analytics_prompt_version_id ON prompt_analytics(prompt_version_id)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prompt_analytics_created_at ON prompt_analytics(created_at)`)
+
 
   // Spans table is created in migration if it doesn't exist
 }
@@ -668,6 +1043,97 @@ const seedData = () => {
     }
 
     console.log('✅ Seeded business priorities data')
+  }
+
+  // Seed default heuristic metrics if empty
+  const metricCount = db.prepare('SELECT COUNT(*) as count FROM heuristic_metrics').get() as { count: number }
+  if (metricCount.count === 0) {
+    const insertMetric = db.prepare(`
+      INSERT INTO heuristic_metrics (id, name, description, type, config, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+
+    const defaultMetrics = [
+      {
+        id: 'metric_contains_001',
+        name: 'Contains Text',
+        description: 'Checks if the output contains specific text or phrases',
+        type: 'contains',
+        config: JSON.stringify({
+          case_sensitive: false,
+          match_type: 'any' // 'any', 'all'
+        }),
+        is_active: 1,
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: 'metric_equals_001',
+        name: 'Exact Match',
+        description: 'Checks if the output exactly matches expected text',
+        type: 'equals',
+        config: JSON.stringify({
+          case_sensitive: false,
+          trim_whitespace: true
+        }),
+        is_active: 1,
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: 'metric_regex_001',
+        name: 'Regex Pattern',
+        description: 'Checks if the output matches a regular expression pattern',
+        type: 'regex',
+        config: JSON.stringify({
+          flags: 'i' // case insensitive by default
+        }),
+        is_active: 1,
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: 'metric_json_001',
+        name: 'Valid JSON',
+        description: 'Checks if the output is valid JSON format',
+        type: 'is_json',
+        config: JSON.stringify({
+          strict: true,
+          allow_empty: false
+        }),
+        is_active: 1,
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: 'metric_levenshtein_001',
+        name: 'Text Similarity',
+        description: 'Measures text similarity using Levenshtein distance',
+        type: 'levenshtein',
+        config: JSON.stringify({
+          threshold: 0.8, // similarity threshold (0-1)
+          normalize: true
+        }),
+        is_active: 1,
+        created_at: now,
+        updated_at: now
+      }
+    ]
+
+    for (const metric of defaultMetrics) {
+      insertMetric.run(
+        metric.id,
+        metric.name,
+        metric.description,
+        metric.type,
+        metric.config,
+        metric.is_active,
+        metric.created_at,
+        metric.updated_at
+      )
+    }
+
+    console.log('✅ Seeded default heuristic metrics')
   }
 }
 
@@ -982,11 +1448,11 @@ export const projectDb = {
     
     if (stats.agents !== undefined) { updates.push('agents = ?'); values.push(stats.agents) }
     if (stats.conversations !== undefined) { updates.push('conversations = ?'); values.push(stats.conversations) }
-    if (stats.successRate !== undefined) { updates.push('successRate = ?'); values.push(stats.successRate) }
+    if (stats.successRate !== undefined) { updates.push('success_rate = ?'); values.push(stats.successRate) }
     
     if (updates.length === 0) return projectDb.getById(id)
     
-    updates.push('updatedAt = ?')
+    updates.push('updated_at = ?')
     values.push(new Date().toISOString(), id)
     
     const stmt = db.prepare(`UPDATE projects SET ${updates.join(', ')} WHERE id = ?`)
@@ -1087,9 +1553,9 @@ export const agentDb = {
     
     const stmt = db.prepare(`
       INSERT INTO agents (
-        id, projectId, name, description, type, role, capabilities, systemPrompt,
-        model, temperature, maxTokens, status, isActive, version, conversations,
-        successRate, avgResponseTime, lastActiveAt, config, tags, createdAt, updatedAt, createdBy
+        id, project_id, name, description, type, role, capabilities, system_prompt,
+        model, temperature, max_tokens, status, is_active, version, conversations,
+        success_rate, avg_response_time, last_active_at, config, tags, created_at, updated_at, created_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     
@@ -1364,9 +1830,9 @@ export const conversationDb = {
     
     const stmt = db.prepare(`
       INSERT INTO conversations (
-        id, project_id, agent_id, agent_name, input, output, status,
+        id, project_id, agent_id, input, output, status,
         response_time, token_usage, cost, metadata, runId, feedback, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     
     // Get agent name if agentId is available, always ensure we have a non-null agent_name
@@ -1389,7 +1855,6 @@ export const conversationDb = {
       id,                                                                                                   // id
       projectId,                                                                                            // projectId
       agentId,                                                                                              // agentId
-      agentName,                                                                                            // agentName
       data.input || '',                                                                                     // input
       data.output || '',                                                                                    // output
       data.status || 'success',                                                                             // status
@@ -1397,7 +1862,7 @@ export const conversationDb = {
       data.tokenUsage || data.token_usage || 0,                                                            // tokenUsage
       data.cost || 0.0,                                                                                     // cost
       typeof data.metadata === 'string' ? data.metadata : JSON.stringify(data.metadata || {}),           // metadata
-      data.runId || null,                                                                                   // runId
+      data.runId || data.run_id || null,                                                                   // runId
       data.feedback || null,                                                                                // feedback
       data.createdAt || data.created_at || now                                                             // createdAt
     )
@@ -1507,7 +1972,7 @@ export const tracesDb = {
       const stmt = db.prepare(query)
       return stmt.all(...params)
     }
-    const stmt = db.prepare('SELECT * FROM traces ORDER BY startTime DESC')
+    const stmt = db.prepare('SELECT * FROM traces ORDER BY start_time DESC')
     return stmt.all()
   },
 
@@ -1533,14 +1998,17 @@ export const tracesDb = {
     
     const stmt = db.prepare(`
       INSERT INTO traces (
-        id, project_id, conversation_id, name, start_time, end_time, duration, 
-        status, metadata, tags, runId, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, project_id, agent_id, conversation_id, operation_name, start_time, end_time, duration, 
+        status, metadata, tags, run_id, created_at,
+        total_cost, input_cost, output_cost, prompt_tokens, completion_tokens, total_tokens,
+        provider, model_name, cost_calculation_metadata
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     
     stmt.run(
       id, 
       projectId, 
+      data.agent_id || data.agentId || null,
       data.conversationId || data.conversation_id || null, 
       data.name || data.operationName || 'operation',
       data.startTime || data.start_time || now, 
@@ -1549,8 +2017,18 @@ export const tracesDb = {
       data.status || 'running', 
       typeof data.metadata === 'string' ? data.metadata : JSON.stringify(data.metadata || {}),
       typeof data.tags === 'string' ? data.tags : JSON.stringify(data.tags || []),
-      data.runId || null,
-      data.createdAt || data.created_at || now
+      data.runId || data.run_id || null,
+      data.createdAt || data.created_at || now,
+      // Cost tracking fields
+      data.total_cost || 0,
+      data.input_cost || 0,
+      data.output_cost || 0,
+      data.prompt_tokens || 0,
+      data.completion_tokens || 0,
+      data.total_tokens || 0,
+      data.provider || null,
+      data.model_name || null,
+      data.cost_calculation_metadata || null
     )
     
     return tracesDb.getById(id)
@@ -1633,7 +2111,7 @@ export const spansDb = {
     const result = stmt.run(
       data.trace_id,                                                                            // trace_id
       data.parent_span_id || null,                                                             // parent_span_id  
-      data.span_id || `span_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,     // span_id
+      data.span_id || generateSpanId(),                                                        // span_id
       data.span_name || data.name,                                                             // span_name
       data.span_type || data.type || 'custom',                                                 // span_type
       data.start_time || now,                                                                  // start_time
@@ -1927,9 +2405,1057 @@ const feedbackDefinitionsDb = {
   }
 }
 
+// Database operations for Distributed Traces
+const distributedTracesDb = {
+  // Get all distributed traces
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    }
+    const stmt = db.prepare('SELECT * FROM distributed_traces ORDER BY start_time DESC')
+    return stmt.all()
+  },
+
+  // Get distributed trace by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM distributed_traces WHERE id = ?')
+    return stmt.get(id) as any
+  },
+
+  // Create distributed trace
+  create: (data: any): any => {
+    const id = data.id || `dtrace_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO distributed_traces (
+        id, root_span_id, service_name, start_time, end_time, duration, status,
+        agent_count, service_count, container_count, total_cost, total_tokens,
+        total_requests, error_count, created_at, metadata
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id,
+      data.root_span_id || data.rootSpanId,
+      data.service_name || data.serviceName,
+      data.start_time || data.startTime || now,
+      data.end_time || data.endTime || null,
+      data.duration || null,
+      data.status || 'running',
+      data.agent_count || data.agentCount || 0,
+      data.service_count || data.serviceCount || 0,
+      data.container_count || data.containerCount || 0,
+      data.total_cost || data.totalCost || 0,
+      data.total_tokens || data.totalTokens || 0,
+      data.total_requests || data.totalRequests || 0,
+      data.error_count || data.errorCount || 0,
+      data.created_at || data.createdAt || now,
+      typeof data.metadata === 'string' ? data.metadata : JSON.stringify(data.metadata || {})
+    )
+    
+    return distributedTracesDb.getById(id)
+  },
+
+  // Update distributed trace
+  update: (id: string, data: any): any | null => {
+    const updates: string[] = []
+    const values: any[] = []
+    
+    if (data.end_time !== undefined) { updates.push('end_time = ?'); values.push(data.end_time || data.endTime) }
+    if (data.duration !== undefined) { updates.push('duration = ?'); values.push(data.duration) }
+    if (data.status !== undefined) { updates.push('status = ?'); values.push(data.status) }
+    if (data.agent_count !== undefined) { updates.push('agent_count = ?'); values.push(data.agent_count || data.agentCount) }
+    if (data.service_count !== undefined) { updates.push('service_count = ?'); values.push(data.service_count || data.serviceCount) }
+    if (data.container_count !== undefined) { updates.push('container_count = ?'); values.push(data.container_count || data.containerCount) }
+    if (data.total_cost !== undefined) { updates.push('total_cost = ?'); values.push(data.total_cost || data.totalCost) }
+    if (data.total_tokens !== undefined) { updates.push('total_tokens = ?'); values.push(data.total_tokens || data.totalTokens) }
+    if (data.total_requests !== undefined) { updates.push('total_requests = ?'); values.push(data.total_requests || data.totalRequests) }
+    if (data.error_count !== undefined) { updates.push('error_count = ?'); values.push(data.error_count || data.errorCount) }
+    if (data.metadata !== undefined) { updates.push('metadata = ?'); values.push(typeof data.metadata === 'string' ? data.metadata : JSON.stringify(data.metadata)) }
+    
+    if (updates.length === 0) return distributedTracesDb.getById(id)
+    
+    values.push(id)
+    const stmt = db.prepare(`UPDATE distributed_traces SET ${updates.join(', ')} WHERE id = ?`)
+    const result = stmt.run(...values)
+    
+    if (result.changes === 0) return null
+    return distributedTracesDb.getById(id)
+  },
+
+  // Delete distributed trace
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM distributed_traces WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for Distributed Spans
+const distributedSpansDb = {
+  // Get all distributed spans
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    }
+    const stmt = db.prepare('SELECT * FROM distributed_spans ORDER BY start_time ASC')
+    return stmt.all()
+  },
+
+  // Get distributed span by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM distributed_spans WHERE id = ?')
+    return stmt.get(id) as any
+  },
+
+  // Get spans by trace ID
+  getByTraceId: (traceId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM distributed_spans WHERE trace_id = ? ORDER BY start_time ASC')
+    return stmt.all(traceId)
+  },
+
+  // Create distributed span
+  create: (data: any): any => {
+    const id = data.id || `dspan_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO distributed_spans (
+        id, trace_id, parent_span_id, operation_name, service_name, service_version,
+        start_time, end_time, duration, status, tags, logs,
+        agent_id, agent_type, agent_version,
+        container_id, container_name, hostname, pod_name, namespace,
+        source_agent_id, target_agent_id, communication_type,
+        total_cost, input_cost, output_cost, prompt_tokens, completion_tokens, total_tokens,
+        provider, model_name, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id,
+      data.trace_id || data.traceId,
+      data.parent_span_id || data.parentSpanId || null,
+      data.operation_name || data.operationName,
+      data.service_name || data.serviceName,
+      data.service_version || data.serviceVersion || null,
+      data.start_time || data.startTime || now,
+      data.end_time || data.endTime || null,
+      data.duration || null,
+      data.status || 'running',
+      typeof data.tags === 'string' ? data.tags : JSON.stringify(data.tags || {}),
+      typeof data.logs === 'string' ? data.logs : JSON.stringify(data.logs || []),
+      data.agent_id || data.agentId || null,
+      data.agent_type || data.agentType || null,
+      data.agent_version || data.agentVersion || null,
+      data.container_id || data.containerId || null,
+      data.container_name || data.containerName || null,
+      data.hostname || null,
+      data.pod_name || data.podName || null,
+      data.namespace || null,
+      data.source_agent_id || data.sourceAgentId || null,
+      data.target_agent_id || data.targetAgentId || null,
+      data.communication_type || data.communicationType || 'direct',
+      data.total_cost || data.totalCost || 0,
+      data.input_cost || data.inputCost || 0,
+      data.output_cost || data.outputCost || 0,
+      data.prompt_tokens || data.promptTokens || 0,
+      data.completion_tokens || data.completionTokens || 0,
+      data.total_tokens || data.totalTokens || 0,
+      data.provider || null,
+      data.model_name || data.modelName || null,
+      data.created_at || data.createdAt || now
+    )
+    
+    return distributedSpansDb.getById(id)
+  },
+
+  // Update distributed span
+  update: (id: string, data: any): any | null => {
+    const updates: string[] = []
+    const values: any[] = []
+    
+    if (data.end_time !== undefined) { updates.push('end_time = ?'); values.push(data.end_time || data.endTime) }
+    if (data.duration !== undefined) { updates.push('duration = ?'); values.push(data.duration) }
+    if (data.status !== undefined) { updates.push('status = ?'); values.push(data.status) }
+    if (data.tags !== undefined) { updates.push('tags = ?'); values.push(typeof data.tags === 'string' ? data.tags : JSON.stringify(data.tags)) }
+    if (data.logs !== undefined) { updates.push('logs = ?'); values.push(typeof data.logs === 'string' ? data.logs : JSON.stringify(data.logs)) }
+    if (data.total_cost !== undefined) { updates.push('total_cost = ?'); values.push(data.total_cost || data.totalCost) }
+    if (data.input_cost !== undefined) { updates.push('input_cost = ?'); values.push(data.input_cost || data.inputCost) }
+    if (data.output_cost !== undefined) { updates.push('output_cost = ?'); values.push(data.output_cost || data.outputCost) }
+    if (data.prompt_tokens !== undefined) { updates.push('prompt_tokens = ?'); values.push(data.prompt_tokens || data.promptTokens) }
+    if (data.completion_tokens !== undefined) { updates.push('completion_tokens = ?'); values.push(data.completion_tokens || data.completionTokens) }
+    if (data.total_tokens !== undefined) { updates.push('total_tokens = ?'); values.push(data.total_tokens || data.totalTokens) }
+    if (data.provider !== undefined) { updates.push('provider = ?'); values.push(data.provider) }
+    if (data.model_name !== undefined) { updates.push('model_name = ?'); values.push(data.model_name || data.modelName) }
+    
+    if (updates.length === 0) return distributedSpansDb.getById(id)
+    
+    values.push(id)
+    const stmt = db.prepare(`UPDATE distributed_spans SET ${updates.join(', ')} WHERE id = ?`)
+    const result = stmt.run(...values)
+    
+    if (result.changes === 0) return null
+    return distributedSpansDb.getById(id)
+  },
+
+  // Delete distributed span
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM distributed_spans WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for A2A Communications
+const a2aCommunicationsDb = {
+  // Get all A2A communications
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    }
+    const stmt = db.prepare('SELECT * FROM a2a_communications ORDER BY start_time DESC')
+    return stmt.all()
+  },
+
+  // Get A2A communication by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM a2a_communications WHERE id = ?')
+    return stmt.get(id) as any
+  },
+
+  // Get A2A communications by trace ID
+  getByTraceId: (traceId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM a2a_communications WHERE trace_id = ? ORDER BY start_time ASC')
+    return stmt.all(traceId)
+  },
+
+  // Create A2A communication
+  create: (data: any): any => {
+    const id = data.id || `a2a_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO a2a_communications (
+        id, trace_id, source_span_id, target_span_id, source_agent_id, target_agent_id,
+        communication_type, protocol, endpoint, method, payload, response,
+        start_time, end_time, duration, status, error_message,
+        source_host, target_host, source_port, target_port, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id,
+      data.trace_id || data.traceId,
+      data.source_span_id || data.sourceSpanId,
+      data.target_span_id || data.targetSpanId,
+      data.source_agent_id || data.sourceAgentId,
+      data.target_agent_id || data.targetAgentId,
+      data.communication_type || data.communicationType,
+      data.protocol || null,
+      data.endpoint || null,
+      data.method || null,
+      typeof data.payload === 'string' ? data.payload : JSON.stringify(data.payload || {}),
+      typeof data.response === 'string' ? data.response : JSON.stringify(data.response || {}),
+      data.start_time || data.startTime || now,
+      data.end_time || data.endTime || null,
+      data.duration || null,
+      data.status || 'running',
+      data.error_message || data.errorMessage || null,
+      data.source_host || data.sourceHost || null,
+      data.target_host || data.targetHost || null,
+      data.source_port || data.sourcePort || null,
+      data.target_port || data.targetPort || null,
+      data.created_at || data.createdAt || now
+    )
+    
+    return a2aCommunicationsDb.getById(id)
+  },
+
+  // Update A2A communication
+  update: (id: string, data: any): any | null => {
+    const updates: string[] = []
+    const values: any[] = []
+    
+    if (data.end_time !== undefined) { updates.push('end_time = ?'); values.push(data.end_time || data.endTime) }
+    if (data.duration !== undefined) { updates.push('duration = ?'); values.push(data.duration) }
+    if (data.status !== undefined) { updates.push('status = ?'); values.push(data.status) }
+    if (data.error_message !== undefined) { updates.push('error_message = ?'); values.push(data.error_message || data.errorMessage) }
+    if (data.response !== undefined) { updates.push('response = ?'); values.push(typeof data.response === 'string' ? data.response : JSON.stringify(data.response)) }
+    
+    if (updates.length === 0) return a2aCommunicationsDb.getById(id)
+    
+    values.push(id)
+    const stmt = db.prepare(`UPDATE a2a_communications SET ${updates.join(', ')} WHERE id = ?`)
+    const result = stmt.run(...values)
+    
+    if (result.changes === 0) return null
+    return a2aCommunicationsDb.getById(id)
+  },
+
+  // Delete A2A communication
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM a2a_communications WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for LLM Providers
+const llmProvidersDb = {
+  // Get all providers
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    } else {
+      const stmt = db.prepare('SELECT * FROM llm_providers ORDER BY created_at DESC')
+      return stmt.all()
+    }
+  },
+
+  // Get provider by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM llm_providers WHERE id = ?')
+    return stmt.get(id) || null
+  },
+
+  // Create new provider
+  create: (data: any): any => {
+    const id = data.id || generateSpanId()
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO llm_providers (
+        id, name, type, display_name, description, config, credentials, 
+        status, health_status, usage_limits, created_at, updated_at, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id, data.name, data.type, data.display_name, data.description,
+      JSON.stringify(data.config), JSON.stringify(data.credentials),
+      data.status || 'active', data.health_status || 'unknown',
+      JSON.stringify(data.usage_limits || {}), now, now, data.created_by, data.updated_by
+    )
+    
+    return llmProvidersDb.getById(id)
+  },
+
+  // Update provider
+  update: (id: string, data: any): any | null => {
+    const updates: string[] = []
+    const values: any[] = []
+    
+    if (data.name !== undefined) { updates.push('name = ?'); values.push(data.name) }
+    if (data.display_name !== undefined) { updates.push('display_name = ?'); values.push(data.display_name) }
+    if (data.description !== undefined) { updates.push('description = ?'); values.push(data.description) }
+    if (data.config !== undefined) { updates.push('config = ?'); values.push(JSON.stringify(data.config)) }
+    if (data.credentials !== undefined) { updates.push('credentials = ?'); values.push(JSON.stringify(data.credentials)) }
+    if (data.status !== undefined) { updates.push('status = ?'); values.push(data.status) }
+    if (data.health_status !== undefined) { updates.push('health_status = ?'); values.push(data.health_status) }
+    if (data.usage_limits !== undefined) { updates.push('usage_limits = ?'); values.push(JSON.stringify(data.usage_limits)) }
+    if (data.updated_by !== undefined) { updates.push('updated_by = ?'); values.push(data.updated_by) }
+    
+    updates.push('updated_at = ?')
+    values.push(new Date().toISOString())
+    
+    if (updates.length === 1) return llmProvidersDb.getById(id) // Only updated_at was added
+    
+    values.push(id)
+    const stmt = db.prepare(`UPDATE llm_providers SET ${updates.join(', ')} WHERE id = ?`)
+    const result = stmt.run(...values)
+    
+    if (result.changes === 0) return null
+    return llmProvidersDb.getById(id)
+  },
+
+  // Delete provider
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM llm_providers WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for Prompts
+const promptsDb = {
+  // Get all prompts
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    } else {
+      const stmt = db.prepare('SELECT * FROM prompts ORDER BY created_at DESC')
+      return stmt.all()
+    }
+  },
+
+  // Get prompt by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM prompts WHERE id = ?')
+    return stmt.get(id) || null
+  },
+
+  // Create new prompt
+  create: (data: any): any => {
+    const id = data.id || generateSpanId()
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO prompts (
+        id, name, description, project_id, template, variables, metadata, created_at, updated_at, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id, data.name, data.description, data.project_id,
+      data.template || '',
+      JSON.stringify(data.variables || {}),
+      JSON.stringify(data.metadata || {}),
+      now, now, data.created_by, data.updated_by
+    )
+    
+    return promptsDb.getById(id)
+  },
+
+  // Update prompt
+  update: (id: string, data: any): any | null => {
+    const updates: string[] = []
+    const values: any[] = []
+    
+    if (data.name !== undefined) { updates.push('name = ?'); values.push(data.name) }
+    if (data.description !== undefined) { updates.push('description = ?'); values.push(data.description) }
+    if (data.template !== undefined) { updates.push('template = ?'); values.push(data.template) }
+    if (data.variables !== undefined) { updates.push('variables = ?'); values.push(JSON.stringify(data.variables)) }
+    if (data.metadata !== undefined) { updates.push('metadata = ?'); values.push(JSON.stringify(data.metadata)) }
+    if (data.updated_by !== undefined) { updates.push('updated_by = ?'); values.push(data.updated_by) }
+    
+    updates.push('updated_at = ?')
+    values.push(new Date().toISOString())
+    
+    if (updates.length === 1) return promptsDb.getById(id) // Only updated_at was added
+    
+    values.push(id)
+    const stmt = db.prepare(`UPDATE prompts SET ${updates.join(', ')} WHERE id = ?`)
+    const result = stmt.run(...values)
+    
+    if (result.changes === 0) return null
+    return promptsDb.getById(id)
+  },
+
+  // Delete prompt
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM prompts WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for Prompt Versions
+const promptVersionsDb = {
+  // Get all versions
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    } else {
+      const stmt = db.prepare('SELECT * FROM prompt_versions ORDER BY created_at DESC')
+      return stmt.all()
+    }
+  },
+
+  // Get version by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM prompt_versions WHERE id = ?')
+    return stmt.get(id) || null
+  },
+
+  // Get versions by prompt ID
+  getByPromptId: (promptId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM prompt_versions WHERE prompt_id = ? ORDER BY version DESC')
+    return stmt.all(promptId)
+  },
+
+  // Get active version for prompt
+  getActiveVersion: (promptId: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM prompt_versions WHERE prompt_id = ? AND is_active = 1')
+    return stmt.get(promptId) || null
+  },
+
+  // Create new version
+  create: (data: any): any => {
+    // Validate version uniqueness
+    if (promptVersionsDb.versionExists(data.prompt_id, data.version)) {
+      throw new Error(`Version ${data.version} already exists for this prompt`)
+    }
+    
+    const id = data.id || generateSpanId()
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO prompt_versions (
+        id, prompt_id, version, template, variables, is_active, changelog, 
+        variable_definitions, status, comments, created_at, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id, data.prompt_id, data.version, data.template,
+      JSON.stringify(data.variables || {}), data.is_active ? 1 : 0,
+      data.changelog,
+      JSON.stringify(data.variable_definitions || []),
+      data.status || 'draft',
+      data.comments || '',
+      now, data.created_by
+    )
+    
+    return promptVersionsDb.getById(id)
+  },
+
+  // Activate version (deactivates others)
+  activate: (id: string): any | null => {
+    const version = promptVersionsDb.getById(id)
+    if (!version) return null
+    
+    // Deactivate all versions for this prompt
+    const deactivateStmt = db.prepare('UPDATE prompt_versions SET is_active = 0 WHERE prompt_id = ?')
+    deactivateStmt.run(version.prompt_id)
+    
+    // Activate this version
+    const activateStmt = db.prepare('UPDATE prompt_versions SET is_active = 1, updated_at = ? WHERE id = ?')
+    activateStmt.run(new Date().toISOString(), id)
+    
+    return promptVersionsDb.getById(id)
+  },
+
+  // Delete version
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM prompt_versions WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  },
+
+  // Get current version for a prompt
+  getCurrentVersion: (promptId: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM prompt_versions WHERE prompt_id = ? AND status = "current" ORDER BY created_at DESC LIMIT 1')
+    return stmt.get(promptId) || null
+  },
+
+  // Set version as current (and deactivate previous current)
+  setAsCurrent: (id: string): any | null => {
+    const version = promptVersionsDb.getById(id)
+    if (!version) return null
+
+    // Start transaction
+    db.exec('BEGIN TRANSACTION')
+    
+    try {
+      // Deactivate all current versions for this prompt
+      const deactivateStmt = db.prepare('UPDATE prompt_versions SET status = "deactivated" WHERE prompt_id = ? AND status = "current"')
+      deactivateStmt.run(version.prompt_id)
+      
+      // Set this version as current and active
+      const setCurrentStmt = db.prepare('UPDATE prompt_versions SET status = "current", is_active = 1 WHERE id = ?')
+      setCurrentStmt.run(id)
+      
+      db.exec('COMMIT')
+      return promptVersionsDb.getById(id)
+    } catch (error) {
+      db.exec('ROLLBACK')
+      throw error
+    }
+  },
+
+  // Update version
+  update: (id: string, data: any): any | null => {
+    const fields = []
+    const values = []
+    
+    if (data.version !== undefined) {
+      fields.push('version = ?')
+      values.push(data.version)
+    }
+    if (data.template !== undefined) {
+      fields.push('template = ?')
+      values.push(data.template)
+    }
+    if (data.variables !== undefined) {
+      fields.push('variables = ?')
+      values.push(JSON.stringify(data.variables))
+    }
+    if (data.variable_definitions !== undefined) {
+      fields.push('variable_definitions = ?')
+      values.push(JSON.stringify(data.variable_definitions))
+    }
+    if (data.changelog !== undefined) {
+      fields.push('changelog = ?')
+      values.push(data.changelog)
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?')
+      values.push(data.status)
+    }
+    if (data.comments !== undefined) {
+      fields.push('comments = ?')
+      values.push(data.comments)
+    }
+    
+    if (fields.length === 0) return promptVersionsDb.getById(id)
+    
+    fields.push('updated_at = ?')
+    values.push(new Date().toISOString())
+    values.push(id)
+    
+    const stmt = db.prepare(`UPDATE prompt_versions SET ${fields.join(', ')} WHERE id = ?`)
+    stmt.run(...values)
+    
+    return promptVersionsDb.getById(id)
+  },
+
+  // Check if version already exists for a prompt
+  versionExists: (promptId: string, version: string): boolean => {
+    const stmt = db.prepare('SELECT COUNT(*) as count FROM prompt_versions WHERE prompt_id = ? AND version = ?')
+    const result = stmt.get(promptId, version) as { count: number }
+    return result.count > 0
+  },
+
+  // Generate next version number based on change type
+  generateNextVersion: (promptId: string, changeType: 'major' | 'minor' | 'patch'): string => {
+    const versions = promptVersionsDb.getByPromptId(promptId)
+    
+    if (versions.length === 0) {
+      return '1.0.0'
+    }
+    
+    // Find the highest version number
+    let highestVersion = { major: 0, minor: 0, patch: 0 }
+    
+    versions.forEach(version => {
+      const versionParts = version.version.split('.').map(Number)
+      const [major, minor, patch] = versionParts
+      
+      if (major > highestVersion.major || 
+          (major === highestVersion.major && minor > highestVersion.minor) ||
+          (major === highestVersion.major && minor === highestVersion.minor && patch > highestVersion.patch)) {
+        highestVersion = { major, minor, patch }
+      }
+    })
+    
+    // Increment based on change type and ensure uniqueness
+    let newVersion: string
+    switch (changeType) {
+      case 'major':
+        newVersion = `${highestVersion.major + 1}.0.0`
+        break
+      case 'minor':
+        newVersion = `${highestVersion.major}.${highestVersion.minor + 1}.0`
+        break
+      case 'patch':
+      default:
+        newVersion = `${highestVersion.major}.${highestVersion.minor}.${highestVersion.patch + 1}`
+        break
+    }
+    
+    // Double-check uniqueness (should not happen with proper sequencing, but safety check)
+    while (promptVersionsDb.versionExists(promptId, newVersion)) {
+      const parts = newVersion.split('.').map(Number)
+      newVersion = `${parts[0]}.${parts[1]}.${parts[2] + 1}`
+    }
+    
+    return newVersion
+  },
+
+  // Get suggested version increments
+  getSuggestedVersions: (promptId: string): { major: string, minor: string, patch: string } => {
+    return {
+      major: promptVersionsDb.generateNextVersion(promptId, 'major'),
+      minor: promptVersionsDb.generateNextVersion(promptId, 'minor'),
+      patch: promptVersionsDb.generateNextVersion(promptId, 'patch')
+    }
+  }
+}
+
+// Database operations for Agent-Prompt Links
+const agentPromptLinksDb = {
+  // Get all links
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    } else {
+      const stmt = db.prepare('SELECT * FROM agent_prompt_links ORDER BY linked_at DESC')
+      return stmt.all()
+    }
+  },
+
+  // Get link by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM agent_prompt_links WHERE id = ?')
+    return stmt.get(id) || null
+  },
+
+  // Get links by agent ID
+  getByAgentId: (agentId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM agent_prompt_links WHERE agent_id = ? ORDER BY linked_at DESC')
+    return stmt.all(agentId)
+  },
+
+  // Get active link for agent
+  getActiveLink: (agentId: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM agent_prompt_links WHERE agent_id = ? AND is_active = 1')
+    return stmt.get(agentId) || null
+  },
+
+  // Create new link
+  create: (data: any): any => {
+    const id = data.id || generateSpanId()
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO agent_prompt_links (
+        id, agent_id, prompt_version_id, is_active, linked_at, linked_by
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id, data.agent_id, data.prompt_version_id, 
+      data.is_active ? 1 : 0, now, data.linked_by
+    )
+    
+    return agentPromptLinksDb.getById(id)
+  },
+
+  // Activate link (deactivates others for same agent)
+  activate: (id: string): any | null => {
+    const link = agentPromptLinksDb.getById(id)
+    if (!link) return null
+    
+    // Deactivate all links for this agent
+    const deactivateStmt = db.prepare('UPDATE agent_prompt_links SET is_active = 0 WHERE agent_id = ?')
+    deactivateStmt.run(link.agent_id)
+    
+    // Activate this link
+    const activateStmt = db.prepare('UPDATE agent_prompt_links SET is_active = 1 WHERE id = ?')
+    activateStmt.run(id)
+    
+    return agentPromptLinksDb.getById(id)
+  },
+
+  // Delete link
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM agent_prompt_links WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for Heuristic Metrics
+export const heuristicMetricsDb = {
+  // Get all metrics
+  getAll: () => {
+    const stmt = db.prepare('SELECT * FROM heuristic_metrics ORDER BY created_at DESC')
+    return stmt.all()
+  },
+
+  // Get active metrics only
+  getActive: () => {
+    const stmt = db.prepare('SELECT * FROM heuristic_metrics WHERE is_active = 1 ORDER BY name')
+    return stmt.all()
+  },
+
+  // Get by ID
+  getById: (id: string) => {
+    const stmt = db.prepare('SELECT * FROM heuristic_metrics WHERE id = ?')
+    return stmt.get(id)
+  },
+
+  // Get by type
+  getByType: (type: string) => {
+    const stmt = db.prepare('SELECT * FROM heuristic_metrics WHERE type = ? AND is_active = 1')
+    return stmt.all(type)
+  },
+
+  // Create new metric
+  create: (data: {
+    name: string
+    description?: string
+    type: string
+    config: string
+  }) => {
+    const id = `metric_${data.type}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO heuristic_metrics (id, name, description, type, config, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(id, data.name, data.description, data.type, data.config, 1, now, now)
+    return heuristicMetricsDb.getById(id)
+  },
+
+  // Update metric
+  update: (id: string, data: {
+    name?: string
+    description?: string
+    config?: string
+    is_active?: number
+  }) => {
+    const updates = []
+    const values = []
+    
+    if (data.name !== undefined) {
+      updates.push('name = ?')
+      values.push(data.name)
+    }
+    if (data.description !== undefined) {
+      updates.push('description = ?')
+      values.push(data.description)
+    }
+    if (data.config !== undefined) {
+      updates.push('config = ?')
+      values.push(data.config)
+    }
+    if (data.is_active !== undefined) {
+      updates.push('is_active = ?')
+      values.push(data.is_active)
+    }
+    
+    if (updates.length === 0) return null
+    
+    updates.push('updated_at = ?')
+    values.push(new Date().toISOString())
+    values.push(id)
+    
+    const sql = `UPDATE heuristic_metrics SET ${updates.join(', ')} WHERE id = ?`
+    const stmt = db.prepare(sql)
+    const result = stmt.run(...values)
+    
+    if (result.changes === 0) return null
+    return heuristicMetricsDb.getById(id)
+  },
+
+  // Delete metric
+  delete: (id: string) => {
+    const stmt = db.prepare('DELETE FROM heuristic_metrics WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for Evaluation Runs
+export const evaluationRunsDb = {
+  // Get all runs
+  getAll: () => {
+    const stmt = db.prepare(`
+      SELECT er.*, e.name as evaluation_name, d.name as dataset_name
+      FROM evaluation_runs er
+      LEFT JOIN evaluations e ON er.evaluation_id = e.id
+      LEFT JOIN datasets d ON er.dataset_id = d.id
+      ORDER BY er.created_at DESC
+    `)
+    return stmt.all()
+  },
+
+  // Get by ID
+  getById: (id: string) => {
+    const stmt = db.prepare(`
+      SELECT er.*, e.name as evaluation_name, d.name as dataset_name
+      FROM evaluation_runs er
+      LEFT JOIN evaluations e ON er.evaluation_id = e.id
+      LEFT JOIN datasets d ON er.dataset_id = d.id
+      WHERE er.id = ?
+    `)
+    return stmt.get(id)
+  },
+
+  // Get by evaluation ID
+  getByEvaluationId: (evaluationId: string) => {
+    const stmt = db.prepare(`
+      SELECT er.*, d.name as dataset_name
+      FROM evaluation_runs er
+      LEFT JOIN datasets d ON er.dataset_id = d.id
+      WHERE er.evaluation_id = ?
+      ORDER BY er.created_at DESC
+    `)
+    return stmt.all(evaluationId)
+  },
+
+  // Create new run
+  create: (data: {
+    evaluation_id: string
+    dataset_id?: string
+    total_items?: number
+    metrics_config: string
+  }) => {
+    const id = `run_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO evaluation_runs (id, evaluation_id, dataset_id, status, total_items, processed_items, metrics_config, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(id, data.evaluation_id, data.dataset_id, 'pending', data.total_items || 0, 0, data.metrics_config, now, now)
+    return evaluationRunsDb.getById(id)
+  },
+
+  // Update run status and progress
+  updateProgress: (id: string, data: {
+    status?: string
+    processed_items?: number
+    start_time?: string
+    end_time?: string
+    duration?: number
+    summary_stats?: string
+    error_message?: string
+  }) => {
+    const updates = []
+    const values = []
+    
+    if (data.status !== undefined) {
+      updates.push('status = ?')
+      values.push(data.status)
+    }
+    if (data.processed_items !== undefined) {
+      updates.push('processed_items = ?')
+      values.push(data.processed_items)
+    }
+    if (data.start_time !== undefined) {
+      updates.push('start_time = ?')
+      values.push(data.start_time)
+    }
+    if (data.end_time !== undefined) {
+      updates.push('end_time = ?')
+      values.push(data.end_time)
+    }
+    if (data.duration !== undefined) {
+      updates.push('duration = ?')
+      values.push(data.duration)
+    }
+    if (data.summary_stats !== undefined) {
+      updates.push('summary_stats = ?')
+      values.push(data.summary_stats)
+    }
+    if (data.error_message !== undefined) {
+      updates.push('error_message = ?')
+      values.push(data.error_message)
+    }
+    
+    if (updates.length === 0) return null
+    
+    updates.push('updated_at = ?')
+    values.push(new Date().toISOString())
+    values.push(id)
+    
+    const sql = `UPDATE evaluation_runs SET ${updates.join(', ')} WHERE id = ?`
+    const stmt = db.prepare(sql)
+    const result = stmt.run(...values)
+    
+    if (result.changes === 0) return null
+    return evaluationRunsDb.getById(id)
+  },
+
+  // Delete run
+  delete: (id: string) => {
+    const stmt = db.prepare('DELETE FROM evaluation_runs WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  }
+}
+
+// Database operations for Metric Results
+export const metricResultsDb = {
+  // Get results by run ID
+  getByRunId: (runId: string) => {
+    const stmt = db.prepare(`
+      SELECT mr.*, hm.name as metric_name, hm.type as metric_type, di.input_data
+      FROM metric_results mr
+      LEFT JOIN heuristic_metrics hm ON mr.metric_id = hm.id
+      LEFT JOIN dataset_items di ON mr.dataset_item_id = di.id
+      WHERE mr.evaluation_run_id = ?
+      ORDER BY mr.created_at
+    `)
+    return stmt.all(runId)
+  },
+
+  // Get results by metric ID
+  getByMetricId: (metricId: string) => {
+    const stmt = db.prepare(`
+      SELECT mr.*, er.evaluation_id, di.input_data
+      FROM metric_results mr
+      LEFT JOIN evaluation_runs er ON mr.evaluation_run_id = er.id
+      LEFT JOIN dataset_items di ON mr.dataset_item_id = di.id
+      WHERE mr.metric_id = ?
+      ORDER BY mr.created_at DESC
+    `)
+    return stmt.all(metricId)
+  },
+
+  // Create result
+  create: (data: {
+    evaluation_run_id: string
+    dataset_item_id?: string
+    metric_id: string
+    score: number
+    passed: number
+    details?: string
+    execution_time?: number
+  }) => {
+    const id = `result_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO metric_results (id, evaluation_run_id, dataset_item_id, metric_id, score, passed, details, execution_time, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id,
+      data.evaluation_run_id,
+      data.dataset_item_id,
+      data.metric_id,
+      data.score,
+      data.passed,
+      data.details,
+      data.execution_time,
+      now
+    )
+    
+    return { id, ...data, created_at: now }
+  },
+
+  // Get aggregate stats for a run
+  getRunStats: (runId: string) => {
+    const stmt = db.prepare(`
+      SELECT 
+        COUNT(*) as total_results,
+        SUM(passed) as passed_count,
+        AVG(score) as avg_score,
+        MIN(score) as min_score,
+        MAX(score) as max_score,
+        AVG(execution_time) as avg_execution_time
+      FROM metric_results 
+      WHERE evaluation_run_id = ?
+    `)
+    return stmt.get(runId)
+  },
+
+  // Delete results by run ID
+  deleteByRunId: (runId: string) => {
+    const stmt = db.prepare('DELETE FROM metric_results WHERE evaluation_run_id = ?')
+    const result = stmt.run(runId)
+    return result.changes > 0
+  }
+}
+
 // Initialize on module load
 initDatabase()
 
 // Export database instances
-export { db, feedbackScoresDb, feedbackDefinitionsDb }
+export { db, feedbackScoresDb, feedbackDefinitionsDb, distributedTracesDb, distributedSpansDb, a2aCommunicationsDb, llmProvidersDb, promptsDb, promptVersionsDb, agentPromptLinksDb }
 export default db

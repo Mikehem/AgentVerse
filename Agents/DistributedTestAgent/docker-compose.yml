@@ -1,0 +1,190 @@
+version: '3.8'
+
+services:
+  doc-coordinator:
+    build: .
+    container_name: doc-coordinator
+    hostname: coordinator-node
+    environment:
+      - AGENT_ID=doc-coordinator
+      - AGENT_TYPE=coordinator
+      - AGENT_NAME=Document Coordinator
+      - AGENT_ROLE=Orchestrates document processing workflow
+      - AGENT_CAPABILITIES=workflow_management,task_distribution,result_aggregation
+      - AGENT_HOSTNAME=coordinator-node
+      - AGENT_PORT=8001
+      - AGENT_NAMESPACE=document-processing
+      - AGENT_API_URL=http://host.docker.internal:3000
+    ports:
+      - "8001:8001"
+    command: >
+      python agent.py
+      --agent-id doc-coordinator
+      --agent-type coordinator
+      --agent-name "Document Coordinator" 
+      --role "Orchestrates document processing workflow"
+      --capabilities "workflow_management,task_distribution,result_aggregation"
+      --hostname coordinator-node
+      --port 8001
+      --namespace document-processing
+      --api-url http://host.docker.internal:3000
+    networks:
+      - agent-network
+    depends_on:
+      - agent-lens-db
+    restart: unless-stopped
+
+  text-extractor:
+    build: .
+    container_name: text-extractor
+    hostname: extractor-node
+    environment:
+      - AGENT_ID=text-extractor
+      - AGENT_TYPE=specialist
+      - AGENT_NAME=Text Extraction Agent
+      - AGENT_ROLE=Extracts text content from various document formats
+      - AGENT_CAPABILITIES=pdf_extraction,ocr,text_parsing,format_detection
+      - AGENT_HOSTNAME=extractor-node
+      - AGENT_PORT=8002
+      - AGENT_NAMESPACE=document-processing
+      - AGENT_API_URL=http://host.docker.internal:3000
+    ports:
+      - "8002:8002"
+    command: >
+      python agent.py
+      --agent-id text-extractor
+      --agent-type specialist
+      --agent-name "Text Extraction Agent"
+      --role "Extracts text content from various document formats"
+      --capabilities "pdf_extraction,ocr,text_parsing,format_detection"
+      --hostname extractor-node
+      --port 8002
+      --namespace document-processing
+      --api-url http://host.docker.internal:3000
+    networks:
+      - agent-network
+    depends_on:
+      - doc-coordinator
+    restart: unless-stopped
+
+  sentiment-analyzer:
+    build: .
+    container_name: sentiment-analyzer
+    hostname: sentiment-node
+    environment:
+      - AGENT_ID=sentiment-analyzer
+      - AGENT_TYPE=specialist
+      - AGENT_NAME=Sentiment Analysis Agent
+      - AGENT_ROLE=Analyzes sentiment and emotional tone of text
+      - AGENT_CAPABILITIES=sentiment_analysis,emotion_detection,nlp
+      - AGENT_HOSTNAME=sentiment-node
+      - AGENT_PORT=8003
+      - AGENT_NAMESPACE=document-processing
+      - AGENT_API_URL=http://host.docker.internal:3000
+    ports:
+      - "8003:8003"
+    command: >
+      python agent.py
+      --agent-id sentiment-analyzer
+      --agent-type specialist
+      --agent-name "Sentiment Analysis Agent"
+      --role "Analyzes sentiment and emotional tone of text"
+      --capabilities "sentiment_analysis,emotion_detection,nlp"
+      --hostname sentiment-node
+      --port 8003
+      --namespace document-processing
+      --api-url http://host.docker.internal:3000
+    networks:
+      - agent-network
+    depends_on:
+      - text-extractor
+    restart: unless-stopped
+
+  entity-extractor:
+    build: .
+    container_name: entity-extractor
+    hostname: entity-node
+    environment:
+      - AGENT_ID=entity-extractor
+      - AGENT_TYPE=specialist
+      - AGENT_NAME=Entity Extraction Agent
+      - AGENT_ROLE=Identifies and extracts named entities from text
+      - AGENT_CAPABILITIES=named_entity_recognition,entity_linking,knowledge_graphs
+      - AGENT_HOSTNAME=entity-node
+      - AGENT_PORT=8004
+      - AGENT_NAMESPACE=document-processing
+      - AGENT_API_URL=http://host.docker.internal:3000
+    ports:
+      - "8004:8004"
+    command: >
+      python agent.py
+      --agent-id entity-extractor
+      --agent-type specialist
+      --agent-name "Entity Extraction Agent"
+      --role "Identifies and extracts named entities from text"
+      --capabilities "named_entity_recognition,entity_linking,knowledge_graphs"
+      --hostname entity-node
+      --port 8004
+      --namespace document-processing
+      --api-url http://host.docker.internal:3000
+    networks:
+      - agent-network
+    depends_on:
+      - text-extractor
+    restart: unless-stopped
+
+  quality-monitor:
+    build: .
+    container_name: quality-monitor
+    hostname: monitor-node
+    environment:
+      - AGENT_ID=quality-monitor
+      - AGENT_TYPE=monitor
+      - AGENT_NAME=Quality Monitoring Agent
+      - AGENT_ROLE=Monitors processing quality and validates results
+      - AGENT_CAPABILITIES=quality_assessment,validation,error_detection
+      - AGENT_HOSTNAME=monitor-node
+      - AGENT_PORT=8005
+      - AGENT_NAMESPACE=document-processing
+      - AGENT_API_URL=http://host.docker.internal:3000
+    ports:
+      - "8005:8005"
+    command: >
+      python agent.py
+      --agent-id quality-monitor
+      --agent-type monitor
+      --agent-name "Quality Monitoring Agent"
+      --role "Monitors processing quality and validates results"
+      --capabilities "quality_assessment,validation,error_detection"
+      --hostname monitor-node
+      --port 8005
+      --namespace document-processing
+      --api-url http://host.docker.internal:3000
+    networks:
+      - agent-network
+    depends_on:
+      - sentiment-analyzer
+      - entity-extractor
+    restart: unless-stopped
+
+  # Placeholder for Agent Lens database (replace with actual DB service)
+  agent-lens-db:
+    image: sqlite:latest
+    container_name: agent-lens-db
+    environment:
+      - SQLITE_DATABASE=agent_lens.db
+    volumes:
+      - agent_lens_data:/data
+    networks:
+      - agent-network
+
+networks:
+  agent-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  agent_lens_data:
+    driver: local

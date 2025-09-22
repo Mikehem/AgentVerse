@@ -12,8 +12,15 @@ export async function POST(request: NextRequest) {
     const traceData = body
     
     // Map SDK format to our database schema
+    // Handle project name to project ID mapping for distributed tracing demos
+    let projectId = traceData.project_id || traceData.projectId
+    if (!projectId && traceData.project_name === 'ecommerce_distributed_processing_v3') {
+      projectId = 'project-1758269313646' // Map the distributed tracing demo project
+    }
+    projectId = projectId || 'proj_production_demo_001'
+    
     const mappedTrace = {
-      projectId: traceData.project_id || traceData.projectId || 'proj_production_demo_001',
+      projectId: projectId,
       agentId: traceData.agent_id || traceData.agentId || 'sdk-agent',
       runId: traceData.id || null,
       conversationId: traceData.conversation_id || traceData.conversationId || null,
@@ -76,7 +83,7 @@ export async function POST(request: NextRequest) {
       agent_id: mappedTrace.agentId,
       runId: mappedTrace.runId,
       conversation_id: mappedTrace.conversationId,
-      name: mappedTrace.operationName,
+      operation_name: mappedTrace.operationName,
       start_time: mappedTrace.startTime,
       end_time: mappedTrace.endTime,
       duration: mappedTrace.duration,

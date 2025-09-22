@@ -50,6 +50,9 @@ from .llm import LLMProvider, OpenAIProvider, AzureOpenAIProvider
 # Configuration
 from .core.config import SprintLensConfig
 
+# Management utilities
+from .management import ProjectManager, AgentManager, DistributedTraceSetup
+
 # Setup logging
 _logging.setup()
 
@@ -100,4 +103,9 @@ __all__ = [
     "LLMProvider",
     "OpenAIProvider", 
     "AzureOpenAIProvider",
+    
+    # Management utilities
+    "ProjectManager",
+    "AgentManager",
+    "DistributedTraceSetup",
 ]

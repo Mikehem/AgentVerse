@@ -1,0 +1,314 @@
+{
+  "project": {
+    "project": {
+      "id": "project-1758269313646",
+      "name": "E-commerce Distributed Order Processing v3",
+      "description": "Multi-agent e-commerce order processing system with distributed tracing. Demonstrates real-world agent collaboration across containers with full observability.",
+      "template": "simple",
+      "department": "default",
+      "priority": "medium",
+      "tags": [],
+      "securityLevel": "standard",
+      "dataRetention": "90",
+      "defaultAccess": "collaborate",
+      "piiHandling": false,
+      "complianceMode": false,
+      "visibility": "private",
+      "status": "active",
+      "createdAt": "2025-09-19T08:08:33.646Z",
+      "updatedAt": "2025-09-19T08:08:33.646Z",
+      "agents": 1,
+      "conversations": 0,
+      "successRate": 0,
+      "icon": "\ud83d\udcca",
+      "color": "#10B981",
+      "teamMembers": [],
+      "stats": {
+        "agents": 1,
+        "conversations": 0,
+        "successRate": 0
+      },
+      "lastUpdated": "2025-09-19T08:08:33.646Z"
+    },
+    "project_id": "project-1758269313646",
+    "project_data": {
+      "id": "project-1758269313646",
+      "name": "E-commerce Distributed Order Processing v3",
+      "description": "Multi-agent e-commerce order processing system with distributed tracing. Demonstrates real-world agent collaboration across containers with full observability.",
+      "template": "simple",
+      "department": "default",
+      "priority": "medium",
+      "tags": [],
+      "securityLevel": "standard",
+      "dataRetention": "90",
+      "defaultAccess": "collaborate",
+      "piiHandling": false,
+      "complianceMode": false,
+      "visibility": "private",
+      "status": "active",
+      "createdAt": "2025-09-19T08:08:33.646Z",
+      "updatedAt": "2025-09-19T08:08:33.646Z",
+      "agents": 1,
+      "conversations": 0,
+      "successRate": 0,
+      "icon": "\ud83d\udcca",
+      "color": "#10B981",
+      "teamMembers": [],
+      "stats": {
+        "agents": 1,
+        "conversations": 0,
+        "successRate": 0
+      },
+      "lastUpdated": "2025-09-19T08:08:33.646Z"
+    }
+  },
+  "agents": [
+    {
+      "success": true,
+      "data": {
+        "id": "agent_ordercoo_mfqmq9mc",
+        "project_id": "project-1758269313646",
+        "name": "Order Coordinator Agent",
+        "description": "Auto-generated agent: Order Coordinator Agent",
+        "type": "orchestrator",
+        "role": "Coordinator",
+        "capabilities": [
+          "order_validation",
+          "workflow_orchestration",
+          "process_coordination",
+          "status_tracking",
+          "error_handling",
+          "distributed_tracing"
+        ],
+        "system_prompt": "You are a Order Coordinator Agent responsible for coordinator operations.",
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "status": "active",
+        "is_active": 1,
+        "version": "1.0.0",
+        "conversations": 0,
+        "success_rate": 0,
+        "avg_response_time": 0,
+        "last_active_at": null,
+        "config": {
+          "timeout": 30000,
+          "retries": 2,
+          "rateLimitPerMinute": 60,
+          "priority": 5
+        },
+        "tags": [
+          "coordinator",
+          "distributed_tracing"
+        ],
+        "created_at": "2025-09-19T09:20:42.804Z",
+        "updated_at": "2025-09-19T09:20:42.804Z",
+        "created_by": "user",
+        "isActive": false,
+        "successRate": 0,
+        "avgResponseTime": 0
+      },
+      "id": "agent_coordinator_1758273642_65d2ee"
+    },
+    {
+      "success": true,
+      "data": {
+        "id": "agent_paymentp_mfqmq9mw",
+        "project_id": "project-1758269313646",
+        "name": "Payment Processor Agent",
+        "description": "Auto-generated agent: Payment Processor Agent",
+        "type": "specialist",
+        "role": "Payment Processor",
+        "capabilities": [
+          "payment_validation",
+          "transaction_processing",
+          "fraud_detection",
+          "refund_processing",
+          "payment_gateway_integration",
+          "pci_compliance"
+        ],
+        "system_prompt": "You are a Payment Processor Agent responsible for payment_processor operations.",
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "status": "active",
+        "is_active": 1,
+        "version": "1.0.0",
+        "conversations": 0,
+        "success_rate": 0,
+        "avg_response_time": 0,
+        "last_active_at": null,
+        "config": {
+          "timeout": 30000,
+          "retries": 2,
+          "rateLimitPerMinute": 60,
+          "priority": 5
+        },
+        "tags": [
+          "payment_processor",
+          "distributed_tracing"
+        ],
+        "created_at": "2025-09-19T09:20:42.824Z",
+        "updated_at": "2025-09-19T09:20:42.824Z",
+        "created_by": "user",
+        "isActive": false,
+        "successRate": 0,
+        "avgResponseTime": 0
+      },
+      "id": "agent_payment_processor_1758273642_14bfc0"
+    },
+    {
+      "success": true,
+      "data": {
+        "id": "agent_inventor_mfqmq9nf",
+        "project_id": "project-1758269313646",
+        "name": "Inventory Management Agent",
+        "description": "Auto-generated agent: Inventory Management Agent",
+        "type": "specialist",
+        "role": "Inventory Manager",
+        "capabilities": [
+          "inventory_tracking",
+          "stock_management",
+          "availability_checking",
+          "reservation_management",
+          "supplier_integration",
+          "demand_forecasting"
+        ],
+        "system_prompt": "You are a Inventory Management Agent responsible for inventory_manager operations.",
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "status": "active",
+        "is_active": 1,
+        "version": "1.0.0",
+        "conversations": 0,
+        "success_rate": 0,
+        "avg_response_time": 0,
+        "last_active_at": null,
+        "config": {
+          "timeout": 30000,
+          "retries": 2,
+          "rateLimitPerMinute": 60,
+          "priority": 5
+        },
+        "tags": [
+          "inventory_manager",
+          "distributed_tracing"
+        ],
+        "created_at": "2025-09-19T09:20:42.843Z",
+        "updated_at": "2025-09-19T09:20:42.843Z",
+        "created_by": "user",
+        "isActive": false,
+        "successRate": 0,
+        "avgResponseTime": 0
+      },
+      "id": "agent_inventory_manager_1758273642_31b402"
+    },
+    {
+      "success": true,
+      "data": {
+        "id": "agent_shipping_mfqmq9o1",
+        "project_id": "project-1758269313646",
+        "name": "Shipping Management Agent",
+        "description": "Auto-generated agent: Shipping Management Agent",
+        "type": "specialist",
+        "role": "Shipping Manager",
+        "capabilities": [
+          "shipping_calculation",
+          "label_generation",
+          "carrier_integration",
+          "tracking_management",
+          "delivery_optimization",
+          "international_shipping"
+        ],
+        "system_prompt": "You are a Shipping Management Agent responsible for shipping_manager operations.",
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "status": "active",
+        "is_active": 1,
+        "version": "1.0.0",
+        "conversations": 0,
+        "success_rate": 0,
+        "avg_response_time": 0,
+        "last_active_at": null,
+        "config": {
+          "timeout": 30000,
+          "retries": 2,
+          "rateLimitPerMinute": 60,
+          "priority": 5
+        },
+        "tags": [
+          "shipping_manager",
+          "distributed_tracing"
+        ],
+        "created_at": "2025-09-19T09:20:42.865Z",
+        "updated_at": "2025-09-19T09:20:42.865Z",
+        "created_by": "user",
+        "isActive": false,
+        "successRate": 0,
+        "avgResponseTime": 0
+      },
+      "id": "agent_shipping_manager_1758273642_a8cf3f"
+    },
+    {
+      "success": true,
+      "data": {
+        "id": "agent_notifica_mfqmq9oj",
+        "project_id": "project-1758269313646",
+        "name": "Notification Service Agent",
+        "description": "Auto-generated agent: Notification Service Agent",
+        "type": "specialist",
+        "role": "Notification Service",
+        "capabilities": [
+          "email_notifications",
+          "sms_notifications",
+          "push_notifications",
+          "template_management",
+          "delivery_tracking",
+          "preference_management"
+        ],
+        "system_prompt": "You are a Notification Service Agent responsible for notification_service operations.",
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "status": "active",
+        "is_active": 1,
+        "version": "1.0.0",
+        "conversations": 0,
+        "success_rate": 0,
+        "avg_response_time": 0,
+        "last_active_at": null,
+        "config": {
+          "timeout": 30000,
+          "retries": 2,
+          "rateLimitPerMinute": 60,
+          "priority": 5
+        },
+        "tags": [
+          "notification_service",
+          "distributed_tracing"
+        ],
+        "created_at": "2025-09-19T09:20:42.883Z",
+        "updated_at": "2025-09-19T09:20:42.883Z",
+        "created_by": "user",
+        "isActive": false,
+        "successRate": 0,
+        "avgResponseTime": 0
+      },
+      "id": "agent_notification_service_1758273642_ee7b05"
+    }
+  ],
+  "project_id": "project-1758269313646",
+  "agent_ids": [
+    "agent_coordinator_1758273642_65d2ee",
+    "agent_payment_processor_1758273642_14bfc0",
+    "agent_inventory_manager_1758273642_31b402",
+    "agent_shipping_manager_1758273642_a8cf3f",
+    "agent_notification_service_1758273642_ee7b05"
+  ],
+  "status": "success",
+  "setup_timestamp": "2025-09-19T14:50:42.fZ",
+  "base_url": "http://localhost:3001",
+  "sdk_version": "1.0.0"
+}
