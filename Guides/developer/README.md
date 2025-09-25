@@ -1,10 +1,10 @@
-# Agent Lens Developer Tutorial Series
+# Sprint Lens Developer Tutorial Series
 
-Welcome to the comprehensive Agent Lens tutorial series! This guide will take you from zero to building a production-ready AI agent with full observability, evaluation, and monitoring capabilities using Agent Lens.
+Welcome to the comprehensive Sprint Lens tutorial series! This guide will take you from zero to building a production-ready AI agent with full observability, evaluation, and monitoring capabilities using Sprint Lens.
 
 ## 🎯 What You'll Build
 
-By the end of this tutorial, you'll have built a complete **Customer Support Agent** using LangGraph with Agent Lens integration, featuring:
+By the end of this tutorial, you'll have built a complete **Customer Support Agent** using LangGraph with Sprint Lens integration, featuring:
 
 - **Conversational AI** with memory and context management
 - **Tool integration** for accessing external APIs
@@ -40,49 +40,55 @@ graph TB
     end
 ```
 
-## 📚 Tutorial Structure
+## 📚 Available Guides
 
-### Part 1: Setup & Foundation
-- [01-environment-setup.md](./01-environment-setup.md) - Setting up your development environment
-- [02-sdk-installation.md](./02-sdk-installation.md) - Installing and configuring Agent Lens SDK
-- [03-basic-integration.md](./03-basic-integration.md) - Your first Agent Lens integration
+### 🚀 Foundation & Setup
+- **[01-environment-setup.md](./01-environment-setup.md)** - Setting up your development environment
+- **[02-sdk-installation.md](./02-sdk-installation.md)** - Installing and configuring Sprint Lens SDK
 
-### Part 2: Building the Agent
-- [04-langgraph-basics.md](./04-langgraph-basics.md) - Introduction to LangGraph for agent workflows
-- [05-agent-architecture.md](./05-agent-architecture.md) - Designing our customer support agent
-- [06-implementing-agent.md](./06-implementing-agent.md) - Implementing the agent with LangGraph
+### 📊 Sprint Lens Integration
+- **[03-basic-integration.md](./03-basic-integration.md)** - **👋 Start here!** Beginner-friendly guide with 3 progressive tracing patterns
+- **[03-sdk-integration-guide.md](./03-sdk-integration-guide.md)** - **🔥 Comprehensive reference** - Complete SDK integration patterns and usage examples
 
-### Part 3: Agent Lens Integration
-- [07-tracing-integration.md](./07-tracing-integration.md) - Adding comprehensive tracing
-- [08-evaluation-setup.md](./08-evaluation-setup.md) - Setting up evaluation metrics
-- [09-monitoring-analytics.md](./09-monitoring-analytics.md) - Performance monitoring and analytics
+### 🔧 Configuration & Implementation
+- **[05-provider-configuration.md](./05-provider-configuration.md)** - Configuring LLM providers (Azure OpenAI, OpenAI, etc.)
+- **[04-langgraph-basics.md](./04-langgraph-basics.md)** - Introduction to LangGraph for agent workflows
+- **[06-implementing-agent.md](./06-implementing-agent.md)** - Complete agent implementation with Sprint Lens
+- **[07-validation-and-testing.md](./07-validation-and-testing.md)** - **🧪 Essential!** Validate your SDK setup and troubleshoot common issues
 
-### Part 4: Advanced Features
-- [10-dataset-management.md](./10-dataset-management.md) - Creating and managing evaluation datasets
-- [11-prompt-optimization.md](./11-prompt-optimization.md) - Prompt engineering with Agent Lens
-- [12-distributed-tracing.md](./12-distributed-tracing.md) - Multi-service distributed tracing
+### 📋 Learning Path Recommendations
 
-### Part 5: Production & Optimization
-- [13-production-deployment.md](./13-production-deployment.md) - Deploying your agent to production
-- [14-performance-optimization.md](./14-performance-optimization.md) - Optimizing performance with Agent Lens insights
-- [15-advanced-evaluation.md](./15-advanced-evaluation.md) - Advanced evaluation strategies
+**👶 For Beginners:**
+1. Environment Setup → SDK Installation → Basic Integration → Validation & Testing → LangGraph Basics
+
+**🏃 For Experienced Developers:**
+1. SDK Installation → SDK Integration Guide → Implementing Agent
+
+**🎯 For Reference:**
+- Use `03-sdk-integration-guide.md` as your comprehensive API reference
 
 ## 🎓 Prerequisites
 
 - **Python 3.9+** with uv and poetry installed
 - **Basic understanding** of Python and async programming
-- **Agent Lens instance** running (local or cloud)
+- **Sprint Lens instance** running (local or cloud)
 - **OpenAI API key** or access to other LLM providers
 - **Familiarity** with AI/ML concepts (helpful but not required)
 
 ## 🚀 Quick Start
 
-If you want to dive right in, follow this quick path:
+Choose your path based on your experience level:
 
-1. **Setup Environment**: Follow [01-environment-setup.md](./01-environment-setup.md)
-2. **Install SDK**: Complete [02-sdk-installation.md](./02-sdk-installation.md)
-3. **Basic Integration**: Work through [03-basic-integration.md](./03-basic-integration.md)
-4. **Build Agent**: Jump to [06-implementing-agent.md](./06-implementing-agent.md)
+### 👶 **New to Sprint Lens?** (Recommended)
+1. **Setup Environment**: [01-environment-setup.md](./01-environment-setup.md)
+2. **Install SDK**: [02-sdk-installation.md](./02-sdk-installation.md) 
+3. **Learn Patterns**: [03-basic-integration.md](./03-basic-integration.md) - Start with 3 progressive examples
+4. **Build Agent**: [06-implementing-agent.md](./06-implementing-agent.md)
+
+### 🏃 **Experienced Developer?**
+1. **Install SDK**: [02-sdk-installation.md](./02-sdk-installation.md)
+2. **Reference Guide**: [03-sdk-integration-guide.md](./03-sdk-integration-guide.md) - Complete API reference
+3. **Build Agent**: [06-implementing-agent.md](./06-implementing-agent.md)
 
 ## 📖 Tutorial Conventions
 

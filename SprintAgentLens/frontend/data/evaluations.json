@@ -1,0 +1,282 @@
+[
+  {
+    "id": "eval_c3d09f82-f8f",
+    "conversationId": "conv_0a09ca7d-38e",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-09-17T17:05:48.893Z",
+    "metrics": {
+      "relevance": 0.8106667238102178,
+      "helpfulness": 0.9167599604499619,
+      "politeness": 0.8933387892209312,
+      "accuracy": 0.8593157511890864
+    },
+    "overallScore": 0.9956717389775642,
+    "feedback": "Could be more specific about next steps"
+  },
+  {
+    "id": "eval_98c8d570-611",
+    "conversationId": "conv_3a2b77e4-8d6",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-09-12T03:36:07.146Z",
+    "metrics": {
+      "relevance": 0.9798748667712469,
+      "helpfulness": 0.708735008142866,
+      "politeness": 0.9749078801156619,
+      "accuracy": 0.9780788854514741
+    },
+    "overallScore": 0.8815444108450383,
+    "feedback": "Excellent customer service tone"
+  },
+  {
+    "id": "eval_0fb88b6c-b53",
+    "conversationId": "conv_1f9be7cb-c52",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-09-11T16:27:15.147Z",
+    "metrics": {
+      "relevance": 0.8734096994358188,
+      "helpfulness": 0.948777458458729,
+      "politeness": 0.992728869711175,
+      "accuracy": 0.7985562132978055
+    },
+    "overallScore": 0.8465697362639718,
+    "feedback": "Excellent customer service tone"
+  },
+  {
+    "id": "eval_54ccb334-99a",
+    "conversationId": "conv_13bb7daa-5a0",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-09-08T18:36:37.909Z",
+    "metrics": {
+      "relevance": 0.8900740423412735,
+      "helpfulness": 0.8561273289215667,
+      "politeness": 0.9350984942072604,
+      "accuracy": 0.7285176107905271
+    },
+    "overallScore": 0.7820195892742023,
+    "feedback": "Could be more specific about next steps"
+  },
+  {
+    "id": "eval_3e672ef4-1bf",
+    "conversationId": "conv_a3caf394-75d",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-09-01T07:56:56.199Z",
+    "metrics": {
+      "relevance": 0.8396172874211597,
+      "helpfulness": 0.8761730855040859,
+      "politeness": 0.8138267026066599,
+      "accuracy": 0.8132948244864128
+    },
+    "overallScore": 0.7456354383281423,
+    "feedback": "Excellent customer service tone"
+  },
+  {
+    "id": "eval_3c4602dd-742",
+    "conversationId": "conv_602deb20-b4a",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-24T07:03:10.069Z",
+    "metrics": {
+      "relevance": 0.7396133204659785,
+      "helpfulness": 0.7863673390452961,
+      "politeness": 0.901019904873313,
+      "accuracy": 0.7310077246093816
+    },
+    "overallScore": 0.8179853677168638,
+    "feedback": "Could be more specific about next steps"
+  },
+  {
+    "id": "eval_98f61807-fbe",
+    "conversationId": "conv_084df54b-193",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-23T09:57:38.894Z",
+    "metrics": {
+      "relevance": 0.8074414427659921,
+      "helpfulness": 0.8363940270739457,
+      "politeness": 0.8955290158787412,
+      "accuracy": 0.9929067719505267
+    },
+    "overallScore": 0.8231073469006974,
+    "feedback": "Resolved the issue quickly"
+  },
+  {
+    "id": "eval_7dfcf979-430",
+    "conversationId": "conv_9d549f54-e5d",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-20T06:24:23.195Z",
+    "metrics": {
+      "relevance": 0.8305603489709702,
+      "helpfulness": 0.8518229763702493,
+      "politeness": 0.8596647414123905,
+      "accuracy": 0.9573681147264941
+    },
+    "overallScore": 0.9546805133917191,
+    "feedback": "Resolved the issue quickly"
+  },
+  {
+    "id": "eval_b55435e3-e29",
+    "conversationId": "conv_e18b4b55-83a",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-18T00:40:04.606Z",
+    "metrics": {
+      "relevance": 0.9884916377921344,
+      "helpfulness": 0.8634709315850931,
+      "politeness": 0.9551803763906938,
+      "accuracy": 0.9829345609093887
+    },
+    "overallScore": 0.9617812720137919,
+    "feedback": "Resolved the issue quickly"
+  },
+  {
+    "id": "eval_dfbc7f58-dd6",
+    "conversationId": "conv_c81887e5-29c",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-17T09:42:37.336Z",
+    "metrics": {
+      "relevance": 0.8807274566156952,
+      "helpfulness": 0.7661560352245743,
+      "politeness": 0.8199482138983315,
+      "accuracy": 0.7982592742164132
+    },
+    "overallScore": 0.8500368997012299,
+    "feedback": "Excellent customer service tone"
+  },
+  {
+    "id": "eval_ca5b7038-788",
+    "conversationId": "conv_bde165e6-dc0",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-13T03:43:23.878Z",
+    "metrics": {
+      "relevance": 0.9626241288450899,
+      "helpfulness": 0.7397385097591146,
+      "politeness": 0.9811609065220893,
+      "accuracy": 0.9084196377296473
+    },
+    "overallScore": 0.9381372671190262,
+    "feedback": "Resolved the issue quickly"
+  },
+  {
+    "id": "eval_ab207c38-29a",
+    "conversationId": "conv_a064ecb9-b99",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-12T04:56:19.269Z",
+    "metrics": {
+      "relevance": 0.8945020941044273,
+      "helpfulness": 0.8115583001634843,
+      "politeness": 0.8210619658457313,
+      "accuracy": 0.7535553958903513
+    },
+    "overallScore": 0.9371179695804384,
+    "feedback": "Resolved the issue quickly"
+  },
+  {
+    "id": "eval_45104e18-378",
+    "conversationId": "conv_71aa022f-b9d",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-11T06:51:14.988Z",
+    "metrics": {
+      "relevance": 0.9821064047388428,
+      "helpfulness": 0.7794220784411262,
+      "politeness": 0.808720534325681,
+      "accuracy": 0.7369663599031507
+    },
+    "overallScore": 0.8331538461016192,
+    "feedback": "Resolved the issue quickly"
+  },
+  {
+    "id": "eval_3d93cc7a-5cd",
+    "conversationId": "conv_a6d3dca2-ff0",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-06T00:13:18.431Z",
+    "metrics": {
+      "relevance": 0.8682891660593477,
+      "helpfulness": 0.9962962866827344,
+      "politeness": 0.9114541290228964,
+      "accuracy": 0.8171581412000127
+    },
+    "overallScore": 0.7795181875879269,
+    "feedback": "Excellent customer service tone"
+  },
+  {
+    "id": "eval_bca45925-785",
+    "conversationId": "conv_eea30b0f-739",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-03T03:00:41.002Z",
+    "metrics": {
+      "relevance": 0.781056983779799,
+      "helpfulness": 0.8930722151385428,
+      "politeness": 0.8017340633851416,
+      "accuracy": 0.8557255196537243
+    },
+    "overallScore": 0.7795231259929805,
+    "feedback": "Response was helpful and accurate"
+  },
+  {
+    "id": "eval_39768c7f-334",
+    "conversationId": "conv_5ee452b7-b65",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-08-03T01:53:25.309Z",
+    "metrics": {
+      "relevance": 0.9777527821864272,
+      "helpfulness": 0.9176089866543118,
+      "politeness": 0.8465328558561472,
+      "accuracy": 0.7016844098433843
+    },
+    "overallScore": 0.8663193719998455,
+    "feedback": "Could be more specific about next steps"
+  },
+  {
+    "id": "eval_af23dfd1-d3f",
+    "conversationId": "conv_20fdb23a-0ef",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-07-29T20:42:35.883Z",
+    "metrics": {
+      "relevance": 0.8754933364358966,
+      "helpfulness": 0.8938539546356569,
+      "politeness": 0.9048172167064099,
+      "accuracy": 0.9339063248882832
+    },
+    "overallScore": 0.8152583530050904,
+    "feedback": "Response was helpful and accurate"
+  },
+  {
+    "id": "eval_bddf4f89-90d",
+    "conversationId": "conv_fccf58bc-7ca",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-07-16T09:35:41.747Z",
+    "metrics": {
+      "relevance": 0.7525547198577955,
+      "helpfulness": 0.9302630612983004,
+      "politeness": 0.876687587290488,
+      "accuracy": 0.8256553340831161
+    },
+    "overallScore": 0.8717753031555471,
+    "feedback": "Excellent customer service tone"
+  },
+  {
+    "id": "eval_253a68a0-f27",
+    "conversationId": "conv_9d5a1950-61e",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-07-16T09:34:59.116Z",
+    "metrics": {
+      "relevance": 0.7971510869300494,
+      "helpfulness": 0.9730331849633949,
+      "politeness": 0.9411688341444715,
+      "accuracy": 0.7139380219864538
+    },
+    "overallScore": 0.7516368356452919,
+    "feedback": "Excellent customer service tone"
+  },
+  {
+    "id": "eval_cb39e036-0cb",
+    "conversationId": "conv_8ec799f4-56a",
+    "projectId": "proj_production_demo_001",
+    "timestamp": "2025-07-12T03:37:12.330Z",
+    "metrics": {
+      "relevance": 0.8976675090182191,
+      "helpfulness": 0.9962361444310677,
+      "politeness": 0.8039868192276701,
+      "accuracy": 0.999360347723782
+    },
+    "overallScore": 0.9686460745505585,
+    "feedback": "Response was helpful and accurate"
+  }
+]

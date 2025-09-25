@@ -1,6 +1,16 @@
 # Part 3: Basic Agent Lens Integration
 
-Learn the fundamentals of Agent Lens integration with practical examples and best practices.
+> **🔥 NEW: Comprehensive Integration Guide Available!**
+> 
+> For the most complete and up-to-date Sprint Lens SDK integration patterns, examples, and usage information, please refer to our comprehensive guide:
+> 
+> **➡️ [03-sdk-integration-guide.md](./03-sdk-integration-guide.md) - Complete SDK Integration Reference**
+> 
+> This comprehensive guide includes all the patterns shown below plus many more advanced examples, troubleshooting tips, and real-world usage scenarios.
+
+Learn the fundamentals of Sprint Lens integration with practical examples and best practices.
+
+> **👋 New to Sprint Lens?** This guide teaches you **3 progressive patterns** for adding observability to your code. You'll build **one complete example file** step by step, never replacing code - only adding to it. By the end, you'll understand when and how to use each pattern.
 
 ## 🎯 What You'll Learn
 
@@ -49,7 +59,17 @@ graph TD
 
 ## 🚀 Basic Tracing Patterns
 
-### Pattern 1: Automatic Function Tracing
+Sprint Lens offers **three main patterns** for adding observability to your code. As a first-time user, you'll learn each pattern progressively, building from simple automatic tracing to advanced manual control.
+
+> **📖 How to Use This Section**: Each pattern builds on the previous one. You'll create **one single file** and **add code progressively** - never overwrite previous examples. By the end, you'll have a complete working example with all three patterns.
+
+---
+
+### Pattern 1: Automatic Function Tracing ✨
+
+**What it does**: Automatically tracks function execution with minimal setup
+**When to use**: Perfect for getting started - just add `@sprintlens.track()` above any function
+**What you get**: Automatic timing, input/output capture, error tracking
 
 The simplest way to add observability is using the `@track` decorator:
 
@@ -61,8 +81,22 @@ import asyncio
 from typing import Dict, Any, List
 import sprintlens
 
-# Simple function tracing
-@sprintlens.track
+# Configure Sprint Lens before using any decorators
+sprintlens.configure(
+    url="http://localhost:3001",
+    username="admin",
+    password="OpikAdmin2024!",
+    workspace_id="default",
+    project_name="project-1758599350381"
+)
+
+print("🔧 Sprint Lens SDK configured successfully")
+print(f"✅ Backend URL: http://localhost:3001")
+print(f"✅ Project: project-1758599350381")
+print()
+
+# Simple function tracing with agent tagging
+@sprintlens.track(tags={"agent_id": "agent_simpleag_mfw0ut5k"})
 def process_customer_query(query: str) -> str:
     """Process a customer query and return a response."""
     # Simulate processing time
@@ -76,8 +110,8 @@ def process_customer_query(query: str) -> str:
     else:
         return "Thank you for your query. Let me find the best way to help you."
 
-# Async function tracing
-@sprintlens.track
+# Async function tracing with agent tagging
+@sprintlens.track(tags={"agent_id": "agent_simpleag_mfw0ut5k"})
 async def async_sentiment_analysis(text: str) -> Dict[str, Any]:
     """Analyze sentiment of customer text asynchronously."""
     # Simulate async API call
@@ -105,8 +139,8 @@ async def async_sentiment_analysis(text: str) -> Dict[str, Any]:
         "negative_signals": negative_count
     }
 
-# Function with complex input/output
-@sprintlens.track
+# Function with complex input/output and agent tagging
+@sprintlens.track(tags={"agent_id": "agent_simpleag_mfw0ut5k"})
 def analyze_customer_profile(customer_data: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze customer profile for personalized support."""
     
@@ -145,21 +179,90 @@ def analyze_customer_profile(customer_data: Dict[str, Any]) -> Dict[str, Any]:
         "recommended_agent": "senior" if priority == "high" else "standard"
     }
 ```
+# 🧪 Test Pattern 1: Try Your First Automatic Tracing
 
-### Pattern 2: Manual Trace Management
+**Add this test code to the end of your `basic_tracing.py` file**:
+
+```python
+if __name__ == "__main__":
+    print("🚀 Testing Pattern 1: Automatic Function Tracing")
+    print("=" * 50)
+    
+    # Test 1: Simple function tracing
+    print("📍 Testing synchronous function with agent tagging...")
+    result1 = process_customer_query("I have a billing question")
+    print(f"✅ Query Result: {result1}")
+    print(f"🏷️  Trace tagged with: agent_simpleag_mfw0ut5k")
+    print()
+    
+    # Test 2: Async function tracing
+    print("📍 Testing asynchronous function with agent tagging...")
+    import asyncio
+    result2 = asyncio.run(async_sentiment_analysis("This service is great!"))
+    print(f"✅ Sentiment: {result2}")
+    print(f"🏷️  Trace tagged with: agent_simpleag_mfw0ut5k")
+    print()
+    
+    # Test 3: Complex function with detailed input/output
+    print("📍 Testing complex function with customer profile...")
+    customer_data = {
+        "tier": "premium",
+        "support_history": [{"recent": True}, {"recent": True}],
+        "preferences": {"channel": "email"}
+    }
+    result3 = analyze_customer_profile(customer_data)
+    print(f"✅ Profile Analysis: {result3}")
+    print(f"🏷️  Trace tagged with: agent_simpleag_mfw0ut5k")
+    print()
+    
+    print("🎉 Pattern 1 Complete! Check your Sprint Lens dashboard to see the traces.")
+    print("🌐 UI Links:")
+    print("   📊 All traces: http://localhost:3001/traces")
+    print("   📁 Project traces: http://localhost:3001/projects/project-1758599350381")
+    print(f"   🔍 Agent traces: Filter by agent_id = agent_simpleag_mfw0ut5k")
+```
+
+**Run your test**:
+```bash
+cd src/customer_support_agent/examples
+python basic_tracing.py
+```
+
+You should see automatic traces appear in your Sprint Lens dashboard for each function call!
+
+---
+
+### Pattern 2: Manual Trace Management 🎯
+
+**What it does**: Gives you full control over trace creation and span organization
+**When to use**: When you need to group multiple operations into one logical workflow
+**What you get**: Custom trace names, grouped spans, detailed step-by-step tracking
+
+**Key Difference from Pattern 1**: Instead of each function creating its own trace, you create ONE trace that contains multiple spans (steps).
+
+**Important**: This code gets **ADDED** to your existing `basic_tracing.py` file (don't replace anything!)
 
 For more control, create traces manually:
 
 ```python
-# Add to basic_tracing.py
+# ADD this to basic_tracing.py (after the existing functions, before the test section)
 
 def handle_customer_interaction_manual(customer_id: str, query: str) -> Dict[str, Any]:
-    """Handle customer interaction with manual trace management."""
+    """Handle customer interaction with manual trace management.
     
-    # Create main trace
-    trace = sprintlens.Trace(
+    This demonstrates creating ONE trace with multiple spans (steps) inside it.
+    Each span represents a different step in the customer interaction process.
+    """
+    
+    # Get the configured client
+    client = sprintlens.get_client()
+    
+    # Create main trace using correct API
+    from sprintlens.tracing.trace import Trace
+    trace = Trace(
         name="customer_interaction",
-        input={
+        client=client,
+        input_data={
             "customer_id": customer_id,
             "query": query,
             "timestamp": time.time()
@@ -172,84 +275,118 @@ def handle_customer_interaction_manual(customer_id: str, query: str) -> Dict[str
     )
     
     try:
-        # Step 1: Customer validation
-        with trace.span(name="validate_customer") as validation_span:
-            validation_span.update(
-                input={"customer_id": customer_id}
-            )
+        # Use trace as async context manager
+        async with trace:
+            # Step 1: Customer validation
+            with trace.span(name="validate_customer") as validation_span:
+                validation_span.set_input({"customer_id": customer_id})
+                
+                # Simulate validation
+                time.sleep(0.02)
+                is_valid = len(customer_id) > 0  # Simple validation
+                
+                validation_span.set_output({"valid": is_valid})
+                validation_span.set_metadata("validation_method", "simple_check")
+                
+                if not is_valid:
+                    raise ValueError("Invalid customer ID")
             
-            # Simulate validation
-            time.sleep(0.02)
-            is_valid = len(customer_id) > 0  # Simple validation
+            # Step 2: Query processing
+            with trace.span(name="process_query") as processing_span:
+                processing_span.set_input({"query": query, "length": len(query)})
+                
+                # Process query (reuses our Pattern 1 function!)
+                response = process_customer_query(query)
+                
+                processing_span.set_output({"response": response, "response_length": len(response)})
+                processing_span.set_metadata("processing_method", "rule_based")
             
-            validation_span.update(
-                output={"valid": is_valid},
-                metadata={"validation_method": "simple_check"}
-            )
+            # Step 3: Response formatting
+            with trace.span(name="format_response") as formatting_span:
+                formatting_span.set_input({"raw_response": response})
+                
+                # Format response
+                formatted_response = {
+                    "message": response,
+                    "customer_id": customer_id,
+                    "timestamp": time.time(),
+                    "interaction_id": f"int_{int(time.time())}"
+                }
+                
+                formatting_span.set_output(formatted_response)
+                formatting_span.set_metadata("format", "structured_json")
             
-            if not is_valid:
-                raise ValueError("Invalid customer ID")
-        
-        # Step 2: Query processing
-        with trace.span(name="process_query") as processing_span:
-            processing_span.update(
-                input={"query": query, "length": len(query)}
-            )
-            
-            # Process query
-            response = process_customer_query(query)
-            
-            processing_span.update(
-                output={"response": response, "response_length": len(response)},
-                metadata={"processing_method": "rule_based"}
-            )
-        
-        # Step 3: Response formatting
-        with trace.span(name="format_response") as formatting_span:
-            formatting_span.update(
-                input={"raw_response": response}
-            )
-            
-            # Format response
-            formatted_response = {
-                "message": response,
-                "customer_id": customer_id,
-                "timestamp": time.time(),
-                "interaction_id": f"int_{int(time.time())}"
-            }
-            
-            formatting_span.update(
-                output=formatted_response,
-                metadata={"format": "structured_json"}
-            )
-        
-        # Complete trace successfully
-        trace.end(
-            output=formatted_response,
-            metadata={"status": "success", "total_steps": 3}
-        )
+            # Set final trace output
+            trace.set_output(formatted_response)
         
         return formatted_response
         
     except Exception as e:
         # Handle errors in trace
-        trace.end(
-            output={"error": str(e)},
-            metadata={"status": "error", "error_type": type(e).__name__}
-        )
+        print(f"❌ Error occurred: {e}")
         raise
 ```
+# 🧪 Test Pattern 2: Try Manual Trace Management
 
-### Pattern 3: Context Propagation
+**Add this test code to your `if __name__ == "__main__":` section** (replace the existing test):
+
+```python
+# REPLACE the existing test section with this expanded version
+if __name__ == "__main__":
+    print("🚀 Testing All Patterns")
+    print("=" * 50)
+    
+    # Test Pattern 1 - Automatic Functions
+    print("\n📝 Pattern 1: Automatic Function Tracing")
+    result1 = process_customer_query("I have a billing question")
+    print(f"✅ Query Result: {result1}")
+    
+    # Test Pattern 2 - Manual Trace Management  
+    print("\n🎯 Pattern 2: Manual Trace Management")
+    import asyncio
+    
+    # Create a mock async runner for the manual function
+    async def test_manual_pattern():
+        result = handle_customer_interaction_manual("CUST123", "Help with my account")
+        return result
+    
+    result2 = asyncio.run(test_manual_pattern())
+    print(f"✅ Manual Trace Result: {result2}")
+    
+    print(f"\n🔍 Compare the traces in your dashboard:")
+    print(f"   - Pattern 1 creates separate traces for each function")
+    print(f"   - Pattern 2 creates ONE trace with multiple spans inside")
+```
+
+**What you'll see in the dashboard**:
+- **Pattern 1**: Multiple separate traces (one per function call)
+- **Pattern 2**: One trace named "customer_interaction" with 3 spans inside: validate_customer → process_query → format_response
+
+---
+
+### Pattern 3: Context Propagation 🔗
+
+**What it does**: Automatically groups multiple traced functions under one parent trace
+**When to use**: When you want automatic tracing (Pattern 1) but grouped under one workflow
+**What you get**: Best of both worlds - automatic tracing + logical grouping
+
+**Key Difference**: You set a "current trace" and all `@track()` functions become child spans of that trace.
+
+**Important**: This code gets **ADDED** to your existing `basic_tracing.py` file (don't replace anything!)
 
 Manage trace context across function calls:
 
 ```python
-# Add to basic_tracing.py
+# ADD this to basic_tracing.py (after the Pattern 2 code, before test section)
 
-@sprintlens.track
+# These are helper functions that will become child spans in Pattern 3
+@sprintlens.track()
 def get_customer_data(customer_id: str) -> Dict[str, Any]:
-    """Fetch customer data (simulated)."""
+    """Fetch customer data (simulated).
+    
+    When used in Pattern 3, this will automatically become a child span
+    of whatever trace is currently active.
+    """
     time.sleep(0.1)
     return {
         "id": customer_id,
@@ -261,9 +398,12 @@ def get_customer_data(customer_id: str) -> Dict[str, Any]:
         "preferences": {"channel": "chat", "language": "en"}
     }
 
-@sprintlens.track
+@sprintlens.track()
 def generate_personalized_response(customer_data: Dict[str, Any], query: str) -> str:
-    """Generate a personalized response based on customer data."""
+    """Generate a personalized response based on customer data.
+    
+    When used in Pattern 3, this will automatically become a child span.
+    """
     tier = customer_data.get("tier", "standard")
     preferences = customer_data.get("preferences", {})
     
@@ -275,18 +415,27 @@ def generate_personalized_response(customer_data: Dict[str, Any], query: str) ->
     else:
         prefix = "Thank you for contacting us. "
     
-    # Get base response
+    # Get base response (this will also be a child span!)
     base_response = process_customer_query(query)
     
     return f"{prefix}{base_response}"
 
-def complete_customer_support_flow(customer_id: str, query: str) -> Dict[str, Any]:
-    """Complete customer support flow with context propagation."""
+async def complete_customer_support_flow(customer_id: str, query: str) -> Dict[str, Any]:
+    """Complete customer support flow with context propagation.
     
-    # Create main trace with context
-    main_trace = sprintlens.Trace(
+    This creates ONE main trace, then all @track() functions called within
+    automatically become child spans of this main trace.
+    """
+    
+    # Get the configured client  
+    client = sprintlens.get_client()
+    
+    # Create main trace using correct API
+    from sprintlens.tracing.trace import Trace
+    main_trace = Trace(
         name="complete_support_flow",
-        input={"customer_id": customer_id, "query": query},
+        client=client,
+        input_data={"customer_id": customer_id, "query": query},
         metadata={"flow_type": "complete", "version": "2.0"}
     )
     
@@ -294,51 +443,97 @@ def complete_customer_support_flow(customer_id: str, query: str) -> Dict[str, An
     sprintlens.set_current_trace(main_trace)
     
     try:
-        # All subsequent traced functions will be part of this trace
-        
-        # Step 1: Get customer data (this will be a child span)
-        customer_data = get_customer_data(customer_id)
-        
-        # Step 2: Analyze customer profile (child span)
-        profile_analysis = analyze_customer_profile(customer_data)
-        
-        # Step 3: Perform sentiment analysis (child span)
-        sentiment = asyncio.run(async_sentiment_analysis(query))
-        
-        # Step 4: Generate personalized response (child span)
-        response = generate_personalized_response(customer_data, query)
-        
-        # Compile final result
-        result = {
-            "response": response,
-            "customer_profile": profile_analysis,
-            "sentiment": sentiment,
-            "interaction_metadata": {
-                "customer_tier": customer_data.get("tier"),
-                "priority": profile_analysis.get("priority"),
-                "timestamp": time.time()
+        async with main_trace:
+            # All subsequent @track() functions will be child spans of main_trace
+            
+            # Step 1: Get customer data (automatically becomes child span)
+            customer_data = get_customer_data(customer_id)
+            
+            # Step 2: Analyze customer profile (automatically becomes child span)
+            profile_analysis = analyze_customer_profile(customer_data)
+            
+            # Step 3: Perform sentiment analysis (automatically becomes child span)
+            sentiment = await async_sentiment_analysis(query)
+            
+            # Step 4: Generate personalized response (automatically becomes child span)
+            response = generate_personalized_response(customer_data, query)
+            
+            # Compile final result
+            result = {
+                "response": response,
+                "customer_profile": profile_analysis,
+                "sentiment": sentiment,
+                "interaction_metadata": {
+                    "customer_tier": customer_data.get("tier"),
+                    "priority": profile_analysis.get("priority"),
+                    "timestamp": time.time()
+                }
             }
-        }
-        
-        # End main trace
-        main_trace.end(
-            output=result,
-            metadata={"status": "completed", "components_used": 4}
-        )
-        
-        return result
-        
+            
+            # Set main trace output
+            main_trace.set_output(result)
+            
+            return result
+            
     except Exception as e:
-        main_trace.end(
-            output={"error": str(e)},
-            metadata={"status": "failed", "error_type": type(e).__name__}
-        )
+        print(f"❌ Error in support flow: {e}")
         raise
     
     finally:
         # Clear trace context
         sprintlens.set_current_trace(None)
+
+# 🧪 Test Pattern 3: Try Context Propagation
+
+**Update your test section one final time** (replace the existing test):
+
+```python
+# FINAL TEST VERSION - Replace the entire test section with this
+if __name__ == "__main__":
+    print("🚀 Testing All Three Sprint Lens Patterns")
+    print("=" * 60)
+    
+    # Test Pattern 1 - Automatic Functions (Independent traces)
+    print("\n📝 Pattern 1: Automatic Function Tracing (Independent)")
+    result1 = process_customer_query("I have a billing question")
+    print(f"✅ Query Result: {result1}")
+    
+    # Test Pattern 2 - Manual Trace Management (One trace, manual spans)
+    print("\n🎯 Pattern 2: Manual Trace Management (Grouped)")
+    import asyncio
+    
+    async def test_manual_pattern():
+        result = handle_customer_interaction_manual("CUST123", "Help with my account")
+        return result
+    
+    result2 = asyncio.run(test_manual_pattern())
+    print(f"✅ Manual Trace Result: {result2['interaction_id']}")
+    
+    # Test Pattern 3 - Context Propagation (One trace, automatic child spans)
+    print("\n🔗 Pattern 3: Context Propagation (Automatic Grouping)")
+    
+    async def test_context_pattern():
+        result = await complete_customer_support_flow("CUST456", "I need premium support")
+        return result
+    
+    result3 = asyncio.run(test_context_pattern())
+    print(f"✅ Context Flow Result: {result3['response']}")
+    
+    print(f"\n🎉 All patterns tested! Check your Sprint Lens dashboard:")
+    print(f"📊 You should see:")
+    print(f"   1. Individual traces from Pattern 1 functions")
+    print(f"   2. One 'customer_interaction' trace with 3 manual spans") 
+    print(f"   3. One 'complete_support_flow' trace with 5+ automatic child spans")
+    print(f"\n🔍 Compare how each pattern organizes the same operations differently!")
 ```
+
+## 📊 Pattern Comparison Summary
+
+| Pattern | Use Case | Pros | Cons | Best For |
+|---------|----------|------|------|----------|
+| **Pattern 1: @track()** | Quick function tracing | Simple, automatic | Scattered traces | Individual function monitoring |
+| **Pattern 2: Manual** | Precise control | Full control, grouped | More code | Complex workflows |
+| **Pattern 3: Context** | Best of both worlds | Automatic + grouped | Setup required | Production workflows |
 
 ## 🔧 Advanced Tracing Features
 
@@ -347,7 +542,7 @@ def complete_customer_support_flow(customer_id: str, query: str) -> Dict[str, An
 ```python
 # Add to basic_tracing.py
 
-@sprintlens.track
+@sprintlens.track()
 def advanced_query_processor(
     query: str, 
     customer_tier: str = "standard",
@@ -409,7 +604,7 @@ def advanced_query_processor(
 ```python
 # Add to basic_tracing.py
 
-@sprintlens.track
+@sprintlens.track()
 def resilient_api_call(endpoint: str, max_retries: int = 3) -> Dict[str, Any]:
     """Make API call with retry logic and error tracking."""
     
@@ -466,7 +661,7 @@ class TracedCustomerService:
     def __init__(self, service_name: str = "customer_service"):
         self.service_name = service_name
     
-    @sprintlens.track
+    @sprintlens.track()
     def handle_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle customer service request with full tracing."""
         
@@ -503,7 +698,7 @@ class TracedCustomerService:
                 })
             raise
     
-    @sprintlens.track
+    @sprintlens.track()
     def _validate_request(self, request_data: Dict[str, Any]) -> None:
         """Validate incoming request."""
         required_fields = ["customer_id", "type", "message"]
@@ -520,7 +715,7 @@ class TracedCustomerService:
                 "validated_fields": required_fields
             })
     
-    @sprintlens.track
+    @sprintlens.track()
     def _handle_technical_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle technical support request."""
         
@@ -534,7 +729,7 @@ class TracedCustomerService:
             "ticket_id": f"TECH_{int(time.time())}"
         }
     
-    @sprintlens.track
+    @sprintlens.track()
     def _handle_billing_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle billing request."""
         
@@ -548,7 +743,7 @@ class TracedCustomerService:
             "ticket_id": f"BILL_{int(time.time())}"
         }
     
-    @sprintlens.track
+    @sprintlens.track()
     def _handle_general_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle general request."""
         
@@ -811,7 +1006,7 @@ poetry run python scripts/run_integration_tests.py
 
 After running the examples, view your traces in the Agent Lens dashboard:
 
-1. **Navigate to Dashboard**: `http://localhost:3000`
+1. **Navigate to Dashboard**: `http://localhost:3001`
 2. **Select Your Project**: Choose your configured project
 3. **View Traces**: Go to the Traces section
 4. **Explore Details**: Click on individual traces to see spans and metadata

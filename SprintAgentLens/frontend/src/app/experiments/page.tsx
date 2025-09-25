@@ -21,6 +21,8 @@ import {
   Bot
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ExperimentCreateModal from '@/components/experiments/ExperimentCreateModal'
+import ExperimentResultsModal from '@/components/experiments/ExperimentResultsModal'
 
 interface Experiment {
   id: string
@@ -48,6 +50,8 @@ export default function ExperimentsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('')
   const [projects, setProjects] = useState<any[]>([])
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showResultsModal, setShowResultsModal] = useState(false)
+  const [selectedExperimentForResults, setSelectedExperimentForResults] = useState<Experiment | null>(null)
 
   useEffect(() => {
     fetchExperiments()
@@ -246,21 +250,88 @@ export default function ExperimentsPage() {
           ) : (
             <div className="divide-y divide-gray-200">
               {filteredExperiments.map((experiment) => (
-                <ExperimentRow key={experiment.id} experiment={experiment} />
+                <ExperimentRow 
+                  key={experiment.id} 
+                  experiment={experiment} 
+                  onViewResults={(exp) => {
+                    setSelectedExperimentForResults(exp)
+                    setShowResultsModal(true)
+                  }}
+                  onRefresh={fetchExperiments}
+                />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Experiment Creation Modal */}
+      <ExperimentCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={fetchExperiments}
+        projectId={selectedProject}
+      />
+
+      {/* Experiment Results Modal */}
+      {selectedExperimentForResults && (
+        <ExperimentResultsModal
+          isOpen={showResultsModal}
+          onClose={() => {
+            setShowResultsModal(false)
+            setSelectedExperimentForResults(null)
+          }}
+          experimentId={selectedExperimentForResults.id}
+          experimentName={selectedExperimentForResults.name}
+        />
+      )}
     </div>
   )
 }
 
 interface ExperimentRowProps {
   experiment: Experiment
+  onViewResults: (experiment: Experiment) => void
+  onRefresh: () => void
 }
 
-function ExperimentRow({ experiment }: ExperimentRowProps) {
+function ExperimentRow({ experiment, onViewResults, onRefresh }: ExperimentRowProps) {
+  const [isRunning, setIsRunning] = useState(false)
+
+  const handleRunExperiment = async () => {
+    if (isRunning) return
+    
+    try {
+      setIsRunning(true)
+      
+      const response = await fetch(`/api/v1/experiments/${experiment.id}/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        // Show success message and refresh experiments list
+        alert('Experiment started successfully!')
+        onRefresh() // Use callback instead of page reload
+      } else {
+        alert('Failed to start experiment: ' + result.error)
+      }
+
+    } catch (error) {
+      console.error('Error starting experiment:', error)
+      alert('Failed to start experiment')
+    } finally {
+      setIsRunning(false)
+    }
+  }
+
+  const handleViewResults = () => {
+    onViewResults(experiment)
+  }
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'running': return <Play className="w-4 h-4 text-blue-500" />
@@ -337,13 +408,49 @@ function ExperimentRow({ experiment }: ExperimentRowProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-md">
+          {experiment.status === 'pending' && (
+            <button
+              onClick={handleRunExperiment}
+              disabled={isRunning}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Run Experiment"
+            >
+              {isRunning ? (
+                <>
+                  <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full" />
+                  Running...
+                </>
+              ) : (
+                <>
+                  <Play className="w-3 h-3" />
+                  Run
+                </>
+              )}
+            </button>
+          )}
+          
+          {experiment.status === 'completed' && (
+            <button
+              onClick={handleViewResults}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              title="View Results"
+            >
+              <BarChart3 className="w-3 h-3" />
+              Results
+            </button>
+          )}
+          
+          <button 
+            className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-md"
+            title="Settings"
+          >
             <Settings className="w-4 h-4" />
           </button>
-          <button className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-md">
-            <BarChart3 className="w-4 h-4" />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-md">
+          
+          <button 
+            className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-md"
+            title="More Options"
+          >
             <MoreHorizontal className="w-4 h-4" />
           </button>
         </div>

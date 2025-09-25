@@ -178,10 +178,12 @@ class TrackDecorator:
         created_trace = False
         
         if trace is None:
-            # Create new trace
+            # Create new trace using Trace constructor
+            from .trace import Trace
             trace_name = f"{func.__module__}.{func.__name__}"
-            trace = self._client.create_trace(
+            trace = Trace(
                 name=trace_name,
+                client=self._client,
                 project_name=project_name,
                 tags={"auto_created": "true"},
                 metadata={"created_by": "track_decorator"}
@@ -235,31 +237,71 @@ class TrackDecorator:
                 if capture_input:
                     input_data = self._capture_function_input(func, args, kwargs)
                     span.set_input(input_data)
+                    # For auto-created traces, also set input at trace level
+                    if created_trace:
+                        trace.set_input(input_data)
                 
                 # Execute function
                 result = func(*args, **kwargs)
                 
                 # Capture output
                 if capture_output:
-                    span.set_output(serialize_safely(result))
+                    output_data = serialize_safely(result)
+                    span.set_output(output_data)
+                    # For auto-created traces, also set output at trace level
+                    if created_trace:
+                        trace.set_output(output_data)
                 
                 return result
                 
             except Exception as e:
                 if capture_exception:
                     span.set_error(e)
+                    # For auto-created traces, also set error at trace level
+                    if created_trace:
+                        trace.set_error(e)
                 raise
             
             finally:
                 # Auto-flush if requested and we created the trace
                 if auto_flush and created_trace:
                     try:
-                        # For sync functions, we can't await, so just finish
+                        # For sync functions, finish and flush synchronously
                         trace.finish()
+                        # Handle flushing depending on event loop context
+                        import asyncio
+                        try:
+                            # Check if we're already in an event loop
+                            loop = asyncio.get_running_loop()
+                            # If we're in a loop, schedule the flush as a task
+                            import concurrent.futures
+                            import threading
+                            
+                            # Run flush in a separate thread to avoid blocking
+                            def run_flush():
+                                new_loop = asyncio.new_event_loop()
+                                asyncio.set_event_loop(new_loop)
+                                try:
+                                    new_loop.run_until_complete(trace.flush())
+                                finally:
+                                    new_loop.close()
+                                    
+                            with concurrent.futures.ThreadPoolExecutor() as executor:
+                                future = executor.submit(run_flush)
+                                future.result(timeout=10)  # 10 second timeout
+                                
+                        except RuntimeError:
+                            # No event loop running, safe to use asyncio.run
+                            asyncio.run(trace.flush())
+                            
+                        logger.debug("Auto-flush successful for sync function", extra={
+                            "trace_id": trace.id
+                        })
                     except Exception as e:
                         logger.error("Failed to flush trace", extra={
                             "trace_id": trace.id,
-                            "error": str(e)
+                            "error": str(e),
+                            "error_type": type(e).__name__
                         })
 
     async def _execute_async(
@@ -282,19 +324,29 @@ class TrackDecorator:
                 if capture_input:
                     input_data = self._capture_function_input(func, args, kwargs)
                     span.set_input(input_data)
+                    # For auto-created traces, also set input at trace level
+                    if created_trace:
+                        trace.set_input(input_data)
                 
                 # Execute function
                 result = await func(*args, **kwargs)
                 
                 # Capture output
                 if capture_output:
-                    span.set_output(serialize_safely(result))
+                    output_data = serialize_safely(result)
+                    span.set_output(output_data)
+                    # For auto-created traces, also set output at trace level
+                    if created_trace:
+                        trace.set_output(output_data)
                 
                 return result
                 
             except Exception as e:
                 if capture_exception:
                     span.set_error(e)
+                    # For auto-created traces, also set error at trace level
+                    if created_trace:
+                        trace.set_error(e)
                 raise
             
             finally:
@@ -370,6 +422,8 @@ class TrackDecorator:
 
 # Standalone track function that can be used without a client instance
 def track(
+    func: Optional[Callable] = None,
+    *,
     name: Optional[str] = None,
     span_type: Union[str, SpanType] = SpanType.CUSTOM,
     capture_input: bool = True,
@@ -387,7 +441,12 @@ def track(
     This function provides a track decorator that works with the global
     client instance configured via sprintlens.configure().
     
+    Can be used in two ways:
+    1. @track (without parentheses)
+    2. @track(...) (with parameters)
+    
     Args:
+        func: Function to decorate (when used without parentheses)
         name: Optional span name (defaults to function name)
         span_type: Type of span operation
         capture_input: Whether to capture function arguments
@@ -436,4 +495,9 @@ def track(
             **span_kwargs
         )(func)
     
+    # If used as @track (without parentheses), func will be the actual function
+    if func is not None:
+        return decorator(func)
+    
+    # If used as @track(...), return the decorator
     return decorator

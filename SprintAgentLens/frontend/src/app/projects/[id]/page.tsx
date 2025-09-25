@@ -2143,7 +2143,7 @@ function ProjectMetrics({ project }: { project: Project }) {
         const costData = await costResponse.json()
         
         // Also fetch traces for additional data
-        const tracesResponse = await fetch(`/api/v1/traces?${params}`)
+        const tracesResponse = await fetch(`/v1/private/traces?${params}`)
         const tracesData = await tracesResponse.json()
         
         if (costData.success) {
@@ -3142,7 +3142,7 @@ function ProjectTraces({ project }: { project: Project }) {
         params.append('search', searchQuery)
       }
 
-      const response = await fetch(`/api/v1/traces?${params}`)
+      const response = await fetch(`/v1/private/traces?${params}`)
       const data = await response.json()
 
       if (data.success) {

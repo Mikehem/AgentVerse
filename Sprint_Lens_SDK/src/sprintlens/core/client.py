@@ -77,6 +77,8 @@ class SprintLensClient:
         self._http_client: Optional[HTTPClient] = None
         self._endpoints: Optional[Endpoints] = None
         self._auth_manager: Optional[AuthManager] = None
+        self._current_loop: Optional[asyncio.AbstractEventLoop] = None
+        self._raw_client: Optional[httpx.AsyncClient] = None
         
         # Client modules
         self._dataset_client: Optional[DatasetClient] = None
@@ -264,6 +266,9 @@ class SprintLensClient:
             
             # Store raw client for connectivity test
             self._raw_client = raw_http_client
+            
+            # Store current event loop for later detection of loop changes
+            self._current_loop = asyncio.get_running_loop()
             
             # Initialize client modules
             self._dataset_client = DatasetClient(
@@ -489,6 +494,12 @@ class SprintLensClient:
             raise SprintLensError("Client not initialized")
         
         try:
+            logger.debug("Adding trace to buffer", extra={
+                "trace_id": trace_data.get("id"),
+                "initialized": self._initialized,
+                "http_client": self._http_client is not None,
+                "endpoints": self._endpoints is not None
+            })
             # Send trace directly to backend for now (no buffering)
             await self._send_trace_to_backend(trace_data)
         except Exception as e:
@@ -496,33 +507,139 @@ class SprintLensClient:
                 "Failed to send trace to backend",
                 extra={
                     "trace_id": trace_data.get("id"),
-                    "error": str(e)
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "error_details": repr(e)
                 }
             )
             raise
     
+    async def _check_and_reinitialize_client(self) -> None:
+        """
+        Check if the event loop has changed and reinitialize HTTP client if needed.
+        
+        This handles the case where multiple asyncio.run() calls happen in the same
+        process, which closes the previous event loop and makes the HTTP client unusable.
+        """
+        try:
+            current_loop = asyncio.get_running_loop()
+            
+            # If loop hasn't changed, nothing to do
+            if self._current_loop is current_loop:
+                return
+                
+            # Event loop has changed, need to reinitialize HTTP client
+            logger.info("Event loop changed, reinitializing HTTP client")
+            
+            # Close the old client if it exists
+            if self._raw_client and not self._raw_client.is_closed:
+                try:
+                    await self._raw_client.aclose()
+                except Exception as e:
+                    logger.warning(f"Error closing old HTTP client: {e}")
+            
+            # Create new HTTP client with same configuration
+            timeout = httpx.Timeout(
+                connect=self._config.connect_timeout,
+                read=self._config.read_timeout,
+                write=self._config.timeout,
+                pool=self._config.timeout
+            )
+            
+            headers = {
+                "User-Agent": get_user_agent(),
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+            
+            if self._config.user_agent_suffix:
+                headers["User-Agent"] += f" {self._config.user_agent_suffix}"
+            
+            headers.update(self._config.headers)
+            
+            client_kwargs = {
+                "timeout": timeout,
+                "headers": headers,
+                "verify": self._config.verify_ssl,
+                "follow_redirects": True,
+                "max_redirects": 5,
+            }
+            
+            if self._config.client_cert_path:
+                client_kwargs["cert"] = (
+                    self._config.client_cert_path, 
+                    self._config.client_key_path
+                )
+            
+            if self._config.proxy_url:
+                client_kwargs["proxies"] = self._config.proxy_url
+            
+            # Create new raw client
+            self._raw_client = httpx.AsyncClient(**client_kwargs)
+            
+            # Update the HTTP client wrapper with new raw client
+            self._http_client._client = self._raw_client
+            
+            # Update stored loop reference
+            self._current_loop = current_loop
+            
+            logger.info("HTTP client reinitialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to reinitialize HTTP client: {e}")
+            raise
+
     async def _send_trace_to_backend(self, trace_data: Dict[str, Any]) -> None:
         """Send trace data to Sprint Agent Lens backend."""
         if not self._http_client or not self._endpoints:
             raise SprintLensError("Client not properly initialized")
         
+        # Check if event loop changed and reinitialize client if needed
+        await self._check_and_reinitialize_client()
+        
         try:
+            # Debug logging for trace data
+            logger.debug("Raw trace data", extra={
+                "trace_id": trace_data.get("id"),
+                "project_name": trace_data.get("project_name"),
+                "project_id": trace_data.get("project_id"),
+                "client_project_name": self._config.project_name
+            })
+            
+            # Extract agent_id from tags if available
+            trace_tags = trace_data.get("tags", {})
+            agent_id = trace_data.get("agent_id") or trace_tags.get("agent_id")
+            
+            # Debug logging for agent_id extraction
+            logger.info(f"Debug: trace_data.agent_id = {trace_data.get('agent_id')}")
+            logger.info(f"Debug: trace_tags = {trace_tags}")
+            logger.info(f"Debug: final agent_id = {agent_id}")
+            
             # Prepare trace data for API
             payload = {
-                "name": trace_data.get("name"),
-                "start_time": trace_data.get("start_time"),
-                "end_time": trace_data.get("end_time"),
-                "input": trace_data.get("input"),
-                "output": trace_data.get("output"),
-                "tags": trace_data.get("tags", {}),
+                "operationName": trace_data.get("name"),
+                "startTime": trace_data.get("start_time"),
+                "endTime": trace_data.get("end_time"),
+                "inputData": trace_data.get("input"),
+                "outputData": trace_data.get("output"),
+                "tags": trace_tags,
                 "metadata": trace_data.get("metadata", {}),
                 "feedback_scores": trace_data.get("metrics", {}),
-                "project_name": trace_data.get("project_name") or self._config.project_name,
-                "agent_id": trace_data.get("agent_id"),
+                "projectId": trace_data.get("project_name") or self._config.project_name,
+                "agentId": agent_id,
+                "traceType": "function_call",
+                "status": "success",
+                "spans": trace_data.get("spans", []),
             }
             
             # Remove None values
             payload = {k: v for k, v in payload.items() if v is not None}
+            
+            # Debug logging for final payload
+            logger.info(f"Sending payload structure: {list(payload.keys())}")
+            logger.info(f"Sample payload: operationName={payload.get('operationName')}, projectId={payload.get('projectId')}, agentId={payload.get('agentId')}")
+            if payload.get('spans'):
+                logger.info(f"First span keys: {list(payload['spans'][0].keys()) if payload['spans'] else 'No spans'}")
             
             # Send to backend
             traces_url = self._endpoints.traces()
@@ -590,6 +707,17 @@ def configure(
         workspace_id=workspace_id,
         **kwargs
     )
+    
+    # Initialize the client for immediate use
+    import asyncio
+    try:
+        # Check if there's already an event loop running
+        loop = asyncio.get_running_loop()
+        # If we reach here, create a task for initialization
+        asyncio.create_task(_global_client.initialize())
+    except RuntimeError:
+        # No event loop running, safe to use asyncio.run
+        asyncio.run(_global_client.initialize())
     
     return _global_client
 

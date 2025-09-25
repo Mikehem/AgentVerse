@@ -1,0 +1,20 @@
+[
+  {
+    "id": "gpt-4o-mini",
+    "name": "GPT-4o Mini",
+    "provider": "OpenAI",
+    "usage": 78,
+    "avgCost": 0.0023,
+    "avgLatency": 1.2,
+    "successRate": 99.1
+  },
+  {
+    "id": "gpt-4",
+    "name": "GPT-4",
+    "provider": "OpenAI",
+    "usage": 22,
+    "avgCost": 0.0156,
+    "avgLatency": 2.1,
+    "successRate": 99.8
+  }
+]

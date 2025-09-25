@@ -1,0 +1,20 @@
+[
+  {
+    "id": "agent_sarah",
+    "name": "Sarah AI Assistant",
+    "type": "primary",
+    "version": "2.1.0"
+  },
+  {
+    "id": "agent_alex",
+    "name": "Alex Technical Support",
+    "type": "technical",
+    "version": "2.0.3"
+  },
+  {
+    "id": "agent_emma",
+    "name": "Emma Billing Specialist",
+    "type": "billing",
+    "version": "1.9.8"
+  }
+]

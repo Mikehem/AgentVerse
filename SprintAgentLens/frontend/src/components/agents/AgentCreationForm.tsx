@@ -20,7 +20,7 @@ export function AgentCreationForm({ projectId, isOpen, onClose, onSuccess }: Age
     description: '',
     type: 'general',
     role: '',
-    capabilities: [''],
+    capabilities: ['Natural Language Processing'],
     model: 'gpt-4',
     temperature: 0.7,
     maxTokens: 2000,
@@ -73,7 +73,7 @@ export function AgentCreationForm({ projectId, isOpen, onClose, onSuccess }: Age
           description: '',
           type: 'general',
           role: '',
-          capabilities: [''],
+          capabilities: ['Natural Language Processing'],
           model: 'gpt-4',
           temperature: 0.7,
           maxTokens: 2000,
@@ -126,10 +126,17 @@ export function AgentCreationForm({ projectId, isOpen, onClose, onSuccess }: Age
   }
 
   const removeCapability = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      capabilities: prev.capabilities.filter((_, i) => i !== index)
-    }))
+    setFormData(prev => {
+      const newCapabilities = prev.capabilities.filter((_, i) => i !== index)
+      // Ensure at least one capability remains
+      if (newCapabilities.length === 0) {
+        return prev // Don't remove if it would leave no capabilities
+      }
+      return {
+        ...prev,
+        capabilities: newCapabilities
+      }
+    })
   }
 
   const updateCapability = (index: number, value: string) => {
@@ -272,6 +279,7 @@ export function AgentCreationForm({ projectId, isOpen, onClose, onSuccess }: Age
                       type="button"
                       onClick={() => removeCapability(index)}
                       className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
+                      title="Remove capability"
                     >
                       <Minus className="w-4 h-4" />
                     </button>

@@ -7,7 +7,7 @@ that track individual steps within the workflow.
 
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List, Union, TYPE_CHECKING
 
 from .types import TraceData, TraceStatus, InputOutput, MetricValue
@@ -77,7 +77,7 @@ class Trace:
         self.project_name = project_name or client.config.project_name
         
         # Timing
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self.end_time: Optional[datetime] = None
         self.duration_ms: Optional[float] = None
         
@@ -112,7 +112,7 @@ class Trace:
         
         logger.debug("Created trace", extra={
             "trace_id": self.id,
-            "name": name,
+            "trace_name": name,
             "project_id": self.project_id
         })
 
@@ -415,7 +415,7 @@ class Trace:
         
         self.feedback[name] = {
             "value": value,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             **metadata
         }
         
@@ -454,7 +454,7 @@ class Trace:
         if self._finished:
             return
         
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now(timezone.utc)
         self.duration_ms = (self.end_time - self.start_time).total_seconds() * 1000
         
         # Finalize any unfinished spans
@@ -529,7 +529,9 @@ class Trace:
         except Exception as e:
             logger.error("Failed to flush trace", extra={
                 "trace_id": self.id,
-                "error": str(e)
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "error_details": repr(e)
             })
             raise
 

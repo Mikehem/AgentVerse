@@ -1,0 +1,44 @@
+[
+  {
+    "id": "proj_production_demo_001",
+    "name": "Production Demo Project",
+    "description": "Demo project showcasing Agent Lens capabilities",
+    "icon": "folder",
+    "color": "blue",
+    "template": "autonomous",
+    "department": "Customer Support",
+    "priority": "High",
+    "tags": [
+      "production",
+      "demo",
+      "ai-agents"
+    ],
+    "securityLevel": "standard",
+    "dataRetention": "90",
+    "defaultAccess": "collaborate",
+    "piiHandling": true,
+    "complianceMode": true,
+    "teamMembers": [
+      "admin@sprintlens.com",
+      "demo@sprintlens.com"
+    ],
+    "visibility": "private",
+    "status": "active",
+    "agents": 150,
+    "conversations": 150,
+    "successRate": 0.79,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2025-09-22T16:53:33.526Z",
+    "stats": {
+      "agents": 150,
+      "conversations": 150,
+      "successRate": 0.79
+    },
+    "lastUpdated": "2025-09-22T16:53:33.526Z",
+    "settings": {
+      "retentionDays": 90,
+      "autoEvaluation": true,
+      "costTracking": true
+    }
+  }
+]

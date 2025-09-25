@@ -19,9 +19,13 @@ export async function POST(request: NextRequest) {
     }
     projectId = projectId || 'proj_production_demo_001'
     
+    // Extract agent_id from tags if not directly available
+    const traceTags = traceData.tags || {}
+    const agentId = traceData.agent_id || traceData.agentId || traceTags.agent_id || 'sdk-agent'
+    
     const mappedTrace = {
       projectId: projectId,
-      agentId: traceData.agent_id || traceData.agentId || 'sdk-agent',
+      agentId: agentId,
       runId: traceData.id || null,
       conversationId: traceData.conversation_id || traceData.conversationId || null,
       parentTraceId: traceData.parent_id || traceData.parentId || null,
@@ -32,8 +36,8 @@ export async function POST(request: NextRequest) {
       duration: traceData.duration_ms || traceData.duration || null,
       status: mapStatus(traceData.status),
       errorMessage: traceData.error?.message || null,
-      inputData: traceData.input?.data || traceData.input || {},
-      outputData: traceData.output?.data || traceData.output || {},
+      inputData: traceData.inputData || traceData.input?.data || traceData.input || {},
+      outputData: traceData.outputData || traceData.output?.data || traceData.output || {},
       spans: traceData.spans || [],
       metadata: traceData.metadata || {},
       tags: traceData.tags || []
@@ -88,6 +92,10 @@ export async function POST(request: NextRequest) {
       end_time: mappedTrace.endTime,
       duration: mappedTrace.duration,
       status: mappedTrace.status,
+      error_message: mappedTrace.errorMessage,
+      input_data: mappedTrace.inputData ? JSON.stringify(mappedTrace.inputData) : null,
+      output_data: mappedTrace.outputData ? JSON.stringify(mappedTrace.outputData) : null,
+      spans: mappedTrace.spans ? JSON.stringify(mappedTrace.spans) : null,
       metadata: JSON.stringify(mappedTrace.metadata),
       tags: JSON.stringify(mappedTrace.tags),
       // Enhanced cost tracking fields

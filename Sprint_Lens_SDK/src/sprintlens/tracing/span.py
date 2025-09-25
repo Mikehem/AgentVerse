@@ -6,7 +6,7 @@ database query, or processing step.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Union, TYPE_CHECKING
 
 from .types import SpanData, SpanType, TraceStatus, InputOutput, MetricValue
@@ -107,7 +107,7 @@ class Span:
         
         logger.debug("Created span", extra={
             "span_id": self.id,
-            "name": name,
+            "span_name": name,
             "trace_id": self.trace_id,
             "parent_id": self.parent_id,
             "span_type": span_type.value
@@ -127,7 +127,7 @@ class Span:
         if self._started:
             return
         
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self._started = True
         
         logger.debug("Span started", extra={
@@ -143,7 +143,7 @@ class Span:
         if not self._started:
             self._start()
         
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now(timezone.utc)
         self.duration_ms = (self.end_time - self.start_time).total_seconds() * 1000
         
         # Set final status if not already set to error
@@ -397,11 +397,11 @@ class Span:
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
             "duration_ms": self.duration_ms,
-            "input": self._input.dict() if self._input else None,
-            "output": self._output.dict() if self._output else None,
+            "input": self._input.model_dump() if self._input else None,
+            "output": self._output.model_dump() if self._output else None,
             "tags": self.tags,
             "metadata": self.metadata,
-            "metrics": {k: v.dict() for k, v in self.metrics.items()},
+            "metrics": {k: v.model_dump() for k, v in self.metrics.items()},
             "status": self.status.value,
             "error": self.error,
             "model": self.model,
@@ -424,7 +424,7 @@ class Span:
             parent_id=self.parent_id,
             name=self.name,
             span_type=self.span_type,
-            start_time=self.start_time or datetime.utcnow(),
+            start_time=self.start_time or datetime.now(timezone.utc),
             end_time=self.end_time,
             duration_ms=self.duration_ms,
             input=self._input,

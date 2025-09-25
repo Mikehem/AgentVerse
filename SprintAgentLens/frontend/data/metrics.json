@@ -1,0 +1,1191 @@
+{
+  "overview": {
+    "totalConversations": 150,
+    "completedConversations": 46,
+    "escalatedConversations": 28,
+    "completionRate": "30.7",
+    "escalationRate": "18.7",
+    "avgSatisfactionScore": "3.96",
+    "avgDuration": "364.5"
+  },
+  "performance": {
+    "avgResponseTime": "364.45",
+    "p95ResponseTime": "643.00",
+    "throughput": "5.0",
+    "uptime": "99.8%",
+    "errorRate": "0.2%"
+  },
+  "quality": {
+    "highSatisfactionRate": "46.0",
+    "resolutionRate": "79.3",
+    "avgTurnsPerConversation": "5.2",
+    "firstContactResolution": "78.3%"
+  },
+  "costs": {
+    "totalCost": "0.6812",
+    "avgCostPerConversation": "0.0045",
+    "totalTokens": 59934,
+    "avgTokensPerConversation": 399,
+    "costPerToken": "0.000011"
+  },
+  "intents": {
+    "complaint": {
+      "count": 14,
+      "percentage": "9.3",
+      "avgSatisfaction": "4.13"
+    },
+    "order_inquiry": {
+      "count": 17,
+      "percentage": "11.3",
+      "avgSatisfaction": "3.69"
+    },
+    "escalation": {
+      "count": 13,
+      "percentage": "8.7",
+      "avgSatisfaction": "4.28"
+    },
+    "return_request": {
+      "count": 7,
+      "percentage": "4.7",
+      "avgSatisfaction": "3.94"
+    },
+    "cancellation_request": {
+      "count": 13,
+      "percentage": "8.7",
+      "avgSatisfaction": "4.01"
+    },
+    "billing_inquiry": {
+      "count": 20,
+      "percentage": "13.3",
+      "avgSatisfaction": "4.08"
+    },
+    "account_issue": {
+      "count": 11,
+      "percentage": "7.3",
+      "avgSatisfaction": "4.30"
+    },
+    "shipping_inquiry": {
+      "count": 16,
+      "percentage": "10.7",
+      "avgSatisfaction": "3.91"
+    },
+    "technical_support": {
+      "count": 8,
+      "percentage": "5.3",
+      "avgSatisfaction": "3.91"
+    },
+    "general_inquiry": {
+      "count": 12,
+      "percentage": "8.0",
+      "avgSatisfaction": "3.72"
+    },
+    "compliment": {
+      "count": 14,
+      "percentage": "9.3",
+      "avgSatisfaction": "3.71"
+    },
+    "product_question": {
+      "count": 5,
+      "percentage": "3.3",
+      "avgSatisfaction": "3.87"
+    }
+  },
+  "trends": [
+    {
+      "date": "2024-01-02",
+      "conversations": 2,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.24",
+      "avgDuration": "331.5"
+    },
+    {
+      "date": "2024-01-04",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.44",
+      "avgDuration": "387.0"
+    },
+    {
+      "date": "2024-01-07",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.03",
+      "avgDuration": "652.0"
+    },
+    {
+      "date": "2024-01-20",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.23",
+      "avgDuration": "252.0"
+    },
+    {
+      "date": "2024-01-22",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.85",
+      "avgDuration": "438.0"
+    },
+    {
+      "date": "2024-01-24",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.94",
+      "avgDuration": "68.0"
+    },
+    {
+      "date": "2024-01-26",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.68",
+      "avgDuration": "200.0"
+    },
+    {
+      "date": "2024-01-27",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.61",
+      "avgDuration": "488.0"
+    },
+    {
+      "date": "2024-02-03",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.27",
+      "avgDuration": "595.0"
+    },
+    {
+      "date": "2024-02-16",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.61",
+      "avgDuration": "167.0"
+    },
+    {
+      "date": "2024-02-17",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.54",
+      "avgDuration": "648.0"
+    },
+    {
+      "date": "2024-02-25",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.74",
+      "avgDuration": "290.0"
+    },
+    {
+      "date": "2024-02-29",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.59",
+      "avgDuration": "412.0"
+    },
+    {
+      "date": "2024-03-01",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.52",
+      "avgDuration": "84.0"
+    },
+    {
+      "date": "2024-03-08",
+      "conversations": 2,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.85",
+      "avgDuration": "367.0"
+    },
+    {
+      "date": "2024-04-02",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.62",
+      "avgDuration": "457.0"
+    },
+    {
+      "date": "2024-04-04",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.38",
+      "avgDuration": "238.0"
+    },
+    {
+      "date": "2024-04-07",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.25",
+      "avgDuration": "620.0"
+    },
+    {
+      "date": "2024-04-11",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.12",
+      "avgDuration": "236.0"
+    },
+    {
+      "date": "2024-04-13",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.86",
+      "avgDuration": "81.0"
+    },
+    {
+      "date": "2024-04-18",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.75",
+      "avgDuration": "599.0"
+    },
+    {
+      "date": "2024-04-20",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.50",
+      "avgDuration": "359.0"
+    },
+    {
+      "date": "2024-04-21",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.81",
+      "avgDuration": "587.0"
+    },
+    {
+      "date": "2024-04-28",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.40",
+      "avgDuration": "212.0"
+    },
+    {
+      "date": "2024-04-29",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.89",
+      "avgDuration": "435.0"
+    },
+    {
+      "date": "2024-04-30",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.05",
+      "avgDuration": "296.0"
+    },
+    {
+      "date": "2024-05-03",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.64",
+      "avgDuration": "104.0"
+    },
+    {
+      "date": "2024-05-11",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.08",
+      "avgDuration": "449.0"
+    },
+    {
+      "date": "2024-05-19",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.21",
+      "avgDuration": "353.0"
+    },
+    {
+      "date": "2024-05-20",
+      "conversations": 2,
+      "escalations": 1,
+      "escalationRate": "50.0",
+      "avgSatisfaction": "3.29",
+      "avgDuration": "164.5"
+    },
+    {
+      "date": "2024-05-24",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.57",
+      "avgDuration": "266.0"
+    },
+    {
+      "date": "2024-05-30",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.17",
+      "avgDuration": "532.0"
+    },
+    {
+      "date": "2024-05-31",
+      "conversations": 2,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.63",
+      "avgDuration": "525.5"
+    },
+    {
+      "date": "2024-06-04",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.42",
+      "avgDuration": "609.0"
+    },
+    {
+      "date": "2024-06-14",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.55",
+      "avgDuration": "220.0"
+    },
+    {
+      "date": "2024-06-16",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.27",
+      "avgDuration": "62.0"
+    },
+    {
+      "date": "2024-06-21",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.65",
+      "avgDuration": "393.0"
+    },
+    {
+      "date": "2024-06-24",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.33",
+      "avgDuration": "510.0"
+    },
+    {
+      "date": "2024-06-26",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.78",
+      "avgDuration": "488.0"
+    },
+    {
+      "date": "2024-06-28",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.77",
+      "avgDuration": "395.0"
+    },
+    {
+      "date": "2024-06-29",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.64",
+      "avgDuration": "191.0"
+    },
+    {
+      "date": "2024-07-08",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.36",
+      "avgDuration": "656.0"
+    },
+    {
+      "date": "2024-07-09",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.68",
+      "avgDuration": "528.0"
+    },
+    {
+      "date": "2024-07-29",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.32",
+      "avgDuration": "82.0"
+    },
+    {
+      "date": "2024-07-31",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.62",
+      "avgDuration": "657.0"
+    },
+    {
+      "date": "2024-08-01",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.40",
+      "avgDuration": "232.0"
+    },
+    {
+      "date": "2024-08-07",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.49",
+      "avgDuration": "278.0"
+    },
+    {
+      "date": "2024-08-08",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.88",
+      "avgDuration": "477.0"
+    },
+    {
+      "date": "2024-08-09",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.29",
+      "avgDuration": "355.0"
+    },
+    {
+      "date": "2024-08-14",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.28",
+      "avgDuration": "97.0"
+    },
+    {
+      "date": "2024-08-16",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.06",
+      "avgDuration": "448.0"
+    },
+    {
+      "date": "2024-08-23",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.19",
+      "avgDuration": "459.0"
+    },
+    {
+      "date": "2024-08-26",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.39",
+      "avgDuration": "366.0"
+    },
+    {
+      "date": "2024-08-28",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.91",
+      "avgDuration": "67.0"
+    },
+    {
+      "date": "2024-09-01",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.02",
+      "avgDuration": "606.0"
+    },
+    {
+      "date": "2024-09-08",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.26",
+      "avgDuration": "655.0"
+    },
+    {
+      "date": "2024-09-09",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.56",
+      "avgDuration": "233.0"
+    },
+    {
+      "date": "2024-09-19",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.28",
+      "avgDuration": "570.0"
+    },
+    {
+      "date": "2024-09-27",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.51",
+      "avgDuration": "105.0"
+    },
+    {
+      "date": "2024-10-10",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.55",
+      "avgDuration": "584.0"
+    },
+    {
+      "date": "2024-10-12",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.68",
+      "avgDuration": "406.0"
+    },
+    {
+      "date": "2024-10-20",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.59",
+      "avgDuration": "92.0"
+    },
+    {
+      "date": "2024-10-25",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.56",
+      "avgDuration": "374.0"
+    },
+    {
+      "date": "2024-10-27",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.09",
+      "avgDuration": "475.0"
+    },
+    {
+      "date": "2024-11-03",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.26",
+      "avgDuration": "102.0"
+    },
+    {
+      "date": "2024-11-04",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.85",
+      "avgDuration": "416.0"
+    },
+    {
+      "date": "2024-11-10",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.40",
+      "avgDuration": "420.0"
+    },
+    {
+      "date": "2024-11-11",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.52",
+      "avgDuration": "383.0"
+    },
+    {
+      "date": "2024-11-13",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.93",
+      "avgDuration": "457.0"
+    },
+    {
+      "date": "2024-11-15",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.40",
+      "avgDuration": "152.0"
+    },
+    {
+      "date": "2024-11-20",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.52",
+      "avgDuration": "210.0"
+    },
+    {
+      "date": "2024-11-22",
+      "conversations": 2,
+      "escalations": 1,
+      "escalationRate": "50.0",
+      "avgSatisfaction": "4.00",
+      "avgDuration": "280.0"
+    },
+    {
+      "date": "2024-11-25",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.38",
+      "avgDuration": "270.0"
+    },
+    {
+      "date": "2024-11-28",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.63",
+      "avgDuration": "509.0"
+    },
+    {
+      "date": "2024-11-29",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.14",
+      "avgDuration": "368.0"
+    },
+    {
+      "date": "2024-12-03",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.73",
+      "avgDuration": "141.0"
+    },
+    {
+      "date": "2024-12-06",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.35",
+      "avgDuration": "358.0"
+    },
+    {
+      "date": "2024-12-08",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.37",
+      "avgDuration": "96.0"
+    },
+    {
+      "date": "2024-12-09",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.69",
+      "avgDuration": "441.0"
+    },
+    {
+      "date": "2024-12-10",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.30",
+      "avgDuration": "462.0"
+    },
+    {
+      "date": "2024-12-15",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.29",
+      "avgDuration": "379.0"
+    },
+    {
+      "date": "2024-12-19",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.73",
+      "avgDuration": "82.0"
+    },
+    {
+      "date": "2024-12-28",
+      "conversations": 2,
+      "escalations": 1,
+      "escalationRate": "50.0",
+      "avgSatisfaction": "3.83",
+      "avgDuration": "446.5"
+    },
+    {
+      "date": "2025-01-17",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.03",
+      "avgDuration": "284.0"
+    },
+    {
+      "date": "2025-01-19",
+      "conversations": 2,
+      "escalations": 1,
+      "escalationRate": "50.0",
+      "avgSatisfaction": "3.19",
+      "avgDuration": "608.5"
+    },
+    {
+      "date": "2025-01-26",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.90",
+      "avgDuration": "503.0"
+    },
+    {
+      "date": "2025-01-29",
+      "conversations": 3,
+      "escalations": 1,
+      "escalationRate": "33.3",
+      "avgSatisfaction": "4.28",
+      "avgDuration": "418.7"
+    },
+    {
+      "date": "2025-01-31",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.96",
+      "avgDuration": "653.0"
+    },
+    {
+      "date": "2025-02-05",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.39",
+      "avgDuration": "96.0"
+    },
+    {
+      "date": "2025-02-24",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.37",
+      "avgDuration": "440.0"
+    },
+    {
+      "date": "2025-02-25",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.90",
+      "avgDuration": "187.0"
+    },
+    {
+      "date": "2025-02-27",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.71",
+      "avgDuration": "643.0"
+    },
+    {
+      "date": "2025-03-06",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.14",
+      "avgDuration": "127.0"
+    },
+    {
+      "date": "2025-03-07",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.77",
+      "avgDuration": "533.0"
+    },
+    {
+      "date": "2025-03-12",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.34",
+      "avgDuration": "122.0"
+    },
+    {
+      "date": "2025-03-17",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.72",
+      "avgDuration": "283.0"
+    },
+    {
+      "date": "2025-03-31",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.88",
+      "avgDuration": "433.0"
+    },
+    {
+      "date": "2025-04-04",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.76",
+      "avgDuration": "171.0"
+    },
+    {
+      "date": "2025-04-16",
+      "conversations": 2,
+      "escalations": 1,
+      "escalationRate": "50.0",
+      "avgSatisfaction": "4.06",
+      "avgDuration": "482.5"
+    },
+    {
+      "date": "2025-04-19",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.14",
+      "avgDuration": "593.0"
+    },
+    {
+      "date": "2025-04-20",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.25",
+      "avgDuration": "449.0"
+    },
+    {
+      "date": "2025-04-22",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.05",
+      "avgDuration": "523.0"
+    },
+    {
+      "date": "2025-04-24",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.33",
+      "avgDuration": "361.0"
+    },
+    {
+      "date": "2025-04-27",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.14",
+      "avgDuration": "469.0"
+    },
+    {
+      "date": "2025-05-08",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.72",
+      "avgDuration": "472.0"
+    },
+    {
+      "date": "2025-05-12",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.05",
+      "avgDuration": "210.0"
+    },
+    {
+      "date": "2025-05-20",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.32",
+      "avgDuration": "151.0"
+    },
+    {
+      "date": "2025-05-21",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.70",
+      "avgDuration": "410.0"
+    },
+    {
+      "date": "2025-05-26",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.59",
+      "avgDuration": "142.0"
+    },
+    {
+      "date": "2025-05-28",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.81",
+      "avgDuration": "588.0"
+    },
+    {
+      "date": "2025-06-02",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.51",
+      "avgDuration": "365.0"
+    },
+    {
+      "date": "2025-06-04",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.71",
+      "avgDuration": "356.0"
+    },
+    {
+      "date": "2025-06-11",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.22",
+      "avgDuration": "306.0"
+    },
+    {
+      "date": "2025-06-17",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.05",
+      "avgDuration": "464.0"
+    },
+    {
+      "date": "2025-06-19",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.76",
+      "avgDuration": "390.0"
+    },
+    {
+      "date": "2025-06-28",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.37",
+      "avgDuration": "584.0"
+    },
+    {
+      "date": "2025-06-29",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.93",
+      "avgDuration": "350.0"
+    },
+    {
+      "date": "2025-07-03",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.86",
+      "avgDuration": "185.0"
+    },
+    {
+      "date": "2025-07-09",
+      "conversations": 2,
+      "escalations": 1,
+      "escalationRate": "50.0",
+      "avgSatisfaction": "4.25",
+      "avgDuration": "223.0"
+    },
+    {
+      "date": "2025-07-12",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.68",
+      "avgDuration": "79.0"
+    },
+    {
+      "date": "2025-07-16",
+      "conversations": 2,
+      "escalations": 1,
+      "escalationRate": "50.0",
+      "avgSatisfaction": "4.27",
+      "avgDuration": "168.0"
+    },
+    {
+      "date": "2025-07-29",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.07",
+      "avgDuration": "542.0"
+    },
+    {
+      "date": "2025-08-03",
+      "conversations": 2,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.21",
+      "avgDuration": "371.0"
+    },
+    {
+      "date": "2025-08-06",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.14",
+      "avgDuration": "370.0"
+    },
+    {
+      "date": "2025-08-11",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.72",
+      "avgDuration": "656.0"
+    },
+    {
+      "date": "2025-08-12",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "4.06",
+      "avgDuration": "503.0"
+    },
+    {
+      "date": "2025-08-13",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.67",
+      "avgDuration": "562.0"
+    },
+    {
+      "date": "2025-08-17",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.58",
+      "avgDuration": "278.0"
+    },
+    {
+      "date": "2025-08-18",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.90",
+      "avgDuration": "565.0"
+    },
+    {
+      "date": "2025-08-20",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.65",
+      "avgDuration": "242.0"
+    },
+    {
+      "date": "2025-08-23",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.81",
+      "avgDuration": "380.0"
+    },
+    {
+      "date": "2025-08-24",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.74",
+      "avgDuration": "483.0"
+    },
+    {
+      "date": "2025-09-01",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "4.78",
+      "avgDuration": "295.0"
+    },
+    {
+      "date": "2025-09-08",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.10",
+      "avgDuration": "216.0"
+    },
+    {
+      "date": "2025-09-11",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.31",
+      "avgDuration": "409.0"
+    },
+    {
+      "date": "2025-09-12",
+      "conversations": 1,
+      "escalations": 0,
+      "escalationRate": "0.0",
+      "avgSatisfaction": "3.57",
+      "avgDuration": "164.0"
+    },
+    {
+      "date": "2025-09-17",
+      "conversations": 1,
+      "escalations": 1,
+      "escalationRate": "100.0",
+      "avgSatisfaction": "3.62",
+      "avgDuration": "468.0"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "prompt_001",
+    "name": "Customer Support Assistant",
+    "version": "2.1.0",
+    "content": "You are a helpful customer support assistant. Respond professionally and try to resolve customer issues efficiently.",
+    "createdAt": "2025-09-22T16:53:33.526Z",
+    "usage": 89,
+    "performance": 0.87
+  },
+  {
+    "id": "prompt_002",
+    "name": "Technical Support Specialist",
+    "version": "1.5.2",
+    "content": "You are a technical support specialist. Help customers with technical issues and escalate complex problems when needed.",
+    "createdAt": "2025-09-22T16:53:33.526Z",
+    "usage": 34,
+    "performance": 0.92
+  }
+]

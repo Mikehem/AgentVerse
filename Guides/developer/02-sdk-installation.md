@@ -1,11 +1,11 @@
-# Part 2: Agent Lens SDK Installation & Configuration
+# Part 2: Sprint Lens SDK Installation & Configuration
 
-Learn how to install, configure, and verify the Agent Lens SDK for comprehensive AI agent observability.
+Learn how to install, configure, and verify the Sprint Lens SDK for comprehensive AI agent observability.
 
 ## 🎯 What You'll Learn
 
-- Install the Agent Lens SDK using poetry and uv
-- Configure SDK connection to your Agent Lens backend
+- Install the Sprint Lens SDK using poetry and uv
+- Configure SDK connection to your Sprint Agent Lens backend
 - Implement basic authentication and project setup
 - Verify connectivity and create your first traces
 - Understand SDK architecture and core concepts
@@ -13,10 +13,10 @@ Learn how to install, configure, and verify the Agent Lens SDK for comprehensive
 ## 📋 Prerequisites
 
 - Completed [Part 1: Environment Setup](./01-environment-setup.md)
-- Agent Lens backend running and accessible
+- Sprint Agent Lens backend running and accessible
 - Project credentials and API access
 
-## 🏗️ Agent Lens SDK Architecture
+## 🏗️ Sprint Lens SDK Architecture
 
 ```mermaid
 graph TB
@@ -26,12 +26,12 @@ graph TB
     SDK --> Eval[Evaluation Framework]
     SDK --> Mgmt[Project Management]
     
-    Auth --> Backend[Agent Lens Backend]
+    Auth --> Backend[Sprint Agent Lens Backend]
     Tracing --> Backend
     Eval --> Backend
     Mgmt --> Backend
     
-    Backend --> Dashboard[Agent Lens UI]
+    Backend --> Dashboard[Sprint Agent Lens UI]
     Backend --> Analytics[Analytics Engine]
     Backend --> Storage[(Data Storage)]
     
@@ -47,20 +47,19 @@ graph TB
 
 ## 🛠️ SDK Installation
 
-### Step 1: Install Agent Lens SDK
+### Step 1: Install Sprint Lens SDK
+
+Since we're using the local Sprint Lens SDK that's already configured in your `pyproject.toml`, the SDK should already be installed. Let's verify:
 
 ```bash
 # Navigate to your project directory
 cd customer-support-agent
 
-# Install Sprint Lens SDK with all features
-poetry add sprintlens
+# Install dependencies (including local Sprint Lens SDK)
+poetry install
 
-# Install with optional dependencies for specific providers
-poetry add sprintlens[openai,azure,anthropic]
-
-# Development dependencies for testing
-poetry add --group dev pytest-sprintlens
+# Verify SDK is available
+poetry run python -c "import sprintlens; print(f'Sprint Lens SDK {sprintlens.__version__} installed successfully')"
 ```
 
 ### Step 2: Verify Installation
@@ -85,8 +84,9 @@ def test_core_imports() -> bool:
     """Test core SDK imports."""
     try:
         import sprintlens
-        from sprintlens import configure, track, Trace, Span
+        from sprintlens import configure, track, get_client
         from sprintlens.core.client import SprintLensClient
+        from sprintlens.tracing.context import set_current_trace, get_current_trace
         print(f"✅ Core SDK imported (version: {sprintlens.__version__})")
         return True
     except ImportError as e:
@@ -98,7 +98,8 @@ def test_evaluation_imports() -> bool:
     try:
         from sprintlens.evaluation import (
             Evaluator, EvaluationDataset, BaseMetric,
-            AccuracyMetric, SimilarityMetric
+            AccuracyMetric, SimilarityMetric, EvaluationResult,
+            DatasetItem, BatchEvaluator
         )
         print("✅ Evaluation framework imported")
         return True
@@ -109,7 +110,7 @@ def test_evaluation_imports() -> bool:
 def test_llm_integrations() -> bool:
     """Test LLM provider integrations."""
     try:
-        from sprintlens.llm import LLMProvider, OpenAIProvider
+        from sprintlens.llm import LLMProvider, OpenAIProvider, AzureOpenAIProvider
         print("✅ LLM integrations imported")
         return True
     except ImportError as e:
@@ -119,7 +120,7 @@ def test_llm_integrations() -> bool:
 def test_management_utilities() -> bool:
     """Test management utilities."""
     try:
-        from sprintlens.management import ProjectManager, AgentManager
+        from sprintlens.management import ProjectManager, AgentManager, DistributedTraceSetup
         print("✅ Management utilities imported")
         return True
     except ImportError as e:
@@ -161,24 +162,22 @@ poetry run python scripts/verify_sdk.py
 Add to your `.env` file:
 
 ```env
-# Agent Lens SDK Configuration
-SPRINTLENS_URL=http://localhost:3000
-SPRINTLENS_USERNAME=your_username
-SPRINTLENS_PASSWORD=your_password
-SPRINTLENS_PROJECT_ID=proj_customer_support_001
+# Sprint Lens SDK Configuration
+SPRINTLENS_URL=http://localhost:3001
+SPRINTLENS_USERNAME=admin
+SPRINTLENS_PASSWORD=OpikAdmin2024!
+SPRINTLENS_WORKSPACE_ID=default
+SPRINTLENS_PROJECT_NAME=project-1758599350381
+
+# Optional API Key (alternative to username/password)
+# SPRINTLENS_API_KEY=your_api_key_here
 
 # SDK Behavior Configuration
-SPRINTLENS_AUTO_TRACE=true
-SPRINTLENS_BATCH_SIZE=100
-SPRINTLENS_FLUSH_INTERVAL=5000
+SPRINTLENS_DEBUG=false
+SPRINTLENS_TRACING_ENABLED=true
+# Enable detailed logging for debugging
+SPRINTLENS_LOG_LEVEL=DEBUG
 SPRINTLENS_ENABLE_LOGGING=true
-SPRINTLENS_LOG_LEVEL=INFO
-
-# Retry and Timeout Configuration
-SPRINTLENS_MAX_RETRIES=3
-SPRINTLENS_RETRY_DELAY=1000
-SPRINTLENS_REQUEST_TIMEOUT=30000
-SPRINTLENS_CONNECTION_TIMEOUT=10000
 ```
 
 ### Step 2: Create SDK Configuration Module
@@ -193,7 +192,8 @@ Sprint Lens SDK configuration and initialization.
 import os
 import logging
 from typing import Optional, Dict, Any
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings
+from pydantic import field_validator
 import sprintlens
 from sprintlens.core.config import SprintLensConfig
 from dotenv import load_dotenv
@@ -207,46 +207,29 @@ class SprintLensSettings(BaseSettings):
     """Sprint Lens SDK configuration settings."""
     
     # Connection settings
-    url: str = "http://localhost:3000"
+    url: str = "http://localhost:3001"
     username: str = ""
     password: str = ""
-    project_id: str = ""
-    
-    # Behavior settings
-    auto_trace: bool = True
-    batch_size: int = 100
-    flush_interval: int = 5000  # milliseconds
-    enable_logging: bool = True
-    log_level: str = "INFO"
-    
-    # Performance settings
-    max_retries: int = 3
-    retry_delay: int = 1000  # milliseconds
-    request_timeout: int = 30000  # milliseconds
-    connection_timeout: int = 10000  # milliseconds
+    workspace_id: str = "default"
+    project_name: str = ""
     
     # Optional settings
     api_key: Optional[str] = None
-    workspace_id: Optional[str] = None
+    debug: bool = False
+    tracing_enabled: bool = True
     
-    class Config:
-        env_prefix = "SPRINTLENS_"
-        case_sensitive = False
+    model_config = {
+        "env_prefix": "SPRINTLENS_",
+        "case_sensitive": False
+    }
     
-    @validator('url')
+    @field_validator('url')
+    @classmethod
     def validate_url(cls, v):
         """Ensure URL is properly formatted."""
         if not v.startswith(('http://', 'https://')):
             raise ValueError('URL must start with http:// or https://')
         return v.rstrip('/')
-    
-    @validator('log_level')
-    def validate_log_level(cls, v):
-        """Ensure log level is valid."""
-        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-        if v.upper() not in valid_levels:
-            raise ValueError(f'Log level must be one of: {valid_levels}')
-        return v.upper()
 
 # Global settings instance
 settings = SprintLensSettings()
@@ -257,37 +240,34 @@ def create_sprintlens_config() -> SprintLensConfig:
         url=settings.url,
         username=settings.username,
         password=settings.password,
-        project_id=settings.project_id,
-        api_key=settings.api_key,
         workspace_id=settings.workspace_id,
-        auto_trace=settings.auto_trace,
-        batch_size=settings.batch_size,
-        flush_interval=settings.flush_interval,
-        max_retries=settings.max_retries,
-        retry_delay=settings.retry_delay,
-        request_timeout=settings.request_timeout,
-        connection_timeout=settings.connection_timeout
+        project_name=settings.project_name,
+        api_key=settings.api_key
     )
 
 def configure_sprintlens() -> bool:
     """Configure the Sprint Lens SDK with environment settings."""
     try:
-        # Create configuration
-        config = create_sprintlens_config()
+        # Configure SDK with individual parameters
+        sprintlens.configure(
+            url=settings.url,
+            username=settings.username,
+            password=settings.password,
+            workspace_id=settings.workspace_id,
+            project_name=settings.project_name,
+            api_key=settings.api_key
+        )
         
-        # Configure SDK
-        sprintlens.configure(config)
-        
-        # Set up logging
-        if settings.enable_logging:
+        # Set up logging if debug is enabled
+        if settings.debug:
             logging.basicConfig(
-                level=getattr(logging, settings.log_level),
+                level=logging.DEBUG,
                 format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
         
         logger.info(f"Sprint Lens SDK configured successfully")
         logger.info(f"Backend URL: {settings.url}")
-        logger.info(f"Project ID: {settings.project_id}")
+        logger.info(f"Project Name: {settings.project_name}")
         
         return True
         
@@ -302,9 +282,9 @@ def get_client_info() -> Dict[str, Any]:
         return {
             "configured": True,
             "url": client.config.url if client.config else None,
-            "project_id": client.config.project_id if client.config else None,
-            "auto_trace": client.config.auto_trace if client.config else None,
-            "batch_size": client.config.batch_size if client.config else None
+            "workspace_id": client.config.workspace_id if client.config else None,
+            "project_name": client.config.project_name if client.config else None,
+            "tracing_enabled": client.config.tracing_enabled if client.config else None
         }
     except Exception as e:
         return {
@@ -407,7 +387,7 @@ class TestSDKConnection:
     def test_configuration_loaded(self):
         """Test that configuration is properly loaded."""
         assert settings.url
-        assert settings.project_id
+        assert settings.project_name
         # Don't assert on credentials in tests for security
     
     def test_client_info(self):
@@ -443,44 +423,46 @@ class TestSDKConnection:
     async def test_manual_trace_creation(self):
         """Test manual trace and span creation."""
         
-        # Create a trace
-        trace = sprintlens.Trace(
+        # Get the configured client
+        client = sprintlens.get_client()
+        
+        # Create a trace manually using Trace constructor
+        from sprintlens.tracing.trace import Trace
+        trace = Trace(
             name="test_trace",
-            input={"test": "input"},
-            metadata={"test_type": "manual"}
+            client=client,
+            tags={"test_type": "manual"},
+            metadata={"test_environment": "development"}
         )
         
-        # Create a span within the trace
-        with trace.span(name="test_span") as span:
-            span.update(
-                input={"operation": "test"},
-                output={"result": "success"},
-                metadata={"step": 1}
-            )
-        
-        # Finalize trace
-        trace.end(output={"final": "result"})
+        # Use trace as context manager
+        async with trace:
+            # Create a span within the trace
+            with trace.span(name="test_span") as span:
+                span.set_input({"operation": "test"})
+                span.set_output({"result": "success"})
+                span.add_metadata("step", 1)
         
         # Give some time for trace to be sent
         await asyncio.sleep(0.1)
     
     def test_trace_context(self):
         """Test trace context management."""
+        from sprintlens.tracing.context import TraceContext
+        from sprintlens.tracing.trace import Trace
         
-        # Create trace
-        trace = sprintlens.Trace(name="context_test")
+        # Get the configured client
+        client = sprintlens.get_client()
         
-        # Set current trace
-        sprintlens.set_current_trace(trace)
+        # Create trace using Trace constructor
+        trace = Trace(name="context_test", client=client)
         
-        # Get current trace
-        current = sprintlens.get_current_trace()
-        
-        assert current is not None
-        assert current.name == "context_test"
-        
-        # End trace
-        trace.end()
+        # Use trace context
+        with TraceContext(trace):
+            # Get current trace
+            current = sprintlens.get_current_trace()
+            assert current is not None
+            assert current.name == "context_test"
 
 @pytest.mark.integration
 class TestSDKIntegration:
@@ -490,15 +472,15 @@ class TestSDKIntegration:
     async def test_end_to_end_trace(self):
         """Test complete end-to-end tracing workflow."""
         
-        @sprintlens.track
+        @sprintlens.track(span_type="llm")
         async def async_function(prompt: str) -> str:
             """Simulate an async AI function."""
             await asyncio.sleep(0.01)  # Simulate processing
             return f"Response to: {prompt}"
         
         # Execute function
-        result = await async_function("Hello, Agent Lens!")
-        assert "Hello, Agent Lens!" in result
+        result = await async_function("Hello, Sprint Lens!")
+        assert "Hello, Sprint Lens!" in result
         
         # Allow time for trace processing
         await asyncio.sleep(0.5)
@@ -506,7 +488,7 @@ class TestSDKIntegration:
     def test_error_handling(self):
         """Test error handling in traced functions."""
         
-        @sprintlens.track
+        @sprintlens.track(capture_exception=True)
         def function_with_error():
             """Function that raises an error."""
             raise ValueError("Test error")
@@ -549,7 +531,7 @@ async def test_basic_functionality():
     # 2. Simple Traced Function
     print("2. Testing simple traced function...")
     
-    @sprintlens.track
+    @sprintlens.track(span_type="processing")
     def greet(name: str) -> str:
         """Simple greeting function."""
         time.sleep(0.1)  # Simulate processing
@@ -562,7 +544,7 @@ async def test_basic_functionality():
     # 3. Async Traced Function
     print("3. Testing async traced function...")
     
-    @sprintlens.track
+    @sprintlens.track(span_type="llm", capture_input=True, capture_output=True)
     async def async_process(data: Dict[str, Any]) -> Dict[str, Any]:
         """Simulate async processing."""
         await asyncio.sleep(0.2)
@@ -579,41 +561,37 @@ async def test_basic_functionality():
     # 4. Manual Trace Management
     print("4. Testing manual trace management...")
     
-    trace = sprintlens.Trace(
+    client = sprintlens.get_client()
+    trace = client.create_trace(
         name="manual_test_trace",
-        input={"test_type": "manual", "purpose": "SDK verification"},
+        tags={"test_type": "manual", "purpose": "SDK verification"},
         metadata={"version": "1.0", "environment": "development"}
     )
     
     # Add spans to trace
-    with trace.span(name="preparation") as prep_span:
+    with trace.span(name="preparation", span_type="processing") as prep_span:
         time.sleep(0.05)
-        prep_span.update(
-            output={"status": "prepared"},
-            metadata={"step": "1"}
-        )
+        prep_span.set_output({"status": "prepared"})
+        prep_span.add_metadata("step", "1")
     
-    with trace.span(name="processing") as proc_span:
+    with trace.span(name="processing", span_type="custom") as proc_span:
         time.sleep(0.1)
-        proc_span.update(
-            output={"status": "processed", "items": 5},
-            metadata={"step": "2"}
-        )
+        proc_span.set_output({"status": "processed", "items": 5})
+        proc_span.add_metadata("step", "2")
     
-    with trace.span(name="finalization") as final_span:
+    with trace.span(name="finalization", span_type="custom") as final_span:
         time.sleep(0.05)
-        final_span.update(
-            output={"status": "finalized"},
-            metadata={"step": "3"}
-        )
+        final_span.set_output({"status": "finalized"})
+        final_span.add_metadata("step", "3")
     
-    trace.end(output={"completed": True, "total_time": 0.2})
+    trace.set_output({"completed": True, "total_time": 0.2})
+    await trace.finish()
     print("   ✅ Manual trace created successfully\n")
     
     # 5. Error Handling
     print("5. Testing error handling...")
     
-    @sprintlens.track
+    @sprintlens.track(capture_exception=True)
     def function_with_error(should_fail: bool = False):
         """Function that may fail."""
         if should_fail:
@@ -633,7 +611,7 @@ async def test_basic_functionality():
     print("   ✅ Error handling tested successfully\n")
     
     print("🎉 All SDK tests completed successfully!")
-    print("\n📊 Check your Agent Lens dashboard for the traces!")
+    print("\n📊 Check your Sprint Agent Lens dashboard for the traces!")
     
     return True
 
@@ -647,8 +625,8 @@ def main():
         
         if result:
             print("\n✅ SDK is working correctly!")
-            print("🔗 View traces in Agent Lens dashboard:")
-            print("   http://localhost:3000/projects/your-project-id/traces")
+            print("🔗 View traces in Sprint Agent Lens dashboard:")
+            print("   http://localhost:3001/projects/your-project-id/traces")
         else:
             print("\n❌ SDK tests failed. Check configuration.")
             
@@ -680,8 +658,8 @@ Update your `.env` file:
 
 ```env
 # Enable detailed logging for debugging
+SPRINTLENS_DEBUG=true
 SPRINTLENS_LOG_LEVEL=DEBUG
-SPRINTLENS_ENABLE_LOGGING=true
 ```
 
 ### Step 2: Create Debug Utilities
@@ -701,36 +679,21 @@ from customer_support_agent.config.sprintlens_config import get_client_info
 
 logger = logging.getLogger(__name__)
 
-def log_trace_info(trace: sprintlens.Trace) -> None:
-    """Log detailed information about a trace."""
-    logger.debug(f"Trace Info:")
-    logger.debug(f"  ID: {trace.id}")
-    logger.debug(f"  Name: {trace.name}")
-    logger.debug(f"  Start Time: {trace.start_time}")
-    logger.debug(f"  Status: {getattr(trace, 'status', 'Unknown')}")
-
-def log_span_info(span: sprintlens.Span) -> None:
-    """Log detailed information about a span."""
-    logger.debug(f"Span Info:")
-    logger.debug(f"  ID: {span.id}")
-    logger.debug(f"  Name: {span.name}")
-    logger.debug(f"  Trace ID: {span.trace_id}")
-    logger.debug(f"  Parent ID: {getattr(span, 'parent_id', 'None')}")
-
 def log_client_status() -> None:
     """Log current client status and configuration."""
     info = get_client_info()
     logger.info(f"Client Status: {json.dumps(info, indent=2)}")
 
-def create_debug_trace(name: str = "debug_trace") -> sprintlens.Trace:
+def create_debug_trace(name: str = "debug_trace"):
     """Create a trace specifically for debugging purposes."""
-    trace = sprintlens.Trace(
+    client = sprintlens.get_client()
+    trace = client.create_trace(
         name=name,
-        input={"debug": True, "purpose": "debugging"},
+        tags={"debug": "true", "purpose": "debugging"},
         metadata={"debug_mode": True, "timestamp": "now"}
     )
     
-    log_trace_info(trace)
+    logger.debug(f"Created debug trace: {trace.id}")
     return trace
 
 class DebugTracer:
@@ -739,39 +702,49 @@ class DebugTracer:
     def __init__(self, name: str, input_data: Optional[Dict[str, Any]] = None):
         self.name = name
         self.input_data = input_data or {}
-        self.trace: Optional[sprintlens.Trace] = None
+        self.trace = None
     
-    def __enter__(self) -> sprintlens.Trace:
-        self.trace = sprintlens.Trace(
+    def __enter__(self):
+        client = sprintlens.get_client()
+        self.trace = client.create_trace(
             name=self.name,
-            input=self.input_data,
+            tags={"debug": "true"},
             metadata={"debug": True}
         )
+        if self.input_data:
+            self.trace.set_input(self.input_data)
+        
         logger.debug(f"Started debug trace: {self.name}")
         return self.trace
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.trace:
             if exc_type:
-                self.trace.end(
-                    output={"error": str(exc_val)},
-                    metadata={"exception_type": str(exc_type)}
-                )
+                self.trace.set_output({"error": str(exc_val)})
+                self.trace.add_metadata("exception_type", str(exc_type))
                 logger.debug(f"Debug trace ended with error: {self.name}")
             else:
-                self.trace.end(output={"success": True})
+                self.trace.set_output({"success": True})
                 logger.debug(f"Debug trace completed successfully: {self.name}")
+            
+            await self.trace.finish()
 ```
 
 ## 🎯 Next Steps
 
-Your Agent Lens SDK is now installed and configured! In the next tutorial, we'll:
+Your Sprint Lens SDK is now installed and configured! 
 
-1. Create your first traced functions
-2. Understand the tracing data model
-3. Implement basic observability patterns
+**Next step**: Continue to the comprehensive integration guide to learn about all available SDK features, patterns, and best practices:
 
-Continue to [03-basic-integration.md](./03-basic-integration.md) →
+**➡️ [03-sdk-integration-guide.md](./03-sdk-integration-guide.md) - Complete SDK Integration Reference**
+
+This guide covers:
+- All decorator types and usage patterns
+- Evaluation framework with examples
+- LLM provider integrations
+- Management utilities
+- Real-world implementation examples
+- Troubleshooting and best practices
 
 ## 📚 Reference
 
@@ -779,23 +752,23 @@ Continue to [03-basic-integration.md](./03-basic-integration.md) →
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `SPRINTLENS_URL` | Backend URL | `http://localhost:3000` | ✅ |
+| `SPRINTLENS_URL` | Backend URL | `http://localhost:3001` | ✅ |
 | `SPRINTLENS_USERNAME` | Username for authentication | - | ✅ |
 | `SPRINTLENS_PASSWORD` | Password for authentication | - | ✅ |
-| `SPRINTLENS_PROJECT_ID` | Project identifier | - | ✅ |
-| `SPRINTLENS_AUTO_TRACE` | Enable automatic tracing | `true` | ❌ |
-| `SPRINTLENS_BATCH_SIZE` | Batch size for sending traces | `100` | ❌ |
-| `SPRINTLENS_FLUSH_INTERVAL` | Flush interval in ms | `5000` | ❌ |
-| `SPRINTLENS_MAX_RETRIES` | Maximum retry attempts | `3` | ❌ |
+| `SPRINTLENS_WORKSPACE_ID` | Workspace identifier | `default` | ❌ |
+| `SPRINTLENS_PROJECT_NAME` | Project name | - | ✅ |
+| `SPRINTLENS_API_KEY` | API key (alternative to username/password) | - | ❌ |
+| `SPRINTLENS_DEBUG` | Enable debug mode | `false` | ❌ |
+| `SPRINTLENS_TRACING_ENABLED` | Enable tracing | `true` | ❌ |
 
 ### Common Issues and Solutions
 
 1. **Connection Refused**: Check backend URL and port
 2. **Authentication Failed**: Verify username/password
-3. **Project Not Found**: Confirm project ID exists
+3. **Project Not Found**: Confirm project name exists
 4. **Timeout Errors**: Increase timeout values in configuration
 5. **Import Errors**: Ensure all dependencies are installed correctly
 
 ---
 
-**Next:** [03-basic-integration.md](./03-basic-integration.md) - Creating your first traced functions →
+**Next:** [03-sdk-integration-guide.md](./03-sdk-integration-guide.md) - Comprehensive SDK integration patterns →

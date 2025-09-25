@@ -1,0 +1,3170 @@
+{
+  "intent_classification": {
+    "id": "dataset_intent_001",
+    "name": "Intent Classification Training Set",
+    "description": "Customer message intent classification dataset",
+    "version": "1.0",
+    "createdAt": "2025-09-22T16:53:33.526Z",
+    "examples": [
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.810662796112382,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.6529215773610587,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.9810396484772128,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.6582728277803029,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.8121820756775032,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I need to return this product because it doesn't fit properly",
+        "output": "return_request",
+        "confidence": 0.8166068700296427,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.7590167958902804,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.917593402924099,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.847589356670816,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.6869208056610241,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.7106053437462623,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.7957044144768318,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.9848204470895344,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.7489463136058354,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.84815885642017,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.8822480835003569,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.6423692752568578,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.9341131871785027,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.860337280498386,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.8534491871313907,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.9454577706251679,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.658585175323105,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.662187443277335,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "product_question",
+        "confidence": 0.6246008900520431,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.8521535811497418,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I need to return this product because it doesn't fit properly",
+        "output": "return_request",
+        "confidence": 0.8343248211005223,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.755606827260817,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.9195609961768361,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.9426445482007247,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.834163004751056,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.7013074651711941,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.6918271670856218,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.7424829262897382,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.6707155302483109,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.7747715786525866,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.8622602521619961,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.8969469268766646,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I need to return this product because it doesn't fit properly",
+        "output": "return_request",
+        "confidence": 0.7816024409957857,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.7745775252256123,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.865586758940737,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.8428517468696166,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.8126544377946775,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.8184171338458079,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.7028638445667761,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.6529506218367741,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.6433497462125166,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.7879858000640844,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.7667785481584315,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "product_question",
+        "confidence": 0.6107198139981692,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.9521956919335974,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I need to return this product because it doesn't fit properly",
+        "output": "return_request",
+        "confidence": 0.8963600956299654,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.8325943560536119,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I need to return this product because it doesn't fit properly",
+        "output": "return_request",
+        "confidence": 0.7682038275435802,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.6953445935166568,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "product_question",
+        "confidence": 0.7418951528644978,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.8910004633108226,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.8958378040032755,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.9140874253791451,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.6514505937521212,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.9961142222873807,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.7885578303720285,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.627411858885332,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.8242708028404377,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.7007483896579695,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.7609109238878939,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.8985007347138968,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.8731900080287951,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.6749796890609611,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "product_question",
+        "confidence": 0.6053845642570445,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.882959938251451,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.7382367532773794,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.9318065299619963,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.7652090796238298,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.7208927527111436,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.8486617167622251,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.7753225822537995,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.6591411846345702,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.9437268507833757,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.9498904445848065,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.7187744563652562,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.8275117217989655,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.7866020774266876,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.634666717480858,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.6532836471042244,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.8552177803065741,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.6671488965327372,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.8428673447417754,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.6114730920647354,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.6593424200834137,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.7660983581975072,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.8386374285444358,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.9533959172376195,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.6282374032022895,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.7603046140879435,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.6430117317762005,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.7478884113612174,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.6378262050088764,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.7053476526805982,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.6547258889411486,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.7601277711421432,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.8453448741228964,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.7043949741210996,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.6464507429345442,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.6517495215858475,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.7049523710758278,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.8266142389046631,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.8977242910516512,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.8447976299250411,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.8246125497969746,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.7167560254236581,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.8296039877305552,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.9020829719131339,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I need to return this product because it doesn't fit properly",
+        "output": "return_request",
+        "confidence": 0.7601810061540282,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.9293976307145446,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.9770597441488947,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.9658696838429663,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.9245881179277371,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.9131394346930883,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.9895176432744851,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.8425800825064631,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.8108540945758118,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.887178450021401,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.9054536047928552,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.6653529844011326,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.6215665289032333,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "complaint",
+        "confidence": 0.7351994938494214,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.7595303466602585,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.9583341105620207,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": false
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.8931520919422342,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.80351748200444,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.7666681929059612,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.6849516710188428,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.9020653426424164,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.9957201616366516,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.7965633558805858,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.9816863196424963,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "product_question",
+        "confidence": 0.8118524475402977,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Your API is returning 500 errors and my integration is failing",
+        "output": "technical_support",
+        "confidence": 0.7913191225830234,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.724938304016279,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.7371755410379175,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "escalation",
+        "confidence": 0.8187103882844152,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "compliment",
+        "confidence": 0.9763175510822957,
+        "metadata": {
+          "customer_tier": "enterprise",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.6538912628435729,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I have a question about the charges on my last bill",
+        "output": "billing_inquiry",
+        "confidence": 0.9841720330902546,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "shipping_inquiry",
+        "confidence": 0.6570152900317795,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "cancellation_request",
+        "confidence": 0.7612359502133583,
+        "metadata": {
+          "customer_tier": "premium",
+          "resolved": true
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "order_inquiry",
+        "confidence": 0.85364335560096,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "general_inquiry",
+        "confidence": 0.7259360330398428,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      },
+      {
+        "input": "I need to return this product because it doesn't fit properly",
+        "output": "return_request",
+        "confidence": 0.8881063300914094,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": false
+        }
+      },
+      {
+        "input": "Hi, I want to check the status of my order #12345",
+        "output": "account_issue",
+        "confidence": 0.7217096996911356,
+        "metadata": {
+          "customer_tier": "standard",
+          "resolved": true
+        }
+      }
+    ]
+  },
+  "response_quality": {
+    "id": "dataset_quality_001",
+    "name": "Response Quality Dataset",
+    "description": "Agent response quality and satisfaction correlation",
+    "version": "1.0",
+    "createdAt": "2025-09-22T16:53:33.526Z",
+    "examples": [
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 3.6202371897927366,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.5694375171349506,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 3.308899062182935,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.0953628926489882,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.776137950490531,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I need to return this product because it doesn't fit properly",
+          "agent_response": "I understand you'd like to return your item. I can definitely help you start the return process.",
+          "intent": "return_request"
+        },
+        "output": {
+          "satisfaction_score": 3.7424623012065017,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 4.81292256382524,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.651614267638569,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.901496670545993,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.576811800508299,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 3.6687852352466663,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.06405948549235,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 4.7212071979401475,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.1445252113218047,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.93912816098471,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.487884103533496,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.06715238194043,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.741117789706819,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.797769766660141,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.677091172317456,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.977541593164283,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.523795513354029,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.859402509157525,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "product_question"
+        },
+        "output": {
+          "satisfaction_score": 3.9343363985068027,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.371288238151161,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I need to return this product because it doesn't fit properly",
+          "agent_response": "I understand you'd like to return your item. I can definitely help you start the return process.",
+          "intent": "return_request"
+        },
+        "output": {
+          "satisfaction_score": 4.763578760946418,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.049064521813511,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.2182138625080396,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.7117922352032666,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.511606947954045,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 3.807682838836117,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.586456423734146,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.698601367238671,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.3173553809357035,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.053648126551101,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.721119756034111,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 3.1414528850528187,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I need to return this product because it doesn't fit properly",
+          "agent_response": "I understand you'd like to return your item. I can definitely help you start the return process.",
+          "intent": "return_request"
+        },
+        "output": {
+          "satisfaction_score": 4.331958940843901,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.048399605255816,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 4.245820051649131,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.135974496318229,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.186841031895372,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.939261834007601,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.758539875260227,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.880967385805687,
+          "resolved": false,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.715643077827404,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 3.340275306391937,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 4.772699159980006,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "product_question"
+        },
+        "output": {
+          "satisfaction_score": 3.141746799693287,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.705497731516929,
+          "resolved": false,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "I need to return this product because it doesn't fit properly",
+          "agent_response": "I understand you'd like to return your item. I can definitely help you start the return process.",
+          "intent": "return_request"
+        },
+        "output": {
+          "satisfaction_score": 3.8954486765048975,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.3710266137677753,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I need to return this product because it doesn't fit properly",
+          "agent_response": "I understand you'd like to return your item. I can definitely help you start the return process.",
+          "intent": "return_request"
+        },
+        "output": {
+          "satisfaction_score": 3.390432151741188,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.958947139185723,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "product_question"
+        },
+        "output": {
+          "satisfaction_score": 4.3245563097022615,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.833098614960529,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 3.6969344626457574,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.898103351618155,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.10548528416268,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.2689828592282546,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.0270313190649576,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 3.4127432842783527,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.245879676406538,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.727280954906135,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 3.2942890584887206,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.30143201999646,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 3.6910578732786377,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 3.3675392445251124,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "product_question"
+        },
+        "output": {
+          "satisfaction_score": 4.349740909166886,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 4.730057187448745,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.136249319875134,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.629488342292185,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.378897492916607,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 4.693288642759502,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 3.3157459275481562,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.5167852956889885,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.401739670614063,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 3.9297475735714467,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.5221801875993313,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 4.397247392221651,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 3.84646794081408,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 3.2577209197876185,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 3.088814877567476,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.557103368280732,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.5923973172637504,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.6813364296206634,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.547844900223016,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.512667127171847,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.283304254062882,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.557065731275318,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.2582447855611925,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.0237512316319375,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 3.9130293537918415,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.388446447408225,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.193715972590272,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 3.063878713519055,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.281804428815632,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.294892276509799,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 3.875162124661684,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.493359817667349,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.396544072605196,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.620636164158833,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.322007628924333,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.6765962080606425,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.364499813501772,
+          "resolved": false,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 4.638844706723319,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.766974579442767,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.776958413956671,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.326789995768781,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.6491299620986757,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.272706273527744,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.552253411611612,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I need to return this product because it doesn't fit properly",
+          "agent_response": "I understand you'd like to return your item. I can definitely help you start the return process.",
+          "intent": "return_request"
+        },
+        "output": {
+          "satisfaction_score": 3.417012934773976,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 4.292611108583663,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.961792008883078,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.165712402711201,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.5655378375681153,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.529010816971477,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 3.051190645410828,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.21384925918762,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.08470419177071,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.636986848196358,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.05117253464579,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.893803812040299,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 4.400995120949591,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "complaint"
+        },
+        "output": {
+          "satisfaction_score": 3.807223772492401,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.497861973102503,
+          "resolved": true,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.7475799811157815,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.86474014182293,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.1196349980201985,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.2505890866731044,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.383304905080507,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 3.616254554578051,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.9055744230469354,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 3.796226228522433,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.524240688922205,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "product_question"
+        },
+        "output": {
+          "satisfaction_score": 3.588624200412861,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Your API is returning 500 errors and my integration is failing",
+          "agent_response": "I'm sorry to hear about the API issues. This sounds like a technical problem that needs immediate attention. Let me escalate this to our technical team.",
+          "intent": "technical_support"
+        },
+        "output": {
+          "satisfaction_score": 3.7435077871058393,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.536905142079357,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 4.612088412594936,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "escalation"
+        },
+        "output": {
+          "satisfaction_score": 4.265031820926856,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "compliment"
+        },
+        "output": {
+          "satisfaction_score": 3.613363580723534,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.6816870609813765,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I have a question about the charges on my last bill",
+          "agent_response": "I can help you understand the charges on your bill. Let me review your account details.",
+          "intent": "billing_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.943113931591253,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "shipping_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.853447594818692,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "cancellation_request"
+        },
+        "output": {
+          "satisfaction_score": 4.229014683270379,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "order_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 4.02547175385793,
+          "resolved": false,
+          "escalated": true
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "general_inquiry"
+        },
+        "output": {
+          "satisfaction_score": 3.43753345073747,
+          "resolved": true,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "I need to return this product because it doesn't fit properly",
+          "agent_response": "I understand you'd like to return your item. I can definitely help you start the return process.",
+          "intent": "return_request"
+        },
+        "output": {
+          "satisfaction_score": 4.011003847256758,
+          "resolved": false,
+          "escalated": false
+        }
+      },
+      {
+        "input": {
+          "user_message": "Hi, I want to check the status of my order #12345",
+          "agent_response": "I'd be happy to help you check your order status. Let me look that up for you right away.",
+          "intent": "account_issue"
+        },
+        "output": {
+          "satisfaction_score": 4.4609283350131514,
+          "resolved": true,
+          "escalated": false
+        }
+      }
+    ]
+  }
+}

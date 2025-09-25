@@ -293,7 +293,7 @@ class CustomerSupportAgent:
         
         return workflow.compile()
     
-    @sprintlens.track
+    @sprintlens.track()
     def _parse_input(self, state: AgentState) -> AgentState:
         """Parse and clean user input."""
         
@@ -317,7 +317,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     def _classify_intent(self, state: AgentState) -> AgentState:
         """Classify user intent using LLM."""
         
@@ -378,7 +378,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     def _load_customer_data(self, state: AgentState) -> AgentState:
         """Load customer data from database."""
         
@@ -402,7 +402,7 @@ class CustomerSupportAgent:
         """Route to appropriate handler based on intent."""
         return state.current_intent
     
-    @sprintlens.track
+    @sprintlens.track()
     def _handle_account_query(self, state: AgentState) -> AgentState:
         """Handle account-related queries."""
         
@@ -418,7 +418,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     def _handle_billing_query(self, state: AgentState) -> AgentState:
         """Handle billing-related queries."""
         
@@ -435,7 +435,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     def _handle_technical_query(self, state: AgentState) -> AgentState:
         """Handle technical queries."""
         
@@ -453,7 +453,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     def _handle_general_query(self, state: AgentState) -> AgentState:
         """Handle general queries."""
         
@@ -469,7 +469,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     def _check_escalation(self, state: AgentState) -> AgentState:
         """Check if escalation to human is needed."""
         
@@ -495,7 +495,7 @@ class CustomerSupportAgent:
         """Determine if escalation is needed."""
         return state.should_route_to_human()
     
-    @sprintlens.track
+    @sprintlens.track()
     def _generate_response(self, state: AgentState) -> AgentState:
         """Generate final response to customer."""
         
@@ -546,7 +546,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     def _human_handoff(self, state: AgentState) -> AgentState:
         """Handle escalation to human agent."""
         
@@ -564,7 +564,7 @@ class CustomerSupportAgent:
         
         return state
     
-    @sprintlens.track
+    @sprintlens.track()
     async def process_message(
         self, 
         message: str, 
@@ -654,7 +654,7 @@ class CustomerDatabaseTool:
             }
         }
     
-    @sprintlens.track
+    @sprintlens.track()
     def get_customer_info(self, customer_id: str) -> Optional[Dict[str, Any]]:
         """Get customer information by ID."""
         
@@ -664,7 +664,7 @@ class CustomerDatabaseTool:
         # Return mock data or None
         return self._mock_customer_data.get(customer_id)
     
-    @sprintlens.track
+    @sprintlens.track()
     def update_customer_preferences(
         self, 
         customer_id: str, 
@@ -680,7 +680,7 @@ class CustomerDatabaseTool:
         
         return False
     
-    @sprintlens.track
+    @sprintlens.track()
     def add_support_interaction(
         self,
         customer_id: str,
@@ -737,7 +737,7 @@ class KnowledgeBaseTool:
             }
         }
     
-    @sprintlens.track
+    @sprintlens.track()
     def search(self, query: str, max_results: int = 3) -> List[Dict[str, Any]]:
         """Search the knowledge base for relevant articles."""
         
@@ -777,7 +777,7 @@ class KnowledgeBaseTool:
         results.sort(key=lambda x: x["relevance_score"], reverse=True)
         return results[:max_results]
     
-    @sprintlens.track
+    @sprintlens.track()
     def get_article(self, article_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific article by ID."""
         
@@ -970,7 +970,7 @@ You now have a working LangGraph agent with Agent Lens integration! In the next 
 3. Implement memory and context management
 4. Add evaluation and monitoring capabilities
 
-Continue to [05-agent-architecture.md](./05-agent-architecture.md) →
+Continue to [05-provider-configuration.md](./05-provider-configuration.md) →
 
 ## 📚 Key Concepts Learned
 
@@ -989,4 +989,4 @@ Continue to [05-agent-architecture.md](./05-agent-architecture.md) →
 
 ---
 
-**Next:** [05-agent-architecture.md](./05-agent-architecture.md) - Designing your agent architecture →
+**Next:** [05-provider-configuration.md](./05-provider-configuration.md) - Configuring LLM providers →

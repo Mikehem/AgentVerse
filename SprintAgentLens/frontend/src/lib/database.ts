@@ -229,6 +229,90 @@ const migrateTables = () => {
       `)
     }
 
+    // Check if experiment_runs table exists
+    const experimentRunTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='experiment_runs'").all()
+    if (experimentRunTables.length === 0) {
+      console.log('📝 Creating experiment_runs table...')
+      db.exec(`
+        CREATE TABLE experiment_runs (
+          id TEXT PRIMARY KEY,
+          experiment_id TEXT NOT NULL,
+          prompt_version_id TEXT,
+          evaluation_ids TEXT NOT NULL, -- JSON array of evaluation IDs
+          status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'running', 'completed', 'failed'
+          total_items INTEGER DEFAULT 0,
+          completed_items INTEGER DEFAULT 0,
+          failed_items INTEGER DEFAULT 0,
+          aggregate_scores TEXT, -- JSON object with overall metrics
+          execution_time INTEGER, -- milliseconds
+          error_message TEXT,
+          started_at TEXT,
+          completed_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (experiment_id) REFERENCES experiments(id) ON DELETE CASCADE,
+          FOREIGN KEY (prompt_version_id) REFERENCES prompt_versions(id) ON DELETE SET NULL
+        )
+      `)
+      
+      // Create indexes for experiment_runs
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_runs_experiment_id ON experiment_runs(experiment_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_runs_status ON experiment_runs(status)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_runs_created_at ON experiment_runs(created_at)`)
+    }
+
+    // Check if experiment_results table exists
+    const experimentResultTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='experiment_results'").all()
+    if (experimentResultTables.length === 0) {
+      console.log('📝 Creating experiment_results table...')
+      db.exec(`
+        CREATE TABLE experiment_results (
+          id TEXT PRIMARY KEY,
+          experiment_run_id TEXT NOT NULL,
+          dataset_item_id TEXT NOT NULL,
+          input_data TEXT NOT NULL, -- JSON object
+          generated_output TEXT, -- Generated response
+          expected_output TEXT, -- Expected response from dataset
+          evaluation_scores TEXT NOT NULL, -- JSON object with scores for each evaluation
+          overall_score REAL,
+          passed INTEGER NOT NULL DEFAULT 0, -- boolean: 1 for pass, 0 for fail
+          execution_time INTEGER, -- milliseconds
+          error_message TEXT,
+          metadata TEXT, -- JSON object with additional info
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (experiment_run_id) REFERENCES experiment_runs(id) ON DELETE CASCADE,
+          FOREIGN KEY (dataset_item_id) REFERENCES dataset_items(id) ON DELETE CASCADE
+        )
+      `)
+      
+      // Create indexes for experiment_results
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_results_run_id ON experiment_results(experiment_run_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_results_dataset_item_id ON experiment_results(dataset_item_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_results_overall_score ON experiment_results(overall_score)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_results_passed ON experiment_results(passed)`)
+    }
+
+    // Check if experiment_prompt_links table exists
+    const experimentPromptLinkTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='experiment_prompt_links'").all()
+    if (experimentPromptLinkTables.length === 0) {
+      console.log('📝 Creating experiment_prompt_links table...')
+      db.exec(`
+        CREATE TABLE experiment_prompt_links (
+          id TEXT PRIMARY KEY,
+          experiment_id TEXT NOT NULL,
+          prompt_version_id TEXT NOT NULL,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (experiment_id) REFERENCES experiments(id) ON DELETE CASCADE,
+          FOREIGN KEY (prompt_version_id) REFERENCES prompt_versions(id) ON DELETE CASCADE
+        )
+      `)
+      
+      // Create indexes for experiment_prompt_links
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_prompt_links_experiment_id ON experiment_prompt_links(experiment_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_experiment_prompt_links_prompt_version_id ON experiment_prompt_links(prompt_version_id)`)
+    }
+
     // Check if evaluations table exists
     const evaluationTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='evaluations'").all()
     if (evaluationTables.length === 0) {
@@ -2000,9 +2084,10 @@ export const tracesDb = {
       INSERT INTO traces (
         id, project_id, agent_id, conversation_id, operation_name, start_time, end_time, duration, 
         status, metadata, tags, run_id, created_at,
+        input_data, output_data, spans, error_message,
         total_cost, input_cost, output_cost, prompt_tokens, completion_tokens, total_tokens,
         provider, model_name, cost_calculation_metadata
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     
     stmt.run(
@@ -2010,7 +2095,7 @@ export const tracesDb = {
       projectId, 
       data.agent_id || data.agentId || null,
       data.conversationId || data.conversation_id || null, 
-      data.name || data.operationName || 'operation',
+      data.name || data.operationName || data.operation_name || 'operation',
       data.startTime || data.start_time || now, 
       data.endTime || data.end_time || null,
       data.duration || null, 
@@ -2019,6 +2104,11 @@ export const tracesDb = {
       typeof data.tags === 'string' ? data.tags : JSON.stringify(data.tags || []),
       data.runId || data.run_id || null,
       data.createdAt || data.created_at || now,
+      // Data fields
+      data.input_data || null,
+      data.output_data || null, 
+      data.spans || null,
+      data.error_message || null,
       // Cost tracking fields
       data.total_cost || 0,
       data.input_cost || 0,

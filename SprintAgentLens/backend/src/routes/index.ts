@@ -18,6 +18,11 @@ export async function registerRoutes(server: FastifyInstance): Promise<void> {
       health: '/health',
     }));
 
+    // Health check routes (before versioned API)
+    await server.register(import('@/controllers/health'), {
+      prefix: '/health',
+    });
+
     // API versioning prefix
     await server.register(async function v1Routes(server) {
       // Authentication routes (highest priority - implemented first)

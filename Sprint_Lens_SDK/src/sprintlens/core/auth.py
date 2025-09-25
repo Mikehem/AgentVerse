@@ -4,7 +4,7 @@ Authentication management for Sprint Lens SDK
 
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 import json
 import base64
@@ -148,7 +148,7 @@ class AuthManager:
             # Extract token expiration if available
             if "expiresIn" in auth_response:
                 expires_in = auth_response["expiresIn"]
-                self._token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in - 60)
+                self._token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 60)
             elif "expiresAt" in auth_response:
                 expires_at = auth_response["expiresAt"]
                 if isinstance(expires_at, str):
@@ -157,7 +157,7 @@ class AuthManager:
                     self._token_expires_at = datetime.fromtimestamp(expires_at)
             else:
                 # Default expiration of 1 hour minus 5 minutes buffer
-                self._token_expires_at = datetime.utcnow() + timedelta(minutes=55)
+                self._token_expires_at = datetime.now(timezone.utc) + timedelta(minutes=55)
             
             # Store refresh token if available
             if "refreshToken" in auth_response:
@@ -203,7 +203,7 @@ class AuthManager:
                 # If endpoint doesn't exist, use API key directly
                 if response.status_code == 404:
                     self._jwt_token = self._config.api_key
-                    self._token_expires_at = datetime.utcnow() + timedelta(hours=24)  # Long expiration
+                    self._token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)  # Long expiration
                     return
                 
                 raise SprintLensAuthError(
@@ -216,13 +216,13 @@ class AuthManager:
                 self._jwt_token = auth_response["token"]
                 if "expiresIn" in auth_response:
                     expires_in = auth_response["expiresIn"]
-                    self._token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in - 60)
+                    self._token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 60)
                 else:
-                    self._token_expires_at = datetime.utcnow() + timedelta(hours=1)
+                    self._token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
             else:
                 # Use API key directly
                 self._jwt_token = self._config.api_key
-                self._token_expires_at = datetime.utcnow() + timedelta(hours=24)
+                self._token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
                 
         except httpx.ConnectError as e:
             raise SprintLensConnectionError(
@@ -239,7 +239,7 @@ class AuthManager:
             return False
         
         # Check expiration with 5-minute buffer
-        buffer_time = datetime.utcnow() + timedelta(minutes=5)
+        buffer_time = datetime.now(timezone.utc) + timedelta(minutes=5)
         return self._token_expires_at > buffer_time
 
     async def get_auth_header(self) -> Dict[str, str]:
@@ -306,9 +306,9 @@ class AuthManager:
                 
                 if "expiresIn" in refresh_response:
                     expires_in = refresh_response["expiresIn"]
-                    self._token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in - 60)
+                    self._token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 60)
                 else:
-                    self._token_expires_at = datetime.utcnow() + timedelta(minutes=55)
+                    self._token_expires_at = datetime.now(timezone.utc) + timedelta(minutes=55)
                 
                 if "refreshToken" in refresh_response:
                     self._refresh_token = refresh_response["refreshToken"]

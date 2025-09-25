@@ -1,0 +1,66 @@
+[
+  {
+    "id": "customer_1",
+    "name": "Alice Johnson",
+    "email": "alice.johnson@example.com",
+    "tier": "standard",
+    "joinDate": "2023-10-01T07:02:35.036Z",
+    "totalSessions": 13
+  },
+  {
+    "id": "customer_2",
+    "name": "Bob Smith",
+    "email": "bob.smith@example.com",
+    "tier": "premium",
+    "joinDate": "2023-10-09T22:00:01.806Z",
+    "totalSessions": 2
+  },
+  {
+    "id": "customer_3",
+    "name": "Carol Davis",
+    "email": "carol.davis@example.com",
+    "tier": "enterprise",
+    "joinDate": "2023-05-27T20:23:34.404Z",
+    "totalSessions": 18
+  },
+  {
+    "id": "customer_4",
+    "name": "David Wilson",
+    "email": "david.wilson@example.com",
+    "tier": "standard",
+    "joinDate": "2024-05-24T14:17:01.422Z",
+    "totalSessions": 9
+  },
+  {
+    "id": "customer_5",
+    "name": "Eva Brown",
+    "email": "eva.brown@example.com",
+    "tier": "premium",
+    "joinDate": "2023-12-06T18:17:52.554Z",
+    "totalSessions": 8
+  },
+  {
+    "id": "customer_6",
+    "name": "Frank Miller",
+    "email": "frank.miller@example.com",
+    "tier": "enterprise",
+    "joinDate": "2024-05-23T07:59:03.927Z",
+    "totalSessions": 7
+  },
+  {
+    "id": "customer_7",
+    "name": "Grace Lee",
+    "email": "grace.lee@example.com",
+    "tier": "standard",
+    "joinDate": "2024-03-10T08:39:10.464Z",
+    "totalSessions": 6
+  },
+  {
+    "id": "customer_8",
+    "name": "Henry Garcia",
+    "email": "henry.garcia@example.com",
+    "tier": "premium",
+    "joinDate": "2024-03-02T06:33:57.782Z",
+    "totalSessions": 17
+  }
+]
