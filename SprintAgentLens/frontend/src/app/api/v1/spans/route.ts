@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
       metadata: span.metadata ? JSON.parse(span.metadata) : null,
       tags: span.tags ? JSON.parse(span.tags) : null,
       tokenUsage: span.token_usage ? JSON.parse(span.token_usage) : null,
+      // Parse conversation context JSON field
+      conversation_context: span.conversation_context ? JSON.parse(span.conversation_context) : null,
       // Map snake_case to camelCase for frontend compatibility
       traceId: span.trace_id,
       parentSpanId: span.parent_span_id,
@@ -197,7 +199,7 @@ export async function POST(request: NextRequest) {
 
     // Validate that the trace exists before creating the span
     if (validatedData.traceId) {
-      const { tracesDb } = await import('@/lib/database')
+      const { tracesDb, projectDb, agentDb } = await import('@/lib/database')
       const existingTrace = tracesDb.getById(validatedData.traceId)
       if (!existingTrace) {
         console.error(`Trace not found: ${validatedData.traceId}`)
@@ -205,6 +207,44 @@ export async function POST(request: NextRequest) {
           success: false,
           error: `Referenced trace ${validatedData.traceId} does not exist. Please ensure the trace is created before creating spans.`
         }, { status: 400 })
+      }
+      
+      // If project_id is provided, validate it exists and matches trace
+      if (body.project_id) {
+        const existingProject = projectDb.getById(body.project_id)
+        if (!existingProject) {
+          return NextResponse.json({
+            success: false,
+            error: `Project with ID '${body.project_id}' does not exist.`
+          }, { status: 400 })
+        }
+        
+        // Ensure project matches trace's project
+        if (existingTrace.project_id !== body.project_id) {
+          return NextResponse.json({
+            success: false,
+            error: `Span project_id '${body.project_id}' does not match trace project_id '${existingTrace.project_id}'.`
+          }, { status: 400 })
+        }
+      }
+      
+      // If agent_id is provided, validate it exists and belongs to project
+      if (body.agent_id && body.agent_id !== 'sdk-agent') {
+        const existingAgent = agentDb.getById(body.agent_id)
+        if (!existingAgent) {
+          return NextResponse.json({
+            success: false,
+            error: `Agent with ID '${body.agent_id}' does not exist.`
+          }, { status: 400 })
+        }
+        
+        const projectId = body.project_id || existingTrace.project_id
+        if (existingAgent.project_id !== projectId) {
+          return NextResponse.json({
+            success: false,
+            error: `Agent '${body.agent_id}' does not belong to project '${projectId}'. Agent belongs to project '${existingAgent.project_id}'.`
+          }, { status: 400 })
+        }
       }
     }
 
@@ -233,17 +273,18 @@ export async function POST(request: NextRequest) {
       trace_id: validatedData.traceId,
       parent_span_id: validatedData.parentSpanId || null,
       span_id: validatedData.spanId,
-      name: validatedData.spanName,
-      type: validatedData.spanType,
+      span_name: validatedData.spanName,
+      span_type: validatedData.spanType,
       start_time: validatedData.startTime || new Date().toISOString(),
       end_time: validatedData.endTime || null,
       duration: validatedData.duration || null,
       status: validatedData.status,
-      input: validatedData.inputData ? JSON.stringify(validatedData.inputData) : null,
-      output: validatedData.outputData ? JSON.stringify(validatedData.outputData) : null,
+      error_message: validatedData.errorMessage || null,
+      input_data: validatedData.inputData ? JSON.stringify(validatedData.inputData) : null,
+      output_data: validatedData.outputData ? JSON.stringify(validatedData.outputData) : null,
       metadata: validatedData.metadata ? JSON.stringify(validatedData.metadata) : null,
-      token_usage: validatedData.tokenUsage?.totalTokens || 0,
-      cost: finalCost,
+      tags: validatedData.tags ? JSON.stringify(validatedData.tags) : null,
+      usage: validatedData.tokenUsage ? JSON.stringify(validatedData.tokenUsage) : null,
       // Enhanced cost tracking fields
       total_cost: finalCost,
       input_cost: inputCost,
@@ -253,7 +294,17 @@ export async function POST(request: NextRequest) {
       total_tokens: validatedData.tokenUsage?.totalTokens || 0,
       provider: body.provider || validatedData.metadata?.provider || null,
       model_name: body.model || body.model_name || validatedData.metadata?.model || null,
-      cost_calculation_metadata: costCalculation ? JSON.stringify(costCalculation) : null
+      cost_calculation_metadata: costCalculation ? JSON.stringify(costCalculation) : null,
+      // Conversation-specific fields
+      conversation_session_id: body.conversation_session_id || null,
+      conversation_turn: body.conversation_turn || null,
+      conversation_role: body.conversation_role || null,
+      conversation_context: body.conversation_context ? JSON.stringify(body.conversation_context) : null,
+      // Add direct project+agent linkage for better querying
+      project_id: body.project_id || validatedData.projectId || null,
+      agent_id: body.agent_id || validatedData.agentId || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     })
 
     return NextResponse.json({

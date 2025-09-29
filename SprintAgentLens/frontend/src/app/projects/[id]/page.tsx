@@ -13,6 +13,7 @@ import { ConversationSearch } from '@/components/conversations/ConversationSearc
 import { TraceFeedback } from '@/components/traces/TraceFeedback'
 import { CostAnalyticsChart } from '@/components/traces/CostAnalyticsChart'
 import { ProjectPrompts } from '@/components/prompts/ProjectPrompts'
+import { ProjectConversations } from '@/components/projects/ProjectConversations'
 import { ConversationMetrics, ConversationTableRow, ConversationFilter, SpanData, TraceData, ConversationStatus } from '@/types/agent-lens'
 import { SpanTimeline } from '@/components/spans/SpanTimeline'
 
@@ -946,7 +947,7 @@ function ProjectAgents({ project, onNavigateToPrompts }: { project: Project; onN
   )
 }
 
-function ProjectConversations({ project }: { project: Project }) {
+function LegacyProjectConversations({ project }: { project: Project }) {
   const [viewMode, setViewMode] = useState<'dashboard' | 'thread' | 'span'>('dashboard')
   const [selectedConversation, setSelectedConversation] = useState<ConversationTableRow | null>(null)
   const [selectedSpan, setSelectedSpan] = useState<SpanData | null>(null)

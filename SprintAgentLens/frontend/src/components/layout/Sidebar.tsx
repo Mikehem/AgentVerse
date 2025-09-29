@@ -27,7 +27,6 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, current: true },
   { name: 'Projects', href: '/projects', icon: Folder, current: false },
   { name: 'Agents', href: '/agents', icon: Bot, current: false },
-  { name: 'Conversations', href: '/conversations', icon: MessageCircle, current: false },
   { name: 'Distributed Traces', href: '/distributed-traces', icon: Network, current: false },
   { name: 'Prompts', href: '/prompts', icon: MessageSquare, current: false },
   { name: 'Experiments', href: '/experiments', icon: Zap, current: false },

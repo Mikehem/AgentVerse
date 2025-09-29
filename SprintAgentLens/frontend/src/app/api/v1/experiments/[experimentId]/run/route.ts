@@ -144,10 +144,10 @@ async function processExperimentRun(
     const aggregateScores: any = {}
 
     // Initialize aggregate scores
-    evaluations.forEach(eval => {
-      aggregateScores[eval.id] = {
-        name: eval.name,
-        type: eval.type,
+    evaluations.forEach(evaluation => {
+      aggregateScores[evaluation.id] = {
+        name: evaluation.name,
+        type: evaluation.type,
         scores: [],
         averageScore: 0,
         passRate: 0

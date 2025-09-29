@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { tracesDb } from '@/lib/database'
+import { tracesDb, spansDb, projectDb, agentDb } from '@/lib/database'
 import { calculateCost, type TokenUsage } from '@/lib/costCalculation'
+import { generateSpanId } from '@/lib/idGenerator'
 
 // POST /v1/private/traces - Handle SDK trace submissions
 export async function POST(request: NextRequest) {
@@ -21,11 +22,44 @@ export async function POST(request: NextRequest) {
     
     // Extract agent_id from tags if not directly available
     const traceTags = traceData.tags || {}
-    const agentId = traceData.agent_id || traceData.agentId || traceTags.agent_id || 'sdk-agent'
+    const agentId = traceData.agent_id || traceData.agentId || traceTags.agent_id
+
+    // Validate project exists
+    if (projectId && projectId !== 'proj_production_demo_001') {
+      const existingProject = projectDb.getById(projectId)
+      if (!existingProject) {
+        return NextResponse.json({
+          success: false,
+          error: `Project with ID '${projectId}' does not exist. Please ensure the project is created before submitting traces.`
+        }, { status: 400 })
+      }
+    }
+    
+    // Validate agent exists (if specified and not default)
+    if (agentId && agentId !== 'sdk-agent') {
+      const existingAgent = agentDb.getById(agentId)
+      if (!existingAgent) {
+        return NextResponse.json({
+          success: false,
+          error: `Agent with ID '${agentId}' does not exist. Please ensure the agent is created before submitting traces.`
+        }, { status: 400 })
+      }
+      
+      // Validate agent belongs to the project
+      if (existingAgent.project_id !== projectId) {
+        return NextResponse.json({
+          success: false,
+          error: `Agent '${agentId}' does not belong to project '${projectId}'. Agent belongs to project '${existingAgent.project_id}'.`
+        }, { status: 400 })
+      }
+    }
+
+    // Use validated agentId or fallback to sdk-agent
+    const validatedAgentId = agentId || 'sdk-agent'
     
     const mappedTrace = {
       projectId: projectId,
-      agentId: agentId,
+      agentId: validatedAgentId,
       runId: traceData.id || null,
       conversationId: traceData.conversation_id || traceData.conversationId || null,
       parentTraceId: traceData.parent_id || traceData.parentId || null,
@@ -95,7 +129,7 @@ export async function POST(request: NextRequest) {
       error_message: mappedTrace.errorMessage,
       input_data: mappedTrace.inputData ? JSON.stringify(mappedTrace.inputData) : null,
       output_data: mappedTrace.outputData ? JSON.stringify(mappedTrace.outputData) : null,
-      spans: mappedTrace.spans ? JSON.stringify(mappedTrace.spans) : null,
+      spans: null, // Remove JSON storage, spans will be in separate table
       metadata: JSON.stringify(mappedTrace.metadata),
       tags: JSON.stringify(mappedTrace.tags),
       // Enhanced cost tracking fields
@@ -110,13 +144,92 @@ export async function POST(request: NextRequest) {
       cost_calculation_metadata: costCalculation ? JSON.stringify(costCalculation) : null
     })
 
-    console.log(`✅ SDK trace saved with ID: ${trace.id}, cost: $${finalCost}`)
+    // Create separate span records in the spans table
+    const createdSpans = []
+    if (mappedTrace.spans && Array.isArray(mappedTrace.spans)) {
+      for (const spanData of mappedTrace.spans) {
+        try {
+          // Check if this is a conversation span (contains conversation-specific fields)
+          const isConversationSpan = !!(
+            spanData.conversation_session_id ||
+            spanData.conversation_turn !== undefined ||
+            spanData.conversation_role ||
+            spanData.conversation_context ||
+            (spanData.metadata && (
+              spanData.metadata.conversation_session_id ||
+              spanData.metadata.conversation_turn !== undefined ||
+              spanData.metadata.conversation_role
+            ))
+          )
+
+          // Extract conversation fields from span data or metadata
+          const conversationSessionId = spanData.conversation_session_id || 
+            spanData.metadata?.conversation_session_id || null
+          const conversationTurn = spanData.conversation_turn !== undefined 
+            ? spanData.conversation_turn 
+            : spanData.metadata?.conversation_turn || null
+          const conversationRole = spanData.conversation_role || 
+            spanData.metadata?.conversation_role || null
+          const conversationContext = spanData.conversation_context || 
+            spanData.metadata?.conversation_context || null
+
+          // Map span field names from SDK format to database format
+          const span = spansDb.create({
+            trace_id: trace.id,
+            parent_span_id: spanData.parent_id || spanData.parent_span_id || null,
+            span_id: spanData.id || spanData.span_id || generateSpanId(),
+            span_name: spanData.name || 'Unnamed Span',
+            span_type: spanData.span_type || spanData.type || (isConversationSpan ? 'conversation' : 'custom'),
+            start_time: spanData.start_time || spanData.startTime || new Date().toISOString(),
+            end_time: spanData.end_time || spanData.endTime || null,
+            duration: spanData.duration_ms || spanData.duration || null,
+            status: spanData.status || 'completed',
+            error_message: spanData.error?.message || spanData.error_message || null,
+            input_data: spanData.input?.data ? JSON.stringify(spanData.input.data) : 
+                       (spanData.input ? JSON.stringify(spanData.input) : null),
+            output_data: spanData.output?.data ? JSON.stringify(spanData.output.data) : 
+                        (spanData.output ? JSON.stringify(spanData.output) : null),
+            metadata: spanData.metadata ? JSON.stringify(spanData.metadata) : null,
+            tags: spanData.tags ? JSON.stringify(spanData.tags) : null,
+            usage: spanData.tokens_usage ? JSON.stringify(spanData.tokens_usage) : null,
+            model_name: spanData.model || null,
+            provider: spanData.provider || null,
+            total_cost: spanData.cost || 0,
+            prompt_tokens: spanData.tokens_usage?.prompt_tokens || 0,
+            completion_tokens: spanData.tokens_usage?.completion_tokens || 0,
+            total_tokens: spanData.tokens_usage?.total_tokens || 0,
+            // Conversation-specific fields
+            conversation_session_id: conversationSessionId,
+            conversation_turn: conversationTurn,
+            conversation_role: conversationRole,
+            conversation_context: conversationContext ? JSON.stringify(conversationContext) : null,
+            // Add direct project+agent linkage for better querying
+            project_id: mappedTrace.projectId,
+            agent_id: mappedTrace.agentId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          createdSpans.push(span)
+          
+          if (isConversationSpan) {
+            console.log(`✅ Created conversation span: ${span.span_name} (turn ${conversationTurn}, role: ${conversationRole}) for trace ${trace.id}`)
+          } else {
+            console.log(`✅ Created span: ${span.span_name} for trace ${trace.id}`)
+          }
+        } catch (spanError) {
+          console.error(`❌ Failed to create span for trace ${trace.id}:`, spanError)
+        }
+      }
+    }
+
+    console.log(`✅ SDK trace saved with ID: ${trace.id}, cost: $${finalCost}, spans: ${createdSpans.length}`)
 
     // Return success response in format expected by SDK
     return NextResponse.json({
       success: true,
       data: {
         id: trace.id,
+        spans_created: createdSpans.length,
         ...mappedTrace
       }
     }, { status: 201 })

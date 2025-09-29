@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Configure Sprint Lens before using any decorators
 sprintlens.configure(
-    url="http://localhost:3001",
+    url="http://localhost:3000",
     username="admin",
     password="OpikAdmin2024!",
     workspace_id="default",

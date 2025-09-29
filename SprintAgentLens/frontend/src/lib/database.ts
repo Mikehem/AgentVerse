@@ -171,6 +171,73 @@ const migrateTables = () => {
       db.exec('ALTER TABLE spans ADD COLUMN cost_calculation_metadata TEXT') // JSON with detailed cost breakdown
     }
 
+    // Add conversation-specific fields to spans table for conversation-as-span architecture
+    if (!spanColumns.some(col => col.name === 'conversation_session_id')) {
+      console.log('📝 Adding conversation-specific fields to spans table...')
+      db.exec('ALTER TABLE spans ADD COLUMN conversation_session_id TEXT')
+      db.exec('ALTER TABLE spans ADD COLUMN conversation_turn INTEGER') // 1, 2, 3... for multi-turn
+      db.exec('ALTER TABLE spans ADD COLUMN conversation_role TEXT') // 'user_input', 'assistant_response', 'system_message', 'tool_call'
+      db.exec('ALTER TABLE spans ADD COLUMN conversation_context TEXT') // JSON: previous context for this turn
+      
+      // Create indices for conversation queries
+      db.exec('CREATE INDEX IF NOT EXISTS idx_spans_conversation_session ON spans(conversation_session_id)')
+      db.exec('CREATE INDEX IF NOT EXISTS idx_spans_conversation_turn ON spans(conversation_turn)')
+    }
+
+    // Add project_id and agent_id to spans for direct project+agent linkage
+    const hasProjectIdInSpans = spanColumns.some(col => col.name === 'project_id')
+    const hasAgentIdInSpans = spanColumns.some(col => col.name === 'agent_id')
+    
+    if (!hasProjectIdInSpans) {
+      console.log('📝 Adding project_id column to spans table for direct project linkage...')
+      db.exec('ALTER TABLE spans ADD COLUMN project_id TEXT')
+      // Create index for better query performance
+      db.exec('CREATE INDEX IF NOT EXISTS idx_spans_project_id ON spans(project_id)')
+    }
+    
+    if (!hasAgentIdInSpans) {
+      console.log('📝 Adding agent_id column to spans table for direct agent linkage...')
+      db.exec('ALTER TABLE spans ADD COLUMN agent_id TEXT')
+      // Create index for better query performance  
+      db.exec('CREATE INDEX IF NOT EXISTS idx_spans_agent_id ON spans(agent_id)')
+    }
+
+    // Check if conversation_sessions table exists (conversation-as-span architecture)
+    const conversationSessionTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation_sessions'").all()
+    if (conversationSessionTables.length === 0) {
+      console.log('📝 Creating conversation_sessions table for conversation-as-span architecture...')
+      db.exec(`
+        CREATE TABLE conversation_sessions (
+          id TEXT PRIMARY KEY,
+          project_id TEXT NOT NULL,
+          agent_id TEXT NOT NULL,
+          session_id TEXT NOT NULL,  -- Groups related conversations
+          thread_id TEXT,            -- For multi-turn conversations
+          user_id TEXT,              -- Optional user identifier
+          session_name TEXT,         -- Human-readable session name
+          status TEXT NOT NULL DEFAULT 'active', -- 'active', 'completed', 'abandoned'
+          total_turns INTEGER DEFAULT 0,         -- Number of conversation turns
+          total_cost REAL DEFAULT 0,             -- Aggregate cost for session
+          total_tokens INTEGER DEFAULT 0,        -- Aggregate tokens for session
+          started_at TEXT NOT NULL,              -- First conversation timestamp
+          last_activity_at TEXT,                 -- Last conversation timestamp
+          metadata TEXT,                         -- JSON object for session metadata
+          tags TEXT,                            -- JSON array of session tags
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+          FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
+        )
+      `)
+      
+      // Create indices for conversation_sessions
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_conversation_sessions_project_id ON conversation_sessions(project_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_conversation_sessions_agent_id ON conversation_sessions(agent_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_conversation_sessions_session_id ON conversation_sessions(session_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_conversation_sessions_thread_id ON conversation_sessions(thread_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_conversation_sessions_started_at ON conversation_sessions(started_at)`)
+    }
+
     // Check if datasets table exists
     const datasetTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='datasets'").all()
     if (datasetTables.length === 0) {
@@ -1423,7 +1490,7 @@ const transformProject = (raw: any): Project => {
 }
 
 // Project Operations
-export const projectDb = {
+const projectDb = {
   // Get all projects
   getAll: (): Project[] => {
     const stmt = db.prepare(`
@@ -1588,7 +1655,7 @@ const transformAgent = (raw: any): Agent => {
 }
 
 // Agent Operations
-export const agentDb = {
+const agentDb = {
   // Get all agents
   getAll: (): Agent[] => {
     const stmt = db.prepare(`
@@ -2194,8 +2261,11 @@ export const spansDb = {
         trace_id, parent_span_id, span_id, span_name, span_type,
         start_time, end_time, duration, status, error_message,
         input_data, output_data, metadata, tags, usage,
-        model_name, model_parameters, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        model_name, model_parameters, created_at, updated_at,
+        total_cost, input_cost, output_cost, prompt_tokens, completion_tokens, total_tokens, provider, cost_calculation_metadata,
+        conversation_session_id, conversation_turn, conversation_role, conversation_context,
+        project_id, agent_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     
     const result = stmt.run(
@@ -2217,7 +2287,21 @@ export const spansDb = {
       data.model_name || null,                                                                 // model_name
       data.model_parameters || null,                                                           // model_parameters
       data.created_at || now,                                                                  // created_at
-      now                                                                                      // updated_at
+      now,                                                                                     // updated_at
+      data.total_cost || 0,                                                                    // total_cost
+      data.input_cost || 0,                                                                    // input_cost
+      data.output_cost || 0,                                                                   // output_cost
+      data.prompt_tokens || 0,                                                                 // prompt_tokens
+      data.completion_tokens || 0,                                                             // completion_tokens
+      data.total_tokens || 0,                                                                  // total_tokens
+      data.provider || null,                                                                   // provider
+      data.cost_calculation_metadata || null,                                                  // cost_calculation_metadata
+      data.conversation_session_id || null,                                                    // conversation_session_id
+      data.conversation_turn || null,                                                          // conversation_turn
+      data.conversation_role || null,                                                          // conversation_role
+      data.conversation_context || null,                                                       // conversation_context
+      data.project_id || null,                                                              // project_id
+      data.agent_id || null                                                                 // agent_id
     )
     
     return spansDb.getById(result.lastInsertRowid as number)
@@ -3543,9 +3627,183 @@ export const metricResultsDb = {
   }
 }
 
+// Conversation Sessions Database Operations (conversation-as-span architecture)
+const conversationSessionsDb = {
+  // Get all conversation sessions
+  getAll: (query?: string, params?: any[]): any[] => {
+    if (query && params) {
+      const stmt = db.prepare(query)
+      return stmt.all(...params)
+    }
+    const stmt = db.prepare('SELECT * FROM conversation_sessions ORDER BY started_at DESC')
+    return stmt.all()
+  },
+
+  // Get session by ID
+  getById: (id: string): any | null => {
+    const stmt = db.prepare('SELECT * FROM conversation_sessions WHERE id = ?')
+    return stmt.get(id) as any
+  },
+
+  // Get sessions by project ID
+  getByProjectId: (projectId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM conversation_sessions WHERE project_id = ? ORDER BY started_at DESC')
+    return stmt.all(projectId)
+  },
+
+  // Get sessions by agent ID
+  getByAgentId: (agentId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM conversation_sessions WHERE agent_id = ? ORDER BY started_at DESC')
+    return stmt.all(agentId)
+  },
+
+  // Get sessions by session ID (groups related conversations)
+  getBySessionId: (sessionId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM conversation_sessions WHERE session_id = ? ORDER BY started_at DESC')
+    return stmt.all(sessionId)
+  },
+
+  // Get sessions by thread ID (multi-turn conversations)
+  getByThreadId: (threadId: string): any[] => {
+    const stmt = db.prepare('SELECT * FROM conversation_sessions WHERE thread_id = ? ORDER BY started_at DESC')
+    return stmt.all(threadId)
+  },
+
+  // Create new conversation session
+  create: (data: any): any => {
+    const id = data.id || generateConversationId()
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      INSERT INTO conversation_sessions 
+      (id, project_id, agent_id, session_id, thread_id, user_id, session_name, status, 
+       total_turns, total_cost, total_tokens, started_at, last_activity_at, metadata, tags, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
+    stmt.run(
+      id,
+      data.project_id,
+      data.agent_id,
+      data.session_id,
+      data.thread_id || null,
+      data.user_id || null,
+      data.session_name || null,
+      data.status || 'active',
+      data.total_turns || 0,
+      data.total_cost || 0,
+      data.total_tokens || 0,
+      data.started_at || now,
+      data.last_activity_at || now,
+      data.metadata || null,
+      data.tags || null,
+      now,
+      now
+    )
+    
+    return { id, ...data, created_at: now, updated_at: now }
+  },
+
+  // Update conversation session
+  update: (id: string, data: any): boolean => {
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      UPDATE conversation_sessions 
+      SET session_name = ?, status = ?, total_turns = ?, total_cost = ?, total_tokens = ?,
+          last_activity_at = ?, metadata = ?, tags = ?, updated_at = ?
+      WHERE id = ?
+    `)
+    
+    const result = stmt.run(
+      data.session_name,
+      data.status,
+      data.total_turns,
+      data.total_cost,
+      data.total_tokens,
+      data.last_activity_at || now,
+      data.metadata,
+      data.tags,
+      now,
+      id
+    )
+    
+    return result.changes > 0
+  },
+
+  // Increment session metrics (turns, cost, tokens)
+  incrementMetrics: (id: string, turnIncrement: number = 1, costIncrement: number = 0, tokenIncrement: number = 0): boolean => {
+    const now = new Date().toISOString()
+    
+    const stmt = db.prepare(`
+      UPDATE conversation_sessions 
+      SET total_turns = total_turns + ?, 
+          total_cost = total_cost + ?, 
+          total_tokens = total_tokens + ?,
+          last_activity_at = ?,
+          updated_at = ?
+      WHERE id = ?
+    `)
+    
+    const result = stmt.run(turnIncrement, costIncrement, tokenIncrement, now, now, id)
+    return result.changes > 0
+  },
+
+  // Delete conversation session
+  delete: (id: string): boolean => {
+    const stmt = db.prepare('DELETE FROM conversation_sessions WHERE id = ?')
+    const result = stmt.run(id)
+    return result.changes > 0
+  },
+
+  // Get conversation spans for a session
+  getConversationSpans: (sessionId: string): any[] => {
+    const stmt = db.prepare(`
+      SELECT s.*, t.operation_name as trace_operation 
+      FROM spans s
+      LEFT JOIN traces t ON s.trace_id = t.id
+      WHERE s.conversation_session_id = ?
+      ORDER BY s.conversation_turn ASC, s.start_time ASC
+    `)
+    return stmt.all(sessionId)
+  },
+
+  // Get session statistics
+  getSessionStats: (projectId?: string, agentId?: string): any => {
+    let query = `
+      SELECT 
+        COUNT(*) as total_sessions,
+        COUNT(CASE WHEN status = 'active' THEN 1 END) as active_sessions,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_sessions,
+        AVG(total_turns) as avg_turns_per_session,
+        AVG(total_cost) as avg_cost_per_session,
+        AVG(total_tokens) as avg_tokens_per_session,
+        SUM(total_cost) as total_session_cost,
+        SUM(total_tokens) as total_session_tokens
+      FROM conversation_sessions
+      WHERE 1=1
+    `
+    
+    const params: any[] = []
+    
+    if (projectId) {
+      query += ' AND project_id = ?'
+      params.push(projectId)
+    }
+    
+    if (agentId) {
+      query += ' AND agent_id = ?'
+      params.push(agentId)
+    }
+    
+    const stmt = db.prepare(query)
+    return params.length > 0 ? stmt.get(...params) : stmt.get()
+  }
+}
+
 // Initialize on module load
 initDatabase()
 
 // Export database instances
-export { db, feedbackScoresDb, feedbackDefinitionsDb, distributedTracesDb, distributedSpansDb, a2aCommunicationsDb, llmProvidersDb, promptsDb, promptVersionsDb, agentPromptLinksDb }
+export { db, feedbackScoresDb, feedbackDefinitionsDb, distributedTracesDb, distributedSpansDb, a2aCommunicationsDb, llmProvidersDb, promptsDb, promptVersionsDb, agentPromptLinksDb, conversationSessionsDb, projectDb, agentDb }
 export default db
