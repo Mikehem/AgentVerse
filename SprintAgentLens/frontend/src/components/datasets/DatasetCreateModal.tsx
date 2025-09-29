@@ -58,6 +58,12 @@ export function DatasetCreateModal({
   const [items, setItems] = useState<DatasetItem[]>([
     { input_data: {}, expected_output: {}, metadata: {} }
   ])
+  
+  // Local state for raw text editing
+  const [itemTexts, setItemTexts] = useState<Record<string, string>>({
+    '0_input': '{}',
+    '0_output': '{}'
+  })
 
   const resetForm = () => {
     setStep('method')
@@ -71,6 +77,7 @@ export function DatasetCreateModal({
     setColumnMapping({})
     setPreview([])
     setItems([{ input_data: {}, expected_output: {}, metadata: {} }])
+    setItemTexts({ '0_input': '{}', '0_output': '{}' })
     setError(null)
   }
 
@@ -173,7 +180,13 @@ export function DatasetCreateModal({
   }
 
   const addManualItem = () => {
+    const newIndex = items.length
     setItems([...items, { input_data: {}, expected_output: {}, metadata: {} }])
+    setItemTexts({
+      ...itemTexts,
+      [`${newIndex}_input`]: '{}',
+      [`${newIndex}_output`]: '{}'
+    })
   }
 
   const updateManualItem = (index: number, field: keyof DatasetItem, value: any) => {
@@ -185,6 +198,16 @@ export function DatasetCreateModal({
   const removeManualItem = (index: number) => {
     if (items.length > 1) {
       setItems(items.filter((_, i) => i !== index))
+      // Remove text state for deleted item and reindex remaining items
+      const newTexts: Record<string, string> = {}
+      Object.keys(itemTexts).forEach(key => {
+        if (!key.startsWith(`${index}_`)) {
+          const [idx, field] = key.split('_')
+          const newIdx = parseInt(idx) > index ? parseInt(idx) - 1 : parseInt(idx)
+          newTexts[`${newIdx}_${field}`] = itemTexts[key]
+        }
+      })
+      setItemTexts(newTexts)
     }
   }
 
@@ -591,10 +614,16 @@ export function DatasetCreateModal({
                             Input Data (JSON)
                           </label>
                           <textarea
-                            value={JSON.stringify(item.input_data, null, 2)}
+                            value={itemTexts[`${index}_input`] || JSON.stringify(item.input_data, null, 2)}
                             onChange={(e) => {
+                              const newText = e.target.value
+                              setItemTexts(prev => ({
+                                ...prev,
+                                [`${index}_input`]: newText
+                              }))
+                              
                               try {
-                                const parsed = JSON.parse(e.target.value)
+                                const parsed = JSON.parse(newText)
                                 updateManualItem(index, 'input_data', parsed)
                               } catch (err) {
                                 // Keep typing, don't update until valid JSON
@@ -611,10 +640,16 @@ export function DatasetCreateModal({
                             Expected Output (JSON)
                           </label>
                           <textarea
-                            value={JSON.stringify(item.expected_output, null, 2)}
+                            value={itemTexts[`${index}_output`] || JSON.stringify(item.expected_output, null, 2)}
                             onChange={(e) => {
+                              const newText = e.target.value
+                              setItemTexts(prev => ({
+                                ...prev,
+                                [`${index}_output`]: newText
+                              }))
+                              
                               try {
-                                const parsed = JSON.parse(e.target.value)
+                                const parsed = JSON.parse(newText)
                                 updateManualItem(index, 'expected_output', parsed)
                               } catch (err) {
                                 // Keep typing, don't update until valid JSON

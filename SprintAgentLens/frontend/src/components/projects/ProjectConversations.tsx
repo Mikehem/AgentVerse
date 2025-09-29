@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MessageSquare, Filter, Search, RefreshCw, Download, Eye, Clock, DollarSign, Zap, TrendingUp, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { MessageSquare, Filter, Search, RefreshCw, Download, Eye, Clock, DollarSign, Zap, TrendingUp, Users, CheckCircle, XCircle, AlertCircle, Database, Plus } from 'lucide-react'
+import { AddToDatasetModal } from '@/components/datasets/AddToDatasetModal'
 
 interface ProjectConversationsProps {
   project: {
@@ -41,6 +42,9 @@ export function ProjectConversations({ project }: ProjectConversationsProps) {
   const [selectedAgent, setSelectedAgent] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedConversation, setSelectedConversation] = useState<ConversationSession | null>(null)
+  const [showAddToDatasetModal, setShowAddToDatasetModal] = useState(false)
+  const [selectedConversations, setSelectedConversations] = useState<Set<string>>(new Set())
+  const [pendingConversationData, setPendingConversationData] = useState<any[]>([])
 
   const fetchConversations = async () => {
     setLoading(true)
@@ -138,6 +142,69 @@ export function ProjectConversations({ project }: ProjectConversationsProps) {
   useEffect(() => {
     fetchConversations()
   }, [project.id])
+
+  const handleAddToDataset = (conversationsToAdd?: ConversationSession[]) => {
+    let dataToAdd: ConversationSession[]
+    
+    if (conversationsToAdd) {
+      // Single conversation from action button
+      dataToAdd = conversationsToAdd
+    } else {
+      // Bulk selection
+      if (selectedConversations.size === 0) return
+      dataToAdd = conversations.filter(conv => selectedConversations.has(conv.id))
+    }
+    
+    // Transform conversation data for the modal
+    const transformedData = dataToAdd.map(conv => {
+      // Extract input/output from conversation spans
+      const userInputSpan = conv.conversation_spans.find(span => span.conversation_role === 'user_input')
+      const assistantResponseSpan = conv.conversation_spans.find(span => span.conversation_role === 'assistant_response')
+      
+      const input = userInputSpan ? (() => {
+        try {
+          const parsed = JSON.parse(userInputSpan.input_data || '{}')
+          return parsed.message || parsed.content || userInputSpan.input_data || ''
+        } catch {
+          return userInputSpan.input_data || ''
+        }
+      })() : ''
+      
+      const output = assistantResponseSpan ? (() => {
+        try {
+          const parsed = JSON.parse(assistantResponseSpan.output_data || '{}')
+          return parsed.message || parsed.content || assistantResponseSpan.output_data || ''
+        } catch {
+          return assistantResponseSpan.output_data || ''
+        }
+      })() : ''
+      
+      return {
+        id: conv.id,
+        input,
+        output,
+        agent_name: conv.agent_name,
+        metadata: {
+          session_id: conv.session_id,
+          turn_count: conv.turn_count,
+          total_cost: conv.total_cost,
+          total_tokens: conv.total_tokens,
+          started_at: conv.started_at,
+          last_activity: conv.last_activity,
+          status: conv.status
+        }
+      }
+    })
+    
+    setPendingConversationData(transformedData)
+    setShowAddToDatasetModal(true)
+  }
+  
+  const handleDatasetModalSuccess = () => {
+    setShowAddToDatasetModal(false)
+    setPendingConversationData([])
+    setSelectedConversations(new Set())
+  }
 
   // Filter conversations
   const filteredConversations = conversations.filter(conv => {
@@ -272,6 +339,34 @@ export function ProjectConversations({ project }: ProjectConversationsProps) {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedConversations.size > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-blue-800">
+                {selectedConversations.size} conversation{selectedConversations.size !== 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleAddToDataset()}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add to Dataset
+              </button>
+              <button
+                onClick={() => setSelectedConversations(new Set())}
+                className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm"
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Conversations Table */}
       <div className="bg-white rounded-lg border overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200">
@@ -284,6 +379,23 @@ export function ProjectConversations({ project }: ProjectConversationsProps) {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedConversations.size === filteredConversations.length && filteredConversations.length > 0}
+                    ref={(input) => {
+                      if (input) input.indeterminate = selectedConversations.size > 0 && selectedConversations.size < filteredConversations.length
+                    }}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedConversations(new Set(filteredConversations.map(c => c.id)))
+                      } else {
+                        setSelectedConversations(new Set())
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turns</th>
@@ -297,6 +409,22 @@ export function ProjectConversations({ project }: ProjectConversationsProps) {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredConversations.map((conversation) => (
                 <tr key={conversation.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedConversations.has(conversation.id)}
+                      onChange={(e) => {
+                        const newSelection = new Set(selectedConversations)
+                        if (e.target.checked) {
+                          newSelection.add(conversation.id)
+                        } else {
+                          newSelection.delete(conversation.id)
+                        }
+                        setSelectedConversations(newSelection)
+                      }}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="text-sm font-medium text-gray-900 truncate max-w-32">
                       {conversation.session_id}
@@ -328,13 +456,22 @@ export function ProjectConversations({ project }: ProjectConversationsProps) {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => setSelectedConversation(conversation)}
-                      className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                    >
-                      <Eye className="h-4 w-4" />
-                      View
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedConversation(conversation)}
+                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleAddToDataset([conversation])}
+                        className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                        title="Add to Dataset"
+                      >
+                        <Database className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -473,6 +610,16 @@ export function ProjectConversations({ project }: ProjectConversationsProps) {
           </div>
         </div>
       )}
+
+      {/* Add to Dataset Modal */}
+      <AddToDatasetModal
+        isOpen={showAddToDatasetModal}
+        onClose={() => setShowAddToDatasetModal(false)}
+        onSuccess={handleDatasetModalSuccess}
+        projectId={project.id}
+        conversationData={pendingConversationData}
+        dataType="conversation"
+      />
     </div>
   )
 }

@@ -18,6 +18,7 @@ import { ConversationTableRow, ConversationStatus } from '@/types/agent-lens'
 import { safeFormatDateTime } from '@/lib/dateUtils'
 import { cn, formatNumber } from '@/lib/utils'
 import { ConversationFeedback } from './ConversationFeedback'
+import { AddToDatasetModal } from '@/components/datasets/AddToDatasetModal'
 
 interface ConversationTableProps {
   conversations: ConversationTableRow[]
@@ -40,6 +41,8 @@ export function ConversationTable({
   onConversationSelectionChange,
   onAddToDataset
 }: ConversationTableProps) {
+  const [showAddToDatasetModal, setShowAddToDatasetModal] = useState(false)
+  const [pendingConversations, setPendingConversations] = useState<ConversationTableRow[]>([])
   const handleSelectAll = (checked: boolean) => {
     if (!onConversationSelectionChange) return
     
@@ -63,13 +66,27 @@ export function ConversationTable({
     onConversationSelectionChange(newSelection)
   }
 
-  const handleAddToDataset = () => {
-    if (!onAddToDataset || selectedConversations.size === 0) return
+  const handleAddToDataset = (conversationsToAdd?: ConversationTableRow[]) => {
+    let dataToAdd: ConversationTableRow[]
     
-    const selectedConversationData = conversations.filter(conv => 
-      selectedConversations.has(conv.id)
-    )
-    onAddToDataset(selectedConversationData)
+    if (conversationsToAdd) {
+      // Single conversation from action button
+      dataToAdd = conversationsToAdd
+    } else {
+      // Bulk selection
+      if (selectedConversations.size === 0) return
+      dataToAdd = conversations.filter(conv => selectedConversations.has(conv.id))
+    }
+    
+    setPendingConversations(dataToAdd)
+    setShowAddToDatasetModal(true)
+  }
+  
+  const handleDatasetModalSuccess = () => {
+    setShowAddToDatasetModal(false)
+    setPendingConversations([])
+    // Clear selection after successful addition
+    onConversationSelectionChange?.(new Set())
   }
 
   const isAllSelected = conversations.length > 0 && selectedConversations.size === conversations.length
@@ -371,9 +388,9 @@ export function ConversationTable({
                   >
                     <ExternalLink className="w-4 h-4" />
                   </button>
-                  {onAddToDataset && (
+                  {projectId && (
                     <button 
-                      onClick={() => onAddToDataset([conversation])}
+                      onClick={() => handleAddToDataset([conversation])}
                       className="p-1 text-gray-400 hover:text-primary transition-colors"
                       title="Add to Dataset"
                     >
@@ -386,6 +403,33 @@ export function ConversationTable({
           ))}
         </tbody>
       </table>
+    </div>
+      
+      {/* Add to Dataset Modal */}
+      {projectId && (
+        <AddToDatasetModal
+          isOpen={showAddToDatasetModal}
+          onClose={() => setShowAddToDatasetModal(false)}
+          onSuccess={handleDatasetModalSuccess}
+          projectId={projectId}
+          conversationData={pendingConversations.map(conv => ({
+            id: conv.id,
+            input: conv.input,
+            output: conv.output,
+            agent_name: conv.agent_name,
+            metadata: {
+              status: conv.status,
+              response_time: conv.response_time,
+              token_usage: conv.token_usage,
+              cost: conv.cost,
+              created_at: conv.created_at,
+              thread_id: conv.thread_id,
+              turn_count: conv.turn_count
+            }
+          }))}
+          dataType="conversation"
+        />
+      )}
     </div>
   )
 }
