@@ -2,7 +2,7 @@
 """
 Simple SDK Integration Test
 
-Test the Opik-compatible SDK without external dependencies.
+Test the Master-compatible SDK without external dependencies.
 """
 
 import json
@@ -13,10 +13,10 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from opik_client import configure, DatasetItem
+    from Master_client import configure, DatasetItem
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("Make sure opik_client.py is in the same directory")
+    print("Make sure Master_client.py is in the same directory")
     sys.exit(1)
 
 
@@ -145,7 +145,7 @@ def main():
     
     if basic_test and operations_test:
         print("\n🎉 All SDK integration tests passed!")
-        print("\nThe Opik-compatible SDK is working correctly with Sprint Agent Lens")
+        print("\nThe Master-compatible SDK is working correctly with Sprint Agent Lens")
         return True
     else:
         print("\n❌ Some tests failed")

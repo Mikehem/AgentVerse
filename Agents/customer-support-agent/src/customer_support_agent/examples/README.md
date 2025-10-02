@@ -123,7 +123,7 @@ All examples use the same Sprint Lens configuration:
 sprintlens.configure(
     url="http://localhost:3001",
     username="admin",
-    password="OpikAdmin2024!",
+    password="MasterAdmin2024!",
     workspace_id="default",
     project_name="project-1758599350381"
 )
@@ -181,7 +181,7 @@ All examples use consistent tagging:
    - Check the backend logs for errors
 
 3. **Authentication failures**
-   - Ensure credentials: admin / OpikAdmin2024!
+   - Ensure credentials: admin / MasterAdmin2024!
    - Check backend connectivity
 
 ### Getting Help

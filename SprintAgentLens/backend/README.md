@@ -69,8 +69,8 @@ The server will start at `http://localhost:3000`
 
 After running the seed script:
 
-- **Admin**: `admin` / `OpikAdmin2024!`
-- **Test User** (dev only): `testuser` / `OpikAdmin2024!`
+- **Admin**: `admin` / `MasterAdmin2024!`
+- **Test User** (dev only): `testuser` / `MasterAdmin2024!`
 
 ⚠️ **Change the admin password immediately in production!**
 
@@ -110,7 +110,7 @@ backend/
 
 ✅ **100% Java backend compatibility**:
 - Password verification uses `password + salt` concatenation
-- Maintains exact same hashing behavior as OPIK Java backend
+- Maintains exact same hashing behavior as Master Java backend
 - Seamless migration path for existing users
 
 ### API Endpoints
@@ -131,7 +131,7 @@ curl -X POST http://localhost:3000/v1/enterprise/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
-    "password": "OpikAdmin2024!",
+    "password": "MasterAdmin2024!",
     "workspaceId": "default"
   }'
 

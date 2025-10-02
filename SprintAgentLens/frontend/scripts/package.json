@@ -1,0 +1,27 @@
+{
+  "name": "sprintlens-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "SprintLens MCP Server for IDE integration",
+  "main": "sprintlens-mcp.js",
+  "bin": {
+    "sprintlens-mcp": "./sprintlens-mcp.js"
+  },
+  "scripts": {
+    "start": "node sprintlens-mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sprintlens",
+    "llm",
+    "ai",
+    "ide-integration"
+  ],
+  "author": "SprintLens",
+  "license": "MIT"
+}

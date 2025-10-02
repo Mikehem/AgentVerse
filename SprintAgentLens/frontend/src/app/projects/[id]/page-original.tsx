@@ -2639,7 +2639,7 @@ function ProjectMetrics({ project }: { project: Project }) {
 }
 
 
-interface OpikTrace {
+interface MasterTrace {
   id: string
   name: string
   startTime: string
@@ -2652,7 +2652,7 @@ interface OpikTrace {
   tags?: string[]
 }
 
-function MetadataEditor({ trace, onUpdate }: { trace: OpikTrace; onUpdate: (metadata: Record<string, any>) => void }) {
+function MetadataEditor({ trace, onUpdate }: { trace: MasterTrace; onUpdate: (metadata: Record<string, any>) => void }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedMetadata, setEditedMetadata] = useState<string>('')
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -2857,7 +2857,7 @@ function MetadataEditor({ trace, onUpdate }: { trace: OpikTrace; onUpdate: (meta
 }
 
 
-function TraceAnalyticsDashboard({ traces }: { traces: OpikTrace[] }) {
+function TraceAnalyticsDashboard({ traces }: { traces: MasterTrace[] }) {
   const analytics = useMemo(() => {
     const total = traces.length
     const successful = traces.filter(t => t.status === 'success').length
@@ -3100,8 +3100,8 @@ function TraceAnalyticsDashboard({ traces }: { traces: OpikTrace[] }) {
 }
 
 function ProjectTraces({ project }: { project: Project }) {
-  const [selectedTrace, setSelectedTrace] = useState<OpikTrace | null>(null)
-  const [traces, setTraces] = useState<OpikTrace[]>([])
+  const [selectedTrace, setSelectedTrace] = useState<MasterTrace | null>(null)
+  const [traces, setTraces] = useState<MasterTrace[]>([])
   const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')

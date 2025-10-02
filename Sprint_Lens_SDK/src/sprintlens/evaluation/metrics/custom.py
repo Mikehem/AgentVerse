@@ -9,7 +9,7 @@ import time
 from typing import List, Any, Dict, Optional, Callable, Awaitable, Union
 from dataclasses import dataclass
 
-from .base import BaseMetric, MetricResult
+from .base import BaseMetric, MetricResult, ScoreResult
 from .llm_based import LLMBasedMetric, LLMJudgeConfig
 from ...llm.providers import LLMProvider
 
@@ -372,3 +372,243 @@ def create_length_metric(
         description=description or f"Length-based metric: {name}",
         supports_types=[str]
     )
+
+
+# Comet/AgentLens-style Custom Metrics
+
+class CometStyleCustomMetric(BaseMetric):
+    """
+    Custom metric following Comet/AgentLens patterns.
+    
+    Users subclass this and implement the score() method to return ScoreResult or List[ScoreResult].
+    This follows the pattern from https://www.comet.com/docs/opik/evaluation/metrics/custom_metric
+    """
+    
+    def __init__(self, name: Optional[str] = None, **kwargs):
+        super().__init__(name=name or self.__class__.__name__, **kwargs)
+    
+    def score(self, input: str = "", output: str = "", **kwargs) -> Union[ScoreResult, List[ScoreResult]]:
+        """
+        Calculate the metric score.
+        
+        Args:
+            input: The input/question
+            output: The model's output/response
+            **kwargs: Additional arguments (context, expected, etc.)
+            
+        Returns:
+            ScoreResult or list of ScoreResults
+        """
+        raise NotImplementedError("Subclasses must implement the score method")
+    
+    async def score_async(self, input: str = "", output: str = "", **kwargs) -> Union[ScoreResult, List[ScoreResult]]:
+        """Async version of score method."""
+        return self.score(input=input, output=output, **kwargs)
+    
+    def evaluate(self, predictions: List[Any], ground_truth: List[Any], **kwargs) -> MetricResult:
+        """
+        Evaluate using the Comet-style score method.
+        
+        Converts between the legacy interface and the new score-based interface.
+        """
+        start_time = time.time()
+        
+        try:
+            # For single item evaluation, use first prediction
+            if predictions:
+                input_text = ground_truth[0] if ground_truth else ""
+                output_text = str(predictions[0])
+                
+                # Extract additional context from kwargs
+                context = kwargs.get("context", "")
+                
+                result = self.score(input=input_text, output=output_text, context=context, **kwargs)
+                
+                if isinstance(result, list):
+                    # Multi-score metric
+                    primary_score = result[0] if result else ScoreResult(0.0, self.name)
+                    return MetricResult(
+                        name=self.name,
+                        value=primary_score.value,
+                        details={
+                            "scores": [r.to_metric_result().to_dict() for r in result],
+                            "primary_score": primary_score.to_metric_result().to_dict(),
+                            "reason": primary_score.reason
+                        },
+                        duration_ms=(time.time() - start_time) * 1000
+                    )
+                else:
+                    # Single score metric
+                    return MetricResult(
+                        name=self.name,
+                        value=result.value,
+                        details={"reason": result.reason} if result.reason else {},
+                        duration_ms=(time.time() - start_time) * 1000
+                    )
+            else:
+                return MetricResult(
+                    name=self.name,
+                    value=0.0,
+                    error="No predictions provided",
+                    duration_ms=(time.time() - start_time) * 1000
+                )
+                
+        except Exception as e:
+            return MetricResult(
+                name=self.name,
+                value=0.0,
+                error=str(e),
+                duration_ms=(time.time() - start_time) * 1000
+            )
+    
+    async def evaluate_async(self, predictions: List[Any], ground_truth: List[Any], **kwargs) -> MetricResult:
+        """Async version of evaluate method."""
+        start_time = time.time()
+        
+        try:
+            # For single item evaluation, use first prediction
+            if predictions:
+                input_text = ground_truth[0] if ground_truth else ""
+                output_text = str(predictions[0])
+                
+                # Extract additional context from kwargs
+                context = kwargs.get("context", "")
+                
+                result = await self.score_async(input=input_text, output=output_text, context=context, **kwargs)
+                
+                if isinstance(result, list):
+                    # Multi-score metric
+                    primary_score = result[0] if result else ScoreResult(0.0, self.name)
+                    return MetricResult(
+                        name=self.name,
+                        value=primary_score.value,
+                        details={
+                            "scores": [r.to_metric_result().to_dict() for r in result],
+                            "primary_score": primary_score.to_metric_result().to_dict(),
+                            "reason": primary_score.reason
+                        },
+                        duration_ms=(time.time() - start_time) * 1000
+                    )
+                else:
+                    # Single score metric
+                    return MetricResult(
+                        name=self.name,
+                        value=result.value,
+                        details={"reason": result.reason} if result.reason else {},
+                        duration_ms=(time.time() - start_time) * 1000
+                    )
+            else:
+                return MetricResult(
+                    name=self.name,
+                    value=0.0,
+                    error="No predictions provided",
+                    duration_ms=(time.time() - start_time) * 1000
+                )
+                
+        except Exception as e:
+            return MetricResult(
+                name=self.name,
+                value=0.0,
+                error=str(e),
+                duration_ms=(time.time() - start_time) * 1000
+            )
+
+
+class CometLLMJudgeMetric(CometStyleCustomMetric):
+    """
+    LLM-powered custom metric following Comet patterns.
+    
+    This metric uses an LLM to evaluate responses with custom prompts.
+    """
+    
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        model_name: str = "gpt-4o-mini",
+        api_key: Optional[str] = None,
+        prompt_template: Optional[str] = None,
+        scoring_criteria: Optional[str] = None,
+        **kwargs
+    ):
+        super().__init__(name, **kwargs)
+        self.model_name = model_name
+        self.api_key = api_key
+        self.prompt_template = prompt_template or self._default_prompt_template()
+        self.scoring_criteria = scoring_criteria or "Overall quality and helpfulness"
+        self._llm_client = None
+    
+    def _default_prompt_template(self) -> str:
+        """Default prompt template for LLM evaluation."""
+        return """You are an expert evaluator. Please evaluate the following response based on the criteria: {criteria}
+
+Input: {input}
+Output: {output}
+Context: {context}
+
+Please provide:
+1. A score from 0.0 to 1.0 (where 1.0 is excellent)
+2. A brief explanation of your reasoning
+
+Respond in JSON format:
+{{
+  "score": <float between 0.0 and 1.0>,
+  "reason": "<your explanation>"
+}}"""
+    
+    def _get_llm_client(self):
+        """Initialize LLM client (using LiteLLM for provider flexibility)."""
+        if self._llm_client is None:
+            try:
+                import litellm
+                self._llm_client = litellm
+            except ImportError:
+                raise ImportError("LiteLLM is required for LLM-powered metrics. Install with: pip install litellm")
+        return self._llm_client
+    
+    def score(self, input: str = "", output: str = "", context: str = "", **kwargs) -> ScoreResult:
+        """Score using LLM evaluation."""
+        try:
+            llm = self._get_llm_client()
+            
+            # Format prompt
+            prompt = self.prompt_template.format(
+                criteria=self.scoring_criteria,
+                input=input,
+                output=output,
+                context=context
+            )
+            
+            # Call LLM
+            response = llm.completion(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                api_key=self.api_key,
+                temperature=0.1
+            )
+            
+            # Parse response
+            content = response.choices[0].message.content
+            try:
+                import json
+                result_data = json.loads(content)
+                score = float(result_data.get("score", 0.0))
+                reason = result_data.get("reason", "No explanation provided")
+            except (json.JSONDecodeError, ValueError) as e:
+                # Fallback: try to extract score from text
+                import re
+                score_match = re.search(r"score[\":\s]*([0-9.]+)", content, re.IGNORECASE)
+                score = float(score_match.group(1)) if score_match else 0.5
+                reason = f"Parsed from response: {content[:100]}..."
+            
+            return ScoreResult(
+                value=max(0.0, min(1.0, score)),  # Clamp to [0, 1]
+                name=self.name,
+                reason=reason
+            )
+            
+        except Exception as e:
+            return ScoreResult(
+                value=0.0,
+                name=self.name,
+                reason=f"LLM evaluation failed: {str(e)}"
+            )

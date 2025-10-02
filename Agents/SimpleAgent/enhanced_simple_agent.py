@@ -3,7 +3,7 @@
 Enhanced Simple Agent with Full Agent Lens SDK Integration
 
 A comprehensive demonstration of the new Agent Lens SDK featuring:
-- 100% Opik compatibility
+- 100% Master compatibility
 - Advanced context management
 - Enhanced LLM tracing with token tracking
 - Distributed tracing support
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 class AgentLensSDK:
     """
-    Python wrapper for Agent Lens HTTP API with full Opik compatibility.
+    Python wrapper for Agent Lens HTTP API with full Master compatibility.
     Implements all the features from our TypeScript SDK.
     """
     
@@ -217,7 +217,7 @@ class EnhancedSimpleAgent:
     Enhanced Simple Agent with comprehensive Agent Lens SDK integration.
     
     Features:
-    - 100% Opik-compatible API
+    - 100% Master-compatible API
     - Advanced context management
     - Enhanced LLM tracing with token tracking
     - Distributed tracing headers

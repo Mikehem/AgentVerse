@@ -19,7 +19,10 @@ import {
   Star,
   ThumbsUp,
   GitBranch,
-  Network
+  Network,
+  Wrench,
+  Library,
+  BarChart3
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,6 +35,15 @@ const navigation = [
   { name: 'Experiments', href: '/experiments', icon: Zap, current: false },
   { name: 'Datasets', href: '/datasets', icon: Database, current: false },
   { name: 'Settings', href: '/settings', icon: Settings, current: false },
+]
+
+const promptEngineeringNavigation = [
+  { name: 'Prompt Engineering', href: '/prompt-engineering', icon: Wrench, current: false },
+  { name: 'Workbench', href: '/prompt-engineering/workbench', icon: Wrench, current: false, isSubItem: true },
+  { name: 'Version Control', href: '/prompt-engineering/version-control', icon: GitBranch, current: false, isSubItem: true },
+  { name: 'Testing Framework', href: '/prompt-engineering/testing', icon: TestTube, current: false, isSubItem: true },
+  { name: 'Performance Analytics', href: '/prompt-engineering/analytics', icon: BarChart3, current: false, isSubItem: true },
+  { name: 'Template Library', href: '/prompt-engineering/templates', icon: Library, current: false, isSubItem: true },
 ]
 
 const adminNavigation = [
@@ -79,6 +91,35 @@ export function Sidebar() {
             )
           })}
         </ul>
+
+        {/* Prompt Engineering Section */}
+        <div className="mt-8 pt-6 border-t border-light">
+          <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+            Prompt Engineering
+          </p>
+          <ul className="space-y-1">
+            {promptEngineeringNavigation.map((item) => {
+              const Icon = item.icon
+              return (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className={cn(
+                      'nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      item.isSubItem && 'ml-3',
+                      item.current
+                        ? 'active bg-primary-alpha text-primary'
+                        : 'text-secondary hover:bg-accent-alpha hover:text-primary'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
 
         {/* Secondary Navigation */}
         <div className="mt-8 pt-6 border-t border-light">

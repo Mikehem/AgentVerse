@@ -25,7 +25,7 @@ import { UserRole } from '@/types/auth';
  * Workspaces Controller with Enterprise Authentication Integration
  * All endpoints require authentication and implement RBAC
  * 
- * Compatible with OPIK Java backend WorkspacesResource
+ * Compatible with Master Java backend WorkspacesResource
  */
 
 // Validation schemas
@@ -77,7 +77,7 @@ export default async function workspacesController(fastify: FastifyInstance): Pr
 
   /**
    * GET /configurations - Get workspace configurations
-   * Compatible with OPIK Java: /v1/private/workspaces/configurations
+   * Compatible with Master Java: /v1/private/workspaces/configurations
    */
   fastify.get('/configurations', {
     preHandler: requireAuth,
@@ -249,7 +249,7 @@ export default async function workspacesController(fastify: FastifyInstance): Pr
 
   /**
    * GET /metadata - Get workspace metadata and statistics
-   * Compatible with OPIK Java: /v1/private/workspaces/metadata
+   * Compatible with Master Java: /v1/private/workspaces/metadata
    */
   fastify.get('/metadata', {
     preHandler: requireAuth,
@@ -419,7 +419,7 @@ export default async function workspacesController(fastify: FastifyInstance): Pr
 
   /**
    * POST /metrics - Get workspace metrics with filtering
-   * Compatible with OPIK Java: /v1/private/workspaces/metrics
+   * Compatible with Master Java: /v1/private/workspaces/metrics
    */
   fastify.post('/metrics', {
     preHandler: requireAuth,
@@ -501,7 +501,7 @@ export default async function workspacesController(fastify: FastifyInstance): Pr
 
   /**
    * POST /metrics/summary - Get workspace metrics summary
-   * Compatible with OPIK Java: /v1/private/workspaces/metrics/summary
+   * Compatible with Master Java: /v1/private/workspaces/metrics/summary
    */
   fastify.post('/metrics/summary', {
     preHandler: requireAuth,

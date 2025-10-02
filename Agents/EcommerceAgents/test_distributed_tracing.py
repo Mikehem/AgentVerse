@@ -30,7 +30,7 @@ class DistributedTracingDemo:
     """
     Demonstrates distributed tracing across multiple agents
     
-    This simulates the Opik distributed tracing specification:
+    This simulates the Master distributed tracing specification:
     - Root trace creation
     - Parent-child span relationships
     - Cross-agent context propagation
@@ -63,7 +63,7 @@ class DistributedTracingDemo:
         self.client = SprintLensClient(
             url="http://localhost:3001",
             username="admin",
-            password="OpikAdmin2024!",
+            password="MasterAdmin2024!",
             workspace_id="default",
             project_name=self.project_config["project_id"]
         )
@@ -74,7 +74,7 @@ class DistributedTracingDemo:
         sprintlens.configure(
             url="http://localhost:3001",
             username="admin",
-            password="OpikAdmin2024!",
+            password="MasterAdmin2024!",
             workspace_id="default"
         )
         
@@ -385,7 +385,7 @@ class DistributedTracingDemo:
         
         print("🚀 Sprint Lens Distributed Tracing Demonstration")
         print("=" * 70)
-        print("This demo showcases the Opik-compatible distributed tracing features:")
+        print("This demo showcases the Master-compatible distributed tracing features:")
         print("• Root trace creation and span hierarchies")
         print("• Cross-agent context propagation")
         print("• Parallel and sequential processing coordination")

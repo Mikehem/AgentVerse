@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Agent Lens SDK - Comprehensive Cost Tracking Integration
-Based on Opik cost tracking specifications with enhanced features
+Based on Master cost tracking specifications with enhanced features
 """
 
 import os
@@ -36,7 +36,7 @@ class CostCalculation:
 class AgentLensClient:
     """
     Agent Lens SDK Client with comprehensive cost tracking
-    Follows Opik cost tracking patterns with enhanced features
+    Follows Master cost tracking patterns with enhanced features
     """
     
     def __init__(self, 

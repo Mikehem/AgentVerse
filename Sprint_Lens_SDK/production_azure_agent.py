@@ -431,7 +431,7 @@ async def run_production_test():
     sprintlens_client = SprintLensClient(
         url="http://localhost:3000",
         username="admin",
-        password="OpikAdmin2024!",
+        password="MasterAdmin2024!",
         workspace_id="default",
         project_name="azure_openai_production_test"
     )

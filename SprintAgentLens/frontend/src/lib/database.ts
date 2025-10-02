@@ -36,13 +36,19 @@ const migrateTables = () => {
       db.exec('ALTER TABLE metrics ADD COLUMN runId TEXT')
     }
     
-    // Add Opik-style evaluation fields to metrics table
+    // Add advanced evaluation fields to metrics table
     const hasEvaluationModel = metricColumns.some(col => col.name === 'evaluationModel')
     if (!hasEvaluationModel) {
-      console.log('📝 Adding Opik-style evaluation fields to metrics table...')
+      console.log('📝 Adding advanced evaluation fields to metrics table...')
       db.exec('ALTER TABLE metrics ADD COLUMN evaluationModel TEXT')
       db.exec('ALTER TABLE metrics ADD COLUMN referenceValue TEXT')
       db.exec('ALTER TABLE metrics ADD COLUMN threshold REAL')
+      db.exec('ALTER TABLE metrics ADD COLUMN metric_type TEXT')
+      db.exec('ALTER TABLE metrics ADD COLUMN context_data TEXT')
+      db.exec('ALTER TABLE metrics ADD COLUMN reasoning TEXT')
+      db.exec('ALTER TABLE metrics ADD COLUMN confidence_score REAL')
+      db.exec('ALTER TABLE metrics ADD COLUMN evaluation_cost REAL DEFAULT 0')
+      db.exec('ALTER TABLE metrics ADD COLUMN evaluation_latency INTEGER DEFAULT 0')
     }
     
     // Check if feedback column exists in conversations table
@@ -581,6 +587,54 @@ const migrateTables = () => {
       db.exec('ALTER TABLE prompt_versions ADD COLUMN comments TEXT') // Comments/notes for this version
     }
     
+    // Create advanced metrics configuration table
+    const metricsConfigExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='metrics_configs'").get()
+    if (!metricsConfigExists) {
+      console.log('📝 Creating metrics_configs table...')
+      db.exec(`
+        CREATE TABLE metrics_configs (
+          id TEXT PRIMARY KEY,
+          project_id TEXT NOT NULL,
+          metric_type TEXT NOT NULL,
+          model_name TEXT NOT NULL,
+          api_key_encrypted TEXT,
+          custom_prompt TEXT,
+          threshold REAL,
+          enabled BOOLEAN DEFAULT true,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (project_id) REFERENCES projects(id)
+        )
+      `)
+      
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_metrics_configs_project_id ON metrics_configs(project_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_metrics_configs_metric_type ON metrics_configs(metric_type)`)
+    }
+    
+    // Create evaluation jobs table for batch processing
+    const evaluationJobsExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='evaluation_jobs'").get()
+    if (!evaluationJobsExists) {
+      console.log('📝 Creating evaluation_jobs table...')
+      db.exec(`
+        CREATE TABLE evaluation_jobs (
+          id TEXT PRIMARY KEY,
+          experiment_id TEXT NOT NULL,
+          metric_types TEXT,
+          status TEXT DEFAULT 'pending',
+          total_items INTEGER,
+          processed_items INTEGER DEFAULT 0,
+          results TEXT,
+          error_message TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          completed_at DATETIME,
+          FOREIGN KEY (experiment_id) REFERENCES experiments(id)
+        )
+      `)
+      
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_evaluation_jobs_experiment_id ON evaluation_jobs(experiment_id)`)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_evaluation_jobs_status ON evaluation_jobs(status)`)
+    }
+
     console.log('✅ Database migration completed')
   } catch (error) {
     console.error('❌ Database migration failed:', error)

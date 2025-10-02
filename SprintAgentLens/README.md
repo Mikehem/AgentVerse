@@ -1,10 +1,10 @@
 # SprintAgentLens
 
-A modern AI observability and evaluation platform built with Node.js/TypeScript, migrated from the OPIK Java backend architecture.
+A modern AI observability and evaluation platform built with Node.js/TypeScript, migrated from the Master Java backend architecture.
 
 ## Overview
 
-SprintAgentLens is the next-generation evolution of the OPIK platform, providing comprehensive AI model observability, experimentation, and evaluation capabilities with a focus on enterprise-grade security and scalability.
+SprintAgentLens is the next-generation evolution of the Master platform, providing comprehensive AI model observability, experimentation, and evaluation capabilities with a focus on enterprise-grade security and scalability.
 
 ### Key Features
 
@@ -149,9 +149,9 @@ pnpm run test:watch
 pnpm run test:coverage
 ```
 
-## Migration from OPIK Java Backend
+## Migration from Master Java Backend
 
-This project is a complete migration from the original OPIK Java backend (Dropwizard) to modern Node.js/TypeScript architecture while maintaining 100% API compatibility.
+This project is a complete migration from the original Master Java backend (Dropwizard) to modern Node.js/TypeScript architecture while maintaining 100% API compatibility.
 
 ### Migration Highlights
 
@@ -403,7 +403,7 @@ services:
 
 ## Migration Utilities
 
-The project includes comprehensive migration utilities for transitioning from the OPIK Java backend:
+The project includes comprehensive migration utilities for transitioning from the Master Java backend:
 
 ```bash
 # Export data from Java backend

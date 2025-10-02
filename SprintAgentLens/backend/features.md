@@ -1,7 +1,7 @@
 # SprintAgentLens Backend Features & API Documentation
 
 ## Overview
-This document comprehensively details all APIs, features, and technical architecture of the current OPIK Java backend that needs to be migrated to SprintAgentLens JavaScript backend.
+This document comprehensively details all APIs, features, and technical architecture of the current Master Java backend that needs to be migrated to SprintAgentLens JavaScript backend.
 
 ## Current Technical Stack
 
@@ -9,7 +9,7 @@ This document comprehensively details all APIs, features, and technical architec
 - **Framework**: Dropwizard 4.0.14 (JAX-RS, Jersey, Jetty)
 - **Dependency Injection**: Google Guice with Dropwizard-Guicey 7.2.1
 - **Build Tool**: Maven with Java 21
-- **Main Class**: `com.comet.opik.OpikApplication`
+- **Main Class**: `com.comet.Master.MasterApplication`
 
 ### Database Systems
 - **State Database**: MySQL 9.4.0 with JDBI 3.x

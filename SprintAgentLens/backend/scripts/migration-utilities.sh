@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SprintAgentLens Migration Utilities
-# This script provides utilities for migrating data from OPIK Java backend
+# This script provides utilities for migrating data from Master Java backend
 
 set -e
 
@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 JAVA_BACKEND_DB_HOST=${JAVA_DB_HOST:-"localhost"}
 JAVA_BACKEND_DB_PORT=${JAVA_DB_PORT:-"3306"}
-JAVA_BACKEND_DB_NAME=${JAVA_DB_NAME:-"opik"}
+JAVA_BACKEND_DB_NAME=${JAVA_DB_NAME:-"Master"}
 JAVA_BACKEND_DB_USER=${JAVA_DB_USER:-"root"}
 
 NODE_BACKEND_DB_HOST=${NODE_DB_HOST:-"localhost"}
@@ -46,7 +46,7 @@ check_mysql_connection() {
 
 # Function to export users from Java backend
 export_users() {
-    echo -e "${BLUE}📤 Exporting users from OPIK Java backend...${NC}"
+    echo -e "${BLUE}📤 Exporting users from Master Java backend...${NC}"
     
     mysql -h"$JAVA_BACKEND_DB_HOST" -P"$JAVA_BACKEND_DB_PORT" -u"$JAVA_BACKEND_DB_USER" -p \
         -e "SELECT 
@@ -137,7 +137,7 @@ async function verifyPasswords() {
     }
 
     const user = rows[0];
-    const testPassword = 'OpikAdmin2024!'; // Known test password
+    const testPassword = 'MasterAdmin2024!'; // Known test password
     
     // Test Java compatibility: password + salt before BCrypt
     const combined = testPassword + user.salt;
@@ -172,7 +172,7 @@ EOF
 
 # Function to export projects
 export_projects() {
-    echo -e "${BLUE}📤 Exporting projects from OPIK Java backend...${NC}"
+    echo -e "${BLUE}📤 Exporting projects from Master Java backend...${NC}"
     
     mysql -h"$JAVA_BACKEND_DB_HOST" -P"$JAVA_BACKEND_DB_PORT" -u"$JAVA_BACKEND_DB_USER" -p \
         -e "SELECT * FROM $JAVA_BACKEND_DB_NAME.projects;" \
@@ -189,7 +189,7 @@ export_projects() {
 
 # Function to export datasets
 export_datasets() {
-    echo -e "${BLUE}📤 Exporting datasets from OPIK Java backend...${NC}"
+    echo -e "${BLUE}📤 Exporting datasets from Master Java backend...${NC}"
     
     mysql -h"$JAVA_BACKEND_DB_HOST" -P"$JAVA_BACKEND_DB_PORT" -u"$JAVA_BACKEND_DB_USER" -p \
         -e "SELECT * FROM $JAVA_BACKEND_DB_NAME.datasets;" \
@@ -307,7 +307,7 @@ INSERT INTO users (
     'admin@test.com',
     'Test Administrator',
     'admin',
-    '$2a$12$kA.Ni7IXlFsEpSO.udEsteNCknxHNOXX3fbldNC5uY79l2YUjJHeS', -- OpikAdmin2024! with salt
+    '$2a$12$kA.Ni7IXlFsEpSO.udEsteNCknxHNOXX3fbldNC5uY79l2YUjJHeS', -- MasterAdmin2024! with salt
     'production-salt-change-immediately',
     1,
     'default',
@@ -368,8 +368,8 @@ EOF
     
     echo -e "${GREEN}✅ Test data generated${NC}"
     echo -e "${BLUE}Test credentials:${NC}"
-    echo -e "  Admin: testadmin / OpikAdmin2024!"
-    echo -e "  User:  testuser / OpikAdmin2024!"
+    echo -e "  Admin: testadmin / MasterAdmin2024!"
+    echo -e "  User:  testuser / MasterAdmin2024!"
     
     rm -f generate_test_data.sql
 }
@@ -393,10 +393,10 @@ show_usage() {
     echo -e "${BLUE}Usage: $0 [command]${NC}"
     echo ""
     echo "Available commands:"
-    echo "  export_users              - Export users from OPIK Java backend"
+    echo "  export_users              - Export users from Master Java backend"
     echo "  import_users              - Import users to SprintAgentLens backend"
-    echo "  export_projects           - Export projects from OPIK Java backend"
-    echo "  export_datasets           - Export datasets from OPIK Java backend"
+    echo "  export_projects           - Export projects from Master Java backend"
+    echo "  export_datasets           - Export datasets from Master Java backend"
     echo "  verify_password_compatibility - Test password hash compatibility"
     echo "  full_migration            - Run complete data migration"
     echo "  create_backup             - Create database backup"
@@ -408,7 +408,7 @@ show_usage() {
     echo "Environment variables:"
     echo "  JAVA_DB_HOST     - Java backend MySQL host (default: localhost)"
     echo "  JAVA_DB_PORT     - Java backend MySQL port (default: 3306)"
-    echo "  JAVA_DB_NAME     - Java backend database name (default: opik)"
+    echo "  JAVA_DB_NAME     - Java backend database name (default: Master)"
     echo "  JAVA_DB_USER     - Java backend MySQL user (default: root)"
     echo "  NODE_DB_HOST     - Node.js backend MySQL host (default: localhost)"
     echo "  NODE_DB_PORT     - Node.js backend MySQL port (default: 3306)"

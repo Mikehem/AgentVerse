@@ -77,7 +77,7 @@ class BaseEcommerceAgent(ABC):
         config.update({
             "sprintlens_url": os.getenv("SPRINT_LENS_URL", "http://localhost:3000"),
             "sprintlens_username": os.getenv("SPRINT_LENS_USERNAME", "admin"),
-            "sprintlens_password": os.getenv("SPRINT_LENS_PASSWORD", "OpikAdmin2024!"),
+            "sprintlens_password": os.getenv("SPRINT_LENS_PASSWORD", "MasterAdmin2024!"),
             "workspace_id": os.getenv("WORKSPACE_ID", "default"),
             
             # Azure OpenAI configuration

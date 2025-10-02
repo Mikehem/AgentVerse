@@ -2,11 +2,11 @@
 
 ## Executive Summary
 
-Sprint Lens SDK is a Python library designed to integrate with the Sprint Agent Lens enterprise AI observability platform. Based on comprehensive analysis of the Opik SDK architecture, this document outlines the complete feature set and implementation strategy for building a production-ready SDK that connects to our Node.js/TypeScript backend.
+Sprint Lens SDK is a Python library designed to integrate with the Sprint Agent Lens enterprise AI observability platform. Based on comprehensive analysis of the Master SDK architecture, this document outlines the complete feature set and implementation strategy for building a production-ready SDK that connects to our Node.js/TypeScript backend.
 
 ## 🔍 Source SDK Analysis Summary
 
-### Opik SDK Architecture Analysis
+### Master SDK Architecture Analysis
 
 **Core Structure (150+ files analyzed):**
 - **API Objects Layer**: 40+ modules for trace, span, dataset, experiment, prompt management

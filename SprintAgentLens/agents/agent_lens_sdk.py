@@ -6,7 +6,7 @@ This SDK provides comprehensive observability for AI agents with the following f
 - Automatic run_id generation for session tracking
 - Multiturn conversation support with thread_id tracking
 - Rich telemetry collection (metrics, traces, conversations)
-- OPIK-style evaluation metrics support
+- Master-style evaluation metrics support
 - Robust error handling and retry logic
 """
 
@@ -149,7 +149,7 @@ class TraceData:
 class AgentLensContextStorage:
     """
     Manages span and trace context using Python's contextvars for thread and async safety.
-    Based on OPIK's context storage patterns.
+    Based on Master's context storage patterns.
     """
 
     def __init__(self) -> None:
@@ -163,7 +163,7 @@ class AgentLensContextStorage:
             Optional[TraceData]
         ] = contextvars.ContextVar("current_trace_data", default=None)
         
-        # Span stack context (using immutable tuples like OPIK)
+        # Span stack context (using immutable tuples like Master)
         default_span_stack: Tuple[SpanData, ...] = tuple()
         self._spans_data_stack_context: contextvars.ContextVar[
             Tuple[SpanData, ...]
@@ -256,7 +256,7 @@ def update_current_span(
     thread_id: Optional[str] = None,
     error_info: Optional[Dict[str, Any]] = None,
 ) -> None:
-    """Update the current span with provided parameters (OPIK-style API)"""
+    """Update the current span with provided parameters (Master-style API)"""
     current_span = _context_storage.top_span_data()
     if current_span is None:
         raise Exception("No span in context to update")
@@ -280,7 +280,7 @@ def update_current_trace(
     thread_id: Optional[str] = None,
     feedback_scores: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
-    """Update the current trace with provided parameters (OPIK-style API)"""
+    """Update the current trace with provided parameters (Master-style API)"""
     current_trace = _context_storage.get_trace_data()
     if current_trace is None:
         raise Exception("No trace in context to update")
@@ -332,7 +332,7 @@ def trace_context(trace_data: TraceData):
 
 class AgentLensTracker:
     """
-    OPIK-style decorator for automatic function tracking with Agent Lens using contextvars
+    Master-style decorator for automatic function tracking with Agent Lens using contextvars
     """
     
     def __init__(self, agent_lens: Optional['AgentLens'] = None):
@@ -349,7 +349,7 @@ class AgentLensTracker:
              auto_log_conversation: bool = False,
              thread_id: Optional[str] = None) -> Union[Callable, Callable[[Callable], Callable]]:
         """
-        OPIK-style decorator to track function execution with Agent Lens using contextvars
+        Master-style decorator to track function execution with Agent Lens using contextvars
         
         Can be used as @track or @track().
         
@@ -1020,7 +1020,7 @@ class AgentLens:
     
     def log_metric(self, metric_data: Union[MetricData, Dict]) -> bool:
         """
-        Log a metric with OPIK-style evaluation support
+        Log a metric with Master-style evaluation support
         
         Args:
             metric_data: MetricData instance or dictionary with metric details
@@ -1193,14 +1193,14 @@ class AgentLens:
                 else:
                     self.complete_run()
         finally:
-            # Clear all context data (OPIK-style cleanup)
+            # Clear all context data (Master-style cleanup)
             _context_storage.clear_all()
 
 
 # Global decorator instances for convenience
 _global_tracker = AgentLensTracker()
 
-# OPIK-style global functions
+# Master-style global functions
 def track(name: Optional[str] = None,
           track_type: str = "general",
           tags: Optional[List[str]] = None,
@@ -1211,7 +1211,7 @@ def track(name: Optional[str] = None,
           auto_log_conversation: bool = False,
           thread_id: Optional[str] = None) -> Union[Callable, Callable[[Callable], Callable]]:
     """
-    Global OPIK-style track decorator
+    Global Master-style track decorator
     
     Uses the current AgentLens instance from thread-local context.
     
@@ -1243,10 +1243,10 @@ def track(name: Optional[str] = None,
 
 def flush_tracker(timeout: Optional[int] = None) -> None:
     """
-    OPIK-style flush function (for compatibility)
+    Master-style flush function (for compatibility)
     
     Note: Agent Lens doesn't require explicit flushing as it sends data immediately,
-    but this is provided for OPIK compatibility.
+    but this is provided for Master compatibility.
     """
     agent_lens = get_current_agent_lens()
     if agent_lens:
@@ -1306,7 +1306,7 @@ def create_metric(metric_type: str,
 
 # Example usage
 if __name__ == "__main__":
-    # OPIK-style decorator examples
+    # Master-style decorator examples
     
     @track()
     def process_query(query: str) -> str:
@@ -1332,15 +1332,15 @@ if __name__ == "__main__":
         time.sleep(0.3)
         return f"LLM response to '{prompt}' using {model}"
     
-    # Demo using OPIK-style decorators with Agent Lens
-    print("🚀 Starting OPIK-style decorator demo...")
+    # Demo using Master-style decorators with Agent Lens
+    print("🚀 Starting Master-style decorator demo...")
     
     with AgentLens(
         project_id="project-1757579671500",
         agent_id="agent_testagen_mffbl12k",
         backend_url="http://localhost:3000",
-        run_name="SDK Demo - OPIK Style Decorators",
-        run_tags=["demo", "decorators", "opik-style"]
+        run_name="SDK Demo - Master Style Decorators",
+        run_tags=["demo", "decorators", "Master-style"]
     ) as lens:
         
         print("\n📋 Testing basic function tracking...")
@@ -1375,22 +1375,22 @@ if __name__ == "__main__":
         lens.log_metric(create_metric("decorator_calls", 5, "count"))
         lens.log_metric(create_metric("avg_response_time", 180, "ms"))
         
-        print("\n✅ OPIK-style decorator demo completed!")
+        print("\n✅ Master-style decorator demo completed!")
         
     print("\n🔄 Testing global decorator without context (should still work)...")
     result4 = process_query("This works without explicit Agent Lens context")
     print(f"Result: {result4}")
     
-    # Call flush for OPIK compatibility
+    # Call flush for Master compatibility
     flush_tracker()
     
     print("\n🎯 Demo Summary:")
-    print("- ✅ OPIK-style @track decorator implemented")
+    print("- ✅ Master-style @track decorator implemented")
     print("- ✅ Both sync and async function support") 
     print("- ✅ Auto-conversation logging")
     print("- ✅ Thread-based multiturn conversations")
     print("- ✅ Global context management")
-    print("- ✅ Compatible with OPIK decorator patterns")
+    print("- ✅ Compatible with Master decorator patterns")
     print("- ✅ Comprehensive input/output capture")
     print("- ✅ Error handling and trace completion")
     

@@ -22,6 +22,8 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { AddItemsModal } from '@/components/datasets/AddItemsModal'
+import { convertToCSV, convertToSimpleCSV, downloadCSV, generateExportFilename } from '@/lib/utils/csvExport'
 
 interface DatasetItem {
   id: string
@@ -79,6 +81,8 @@ export default function DatasetDetailPage({
   }>({ input_data: {} })
   const [showEvaluationModal, setShowEvaluationModal] = useState(false)
   const [isRunningEvaluation, setIsRunningEvaluation] = useState(false)
+  const [showAddItemsModal, setShowAddItemsModal] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const itemsPerPage = 20
 
   useEffect(() => {
@@ -185,6 +189,19 @@ export default function DatasetDetailPage({
     })
   }
 
+  const handleAddItemsSuccess = async (addedItems: any[]) => {
+    console.log(`Successfully added ${addedItems.length} items to dataset`)
+    
+    // Refresh the dataset and items list
+    await Promise.all([
+      fetchDataset(),
+      fetchDatasetItems()
+    ])
+    
+    // Close the modal
+    setShowAddItemsModal(false)
+  }
+
   const handleSaveItemEdit = async () => {
     if (!editingItem) return
     
@@ -228,6 +245,41 @@ export default function DatasetDetailPage({
       }
     } catch (error) {
       console.error('Error deleting item:', error)
+    }
+  }
+
+  const handleExportDataset = async () => {
+    setIsExporting(true)
+    
+    try {
+      // Fetch all dataset items for export
+      const response = await fetch(`/api/v1/datasets/${datasetId}/items?limit=10000`)
+      const result = await response.json()
+      
+      if (!result.success) {
+        throw new Error('Failed to fetch dataset items for export')
+      }
+      
+      const allItems = result.data
+      
+      if (allItems.length === 0) {
+        alert('No items to export')
+        return
+      }
+      
+      // Convert to CSV
+      const csvContent = convertToSimpleCSV(allItems)
+      const filename = generateExportFilename(dataset?.name || 'dataset', 'csv')
+      
+      // Download the file
+      downloadCSV(csvContent, filename)
+      
+      console.log(`Exported ${allItems.length} items to ${filename}`)
+    } catch (error) {
+      console.error('Error exporting dataset:', error)
+      alert('Failed to export dataset. Please try again.')
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -383,11 +435,27 @@ export default function DatasetDetailPage({
                 </>
               )}
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-              <Download className="w-4 h-4" />
-              Export
+            <button 
+              onClick={handleExportDataset}
+              disabled={isExporting || dataset.item_count === 0}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isExporting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </>
+              )}
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors">
+            <button 
+              onClick={() => setShowAddItemsModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+            >
               <Plus className="w-4 h-4" />
               Add Items
             </button>
@@ -447,7 +515,10 @@ export default function DatasetDetailPage({
                   'This dataset doesn\'t have any items yet.'
                 }
               </p>
-              <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors">
+              <button 
+                onClick={() => setShowAddItemsModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+              >
                 <Plus className="w-4 h-4" />
                 Add Items
               </button>
@@ -725,6 +796,17 @@ export default function DatasetDetailPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Items Modal */}
+      {showAddItemsModal && dataset && (
+        <AddItemsModal
+          isOpen={showAddItemsModal}
+          onClose={() => setShowAddItemsModal(false)}
+          onSuccess={handleAddItemsSuccess}
+          datasetId={datasetId}
+          datasetName={dataset.name}
+        />
       )}
 
       {/* Run Evaluations Modal */}

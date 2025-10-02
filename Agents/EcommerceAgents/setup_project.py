@@ -28,7 +28,7 @@ async def setup_ecommerce_project():
     client = sprintlens.SprintLensClient(
         url="http://localhost:3000",
         username="admin", 
-        password="OpikAdmin2024!",
+        password="MasterAdmin2024!",
         workspace_id="default"
     )
         

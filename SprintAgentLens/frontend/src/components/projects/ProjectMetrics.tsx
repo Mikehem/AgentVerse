@@ -4,7 +4,9 @@ import { useState, useEffect, useMemo } from 'react'
 import { 
   TrendingUp, BarChart3, DollarSign, Calculator, Activity, Users, 
   Download, Search, CheckCircle, XCircle, AlertCircle, Clock,
-  Check, Copy, Code, Database
+  Check, Copy, Code, Database, Target, Brain, Eye, Shield,
+  Settings, Play, RefreshCw, Plus, Edit, Trash2, FileText,
+  Zap, TrendingDown, Gauge, Beaker
 } from 'lucide-react'
 import { Project } from '@/lib/types'
 
@@ -12,7 +14,41 @@ interface ProjectMetricsProps {
   project: Project
 }
 
-interface OpikTrace {
+interface MetricsConfig {
+  id: string
+  name: string
+  type: 'hallucination' | 'relevance' | 'coherence' | 'moderation' | 'usefulness' | 'g_eval'
+  model: {
+    name: string
+    provider: string
+    apiKey?: string
+    temperature?: number
+    maxTokens?: number
+  }
+  threshold?: number
+  customPrompt?: string
+  // G-Eval specific fields
+  taskIntroduction?: string
+  evaluationCriteria?: string
+  evaluationSteps?: string[]
+  enabled: boolean
+  costOptimization: boolean
+}
+
+interface BatchEvaluationJob {
+  id: string
+  name: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  progress: number
+  metricsTypes: string[]
+  datasetSize: number
+  completedItems: number
+  estimatedTimeRemaining?: number
+  cost: number
+  createdAt: string
+}
+
+interface MasterTrace {
   id: string
   name: string
   startTime: string
@@ -25,7 +61,7 @@ interface OpikTrace {
   tags?: string[]
 }
 
-function MetadataEditor({ trace, onUpdate }: { trace: OpikTrace; onUpdate: (metadata: Record<string, any>) => void }) {
+function MetadataEditor({ trace, onUpdate }: { trace: MasterTrace; onUpdate: (metadata: Record<string, any>) => void }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedMetadata, setEditedMetadata] = useState<string>('')
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -229,7 +265,7 @@ function MetadataEditor({ trace, onUpdate }: { trace: OpikTrace; onUpdate: (meta
   )
 }
 
-function TraceAnalyticsDashboard({ traces }: { traces: OpikTrace[] }) {
+function TraceAnalyticsDashboard({ traces }: { traces: MasterTrace[] }) {
   const analytics = useMemo(() => {
     const total = traces.length
     const successful = traces.filter(t => t.status === 'success').length
@@ -471,16 +507,567 @@ function TraceAnalyticsDashboard({ traces }: { traces: OpikTrace[] }) {
   )
 }
 
+function MetricsConfigurationModal({ 
+  isOpen, 
+  onClose, 
+  project,
+  onSave 
+}: { 
+  isOpen: boolean
+  onClose: () => void
+  project: Project
+  onSave: (config: MetricsConfig[]) => void 
+}) {
+  const [metricsConfigs, setMetricsConfigs] = useState<MetricsConfig[]>([
+    {
+      id: '1',
+      name: 'Hallucination Detection',
+      type: 'hallucination',
+      model: {
+        name: 'gpt-4o',
+        provider: 'openai',
+        temperature: 0.0,
+        maxTokens: 1000
+      },
+      threshold: 0.8,
+      enabled: true,
+      costOptimization: true
+    },
+    {
+      id: '2',
+      name: 'Relevance Assessment',
+      type: 'relevance',
+      model: {
+        name: 'claude-3.5-sonnet',
+        provider: 'anthropic',
+        temperature: 0.0,
+        maxTokens: 1000
+      },
+      threshold: 0.7,
+      enabled: true,
+      costOptimization: true
+    }
+  ])
+
+  const [editingConfig, setEditingConfig] = useState<MetricsConfig | null>(null)
+
+  const handleSave = () => {
+    onSave(metricsConfigs)
+    onClose()
+  }
+
+  const handleAddConfig = () => {
+    const newConfig: MetricsConfig = {
+      id: Date.now().toString(),
+      name: 'New Metric',
+      type: 'hallucination',
+      model: {
+        name: 'gpt-4o',
+        provider: 'openai',
+        temperature: 0.0,
+        maxTokens: 1000
+      },
+      threshold: 0.8,
+      enabled: true,
+      costOptimization: true
+    }
+    setMetricsConfigs([...metricsConfigs, newConfig])
+    setEditingConfig(newConfig)
+  }
+
+  const handleDeleteConfig = (id: string) => {
+    setMetricsConfigs(metricsConfigs.filter(config => config.id !== id))
+  }
+
+  const handleUpdateConfig = (updatedConfig: MetricsConfig) => {
+    setMetricsConfigs(metricsConfigs.map(config => 
+      config.id === updatedConfig.id ? updatedConfig : config
+    ))
+    setEditingConfig(null)
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold text-primary">Configure LLM Evaluation Metrics</h2>
+            <p className="text-sm text-muted">Set up advanced metrics and evaluation models</p>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-primary">
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Current Configurations */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-primary">Active Metrics</h3>
+              <button onClick={handleAddConfig} className="btn btn-primary btn-sm">
+                <Plus className="w-4 h-4" />
+                Add Metric
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {metricsConfigs.map((config) => (
+                <div key={config.id} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${config.enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      <div>
+                        <h4 className="font-medium text-primary">{config.name}</h4>
+                        <p className="text-sm text-muted capitalize">{config.type} evaluation</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setEditingConfig(config)}
+                        className="btn btn-outline btn-sm"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteConfig(config.id)}
+                        className="btn btn-outline btn-sm text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted">Model:</span>
+                      <p className="font-medium">{config.model.name}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted">Provider:</span>
+                      <p className="font-medium capitalize">{config.model.provider}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted">Threshold:</span>
+                      <p className="font-medium">{config.threshold || 'Auto'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted">Cost Opt:</span>
+                      <p className="font-medium">{config.costOptimization ? 'Enabled' : 'Disabled'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Edit Configuration Modal */}
+          {editingConfig && (
+            <MetricConfigurationForm
+              config={editingConfig}
+              onSave={handleUpdateConfig}
+              onCancel={() => setEditingConfig(null)}
+            />
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
+          <button onClick={onClose} className="btn btn-outline">
+            Cancel
+          </button>
+          <button onClick={handleSave} className="btn btn-primary">
+            Save Configuration
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MetricConfigurationForm({
+  config,
+  onSave,
+  onCancel
+}: {
+  config: MetricsConfig
+  onSave: (config: MetricsConfig) => void
+  onCancel: () => void
+}) {
+  const [formData, setFormData] = useState(config)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave(formData)
+  }
+
+  return (
+    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+      <h4 className="font-medium text-primary mb-4">Edit Metric Configuration</h4>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="input w-full"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Type</label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+              className="input w-full"
+            >
+              <option value="hallucination">Hallucination</option>
+              <option value="relevance">Relevance</option>
+              <option value="coherence">Coherence</option>
+              <option value="moderation">Moderation</option>
+              <option value="usefulness">Usefulness</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Model</label>
+            <select
+              value={formData.model.name}
+              onChange={(e) => {
+                const provider = e.target.value.includes('gpt') ? 'openai' :
+                                e.target.value.includes('claude') ? 'anthropic' : 'openai'
+                setFormData({
+                  ...formData,
+                  model: { ...formData.model, name: e.target.value, provider }
+                })
+              }}
+              className="input w-full"
+            >
+              <option value="gpt-4o">GPT-4o</option>
+              <option value="gpt-4o-mini">GPT-4o Mini</option>
+              <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+              <option value="claude-3-haiku">Claude 3 Haiku</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Threshold</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              value={formData.threshold || ''}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                threshold: e.target.value ? parseFloat(e.target.value) : undefined 
+              })}
+              className="input w-full"
+              placeholder="Auto"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Temperature</label>
+            <input
+              type="number"
+              min="0"
+              max="2"
+              step="0.1"
+              value={formData.model.temperature || ''}
+              onChange={(e) => setFormData({
+                ...formData,
+                model: { 
+                  ...formData.model, 
+                  temperature: e.target.value ? parseFloat(e.target.value) : undefined 
+                }
+              })}
+              className="input w-full"
+              placeholder="0.0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Max Tokens</label>
+            <input
+              type="number"
+              min="100"
+              max="4000"
+              value={formData.model.maxTokens || ''}
+              onChange={(e) => setFormData({
+                ...formData,
+                model: { 
+                  ...formData.model, 
+                  maxTokens: e.target.value ? parseInt(e.target.value) : undefined 
+                }
+              })}
+              className="input w-full"
+              placeholder="1000"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-muted mb-1">Custom Prompt (Optional)</label>
+          <textarea
+            value={formData.customPrompt || ''}
+            onChange={(e) => setFormData({ ...formData, customPrompt: e.target.value })}
+            className="input w-full h-24"
+            placeholder="Enter a custom evaluation prompt..."
+          />
+        </div>
+
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formData.enabled}
+              onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+              className="rounded"
+            />
+            <span className="text-sm">Enabled</span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formData.costOptimization}
+              onChange={(e) => setFormData({ ...formData, costOptimization: e.target.checked })}
+              className="rounded"
+            />
+            <span className="text-sm">Cost Optimization</span>
+          </label>
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onCancel} className="btn btn-outline">
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function BatchEvaluationModal({
+  isOpen,
+  onClose,
+  project,
+  onStartJob
+}: {
+  isOpen: boolean
+  onClose: () => void
+  project: Project
+  onStartJob: (job: Partial<BatchEvaluationJob>) => void
+}) {
+  const [formData, setFormData] = useState({
+    name: '',
+    metricsTypes: ['hallucination'] as string[],
+    datasetId: '',
+    batchSize: 50,
+    model: 'gpt-4o',
+    provider: 'openai'
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onStartJob({
+      name: formData.name,
+      metricsTypes: formData.metricsTypes,
+      datasetSize: formData.batchSize,
+      status: 'pending',
+      progress: 0,
+      completedItems: 0,
+      cost: 0,
+      createdAt: new Date().toISOString()
+    })
+    onClose()
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold text-primary">Start Batch Evaluation</h2>
+            <p className="text-sm text-muted">Configure and launch large-scale evaluation job</p>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-primary">
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">Job Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="input w-full"
+              placeholder="e.g., Production Hallucination Check"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-muted mb-2">Metrics to Evaluate</label>
+            <div className="grid grid-cols-2 gap-3">
+              {['hallucination', 'relevance', 'coherence', 'moderation', 'g_eval'].map((metric) => (
+                <label key={metric} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.metricsTypes.includes(metric)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({
+                          ...formData,
+                          metricsTypes: [...formData.metricsTypes, metric]
+                        })
+                      } else {
+                        setFormData({
+                          ...formData,
+                          metricsTypes: formData.metricsTypes.filter(m => m !== metric)
+                        })
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  <span className="text-sm capitalize">{metric === 'g_eval' ? 'G-Eval' : metric}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">Dataset</label>
+              <select
+                value={formData.datasetId}
+                onChange={(e) => setFormData({ ...formData, datasetId: e.target.value })}
+                className="input w-full"
+                required
+              >
+                <option value="">Select Dataset</option>
+                <option value="dataset_1">Production Conversations (1,234 items)</option>
+                <option value="dataset_2">Test Dataset (567 items)</option>
+                <option value="dataset_3">Customer Support (890 items)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">Batch Size</label>
+              <select
+                value={formData.batchSize}
+                onChange={(e) => setFormData({ ...formData, batchSize: parseInt(e.target.value) })}
+                className="input w-full"
+              >
+                <option value={10}>10 items per batch</option>
+                <option value={25}>25 items per batch</option>
+                <option value={50}>50 items per batch</option>
+                <option value={100}>100 items per batch</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Estimated Cost</h4>
+            <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+              <p>Selected metrics: {formData.metricsTypes.length}</p>
+              <p>Items to evaluate: {formData.datasetId ? '1,234' : '0'}</p>
+              <p>Estimated cost: <span className="font-bold">$12.45</span></p>
+              <p>Estimated time: <span className="font-bold">~15 minutes</span></p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="btn btn-outline">
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              <Beaker className="w-4 h-4" />
+              Start Evaluation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export function ProjectMetrics({ project }: ProjectMetricsProps) {
   const [costAnalytics, setCostAnalytics] = useState<any>(null)
   const [tracesData, setTracesData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Modal states
+  const [showConfigModal, setShowConfigModal] = useState(false)
+  const [showBatchModal, setShowBatchModal] = useState(false)
+  const [metricsConfigs, setMetricsConfigs] = useState<MetricsConfig[]>([])
+  const [batchJobs, setBatchJobs] = useState<BatchEvaluationJob[]>([])
+  const [evaluationStatus, setEvaluationStatus] = useState({
+    running: 2,
+    completed: 24,
+    averageTime: '8.5m'
+  })
   
   // Filter states
   const [timeRange, setTimeRange] = useState('30d')
   const [selectedAgent, setSelectedAgent] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const [searchTraceId, setSearchTraceId] = useState('')
+
+  // Handler functions for modals
+  const handleConfigSave = (configs: MetricsConfig[]) => {
+    setMetricsConfigs(configs)
+    // Here you would typically make an API call to save the configuration
+    console.log('Saving metrics configuration:', configs)
+  }
+
+  const handleStartBatchJob = (job: Partial<BatchEvaluationJob>) => {
+    const newJob: BatchEvaluationJob = {
+      id: Date.now().toString(),
+      ...job
+    } as BatchEvaluationJob
+    
+    setBatchJobs([...batchJobs, newJob])
+    setEvaluationStatus(prev => ({
+      ...prev,
+      running: prev.running + 1
+    }))
+    
+    // Here you would typically make an API call to start the batch job
+    console.log('Starting batch evaluation job:', newJob)
+    
+    // Simulate job completion after 5 seconds for demo
+    setTimeout(() => {
+      setBatchJobs(prev => prev.map(j => 
+        j.id === newJob.id 
+          ? { ...j, status: 'completed', progress: 100 }
+          : j
+      ))
+      setEvaluationStatus(prev => ({
+        ...prev,
+        running: Math.max(0, prev.running - 1),
+        completed: prev.completed + 1
+      }))
+    }, 5000)
+  }
+
+  const handleRunEvaluation = () => {
+    // Quick evaluation trigger
+    console.log('Running quick evaluation for project:', project.id)
+    // Here you would make an API call to trigger evaluation
+  }
 
   // Fetch cost analytics data
   useEffect(() => {
@@ -949,6 +1536,245 @@ export function ProjectMetrics({ project }: ProjectMetricsProps) {
         </div>
       </div>
 
+      {/* LLM Evaluation Metrics Section */}
+      <div className="space-y-6">
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-semibold text-primary">LLM Evaluation Metrics</h3>
+              <p className="text-sm text-muted">Advanced metrics powered by LLM-as-Judge evaluation</p>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowConfigModal(true)}
+                className="btn btn-outline btn-sm"
+              >
+                <Settings className="w-4 h-4" />
+                Configure
+              </button>
+              <button 
+                onClick={handleRunEvaluation}
+                className="btn btn-primary btn-sm"
+              >
+                <Play className="w-4 h-4" />
+                Run Evaluation
+              </button>
+            </div>
+          </div>
+
+          {/* Key LLM Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Brain className="w-5 h-5 text-red-600" />
+                <h4 className="font-medium text-red-800 dark:text-red-200">Hallucination Score</h4>
+              </div>
+              <p className="text-2xl font-bold text-red-900 dark:text-red-100">8.2%</p>
+              <p className="text-sm text-red-700 dark:text-red-300">↓ 2.1% vs last week</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-5 h-5 text-green-600" />
+                <h4 className="font-medium text-green-800 dark:text-green-200">Relevance Score</h4>
+              </div>
+              <p className="text-2xl font-bold text-green-900 dark:text-green-100">92.5%</p>
+              <p className="text-sm text-green-700 dark:text-green-300">↑ 3.2% vs last week</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="w-5 h-5 text-blue-600" />
+                <h4 className="font-medium text-blue-800 dark:text-blue-200">Coherence Score</h4>
+              </div>
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">89.7%</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">↑ 1.8% vs last week</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="w-5 h-5 text-purple-600" />
+                <h4 className="font-medium text-purple-800 dark:text-purple-200">Safety Score</h4>
+              </div>
+              <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">98.1%</p>
+              <p className="text-sm text-purple-700 dark:text-purple-300">↑ 0.5% vs last week</p>
+            </div>
+          </div>
+
+          {/* LLM Metrics Trends */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
+              <h4 className="font-medium text-primary mb-3">Evaluation Trends (7 days)</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Hallucination Detection</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-2 bg-gray-200 rounded-full">
+                      <div className="h-2 bg-red-500 rounded-full" style={{ width: '18%' }}></div>
+                    </div>
+                    <span className="text-sm font-medium">8.2%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Relevance Assessment</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-2 bg-gray-200 rounded-full">
+                      <div className="h-2 bg-green-500 rounded-full" style={{ width: '92.5%' }}></div>
+                    </div>
+                    <span className="text-sm font-medium">92.5%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Coherence Check</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-2 bg-gray-200 rounded-full">
+                      <div className="h-2 bg-blue-500 rounded-full" style={{ width: '89.7%' }}></div>
+                    </div>
+                    <span className="text-sm font-medium">89.7%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Safety Moderation</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-2 bg-gray-200 rounded-full">
+                      <div className="h-2 bg-purple-500 rounded-full" style={{ width: '98.1%' }}></div>
+                    </div>
+                    <span className="text-sm font-medium">98.1%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
+              <h4 className="font-medium text-primary mb-3">Evaluation Models Used</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                  <span className="text-sm font-medium">GPT-4o</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted">856 evaluations</span>
+                    <span className="text-sm font-medium">72%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                  <span className="text-sm font-medium">Claude-3.5-Sonnet</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted">234 evaluations</span>
+                    <span className="text-sm font-medium">20%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                  <span className="text-sm font-medium">GPT-4o-mini</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted">95 evaluations</span>
+                    <span className="text-sm font-medium">8%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Batch Evaluation Status */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="font-medium text-primary">Batch Evaluation Jobs</h4>
+                <p className="text-sm text-muted">Monitor large-scale evaluation progress</p>
+              </div>
+              <button 
+                onClick={() => setShowBatchModal(true)}
+                className="btn btn-outline btn-sm"
+              >
+                <Beaker className="w-4 h-4" />
+                Start Batch Job
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-medium">Running Jobs</span>
+                </div>
+                <p className="text-xl font-bold text-primary">{evaluationStatus.running}</p>
+                <p className="text-xs text-muted">Est. 15 min remaining</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-medium">Completed</span>
+                </div>
+                <p className="text-xl font-bold text-primary">{evaluationStatus.completed}</p>
+                <p className="text-xs text-muted">Last 24 hours</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Gauge className="w-4 h-4 text-purple-500" />
+                  <span className="text-sm font-medium">Avg. Processing Time</span>
+                </div>
+                <p className="text-xl font-bold text-primary">{evaluationStatus.averageTime}</p>
+                <p className="text-xs text-muted">Per 100 evaluations</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Evaluation Insights */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
+              <h4 className="font-medium text-primary mb-3">Quality Insights</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-green-700 dark:text-green-300">Improved Relevance</p>
+                    <p className="text-xs text-muted">Relevance scores increased by 3.2% this week</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <Brain className="w-5 h-5 text-blue-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Reduced Hallucinations</p>
+                    <p className="text-xs text-muted">Hallucination rate dropped by 2.1% since last week</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                  <Shield className="w-5 h-5 text-purple-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-purple-700 dark:text-purple-300">High Safety Score</p>
+                    <p className="text-xs text-muted">Consistently maintaining 98%+ safety compliance</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
+              <h4 className="font-medium text-primary mb-3">Evaluation Cost Optimization</h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Total Evaluation Cost</span>
+                  <span className="text-sm font-medium text-primary">$12.34</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Cost per Evaluation</span>
+                  <span className="text-sm font-medium text-primary">$0.0104</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Monthly Projection</span>
+                  <span className="text-sm font-medium text-primary">$156.78</span>
+                </div>
+                <div className="pt-2 border-t">
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <TrendingDown className="w-4 h-4" />
+                    <span>15% cost reduction vs last month</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Cost Analytics Section */}
       {costAnalytics && (
         <div className="space-y-6">
@@ -1059,6 +1885,21 @@ export function ProjectMetrics({ project }: ProjectMetricsProps) {
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <MetricsConfigurationModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        project={project}
+        onSave={handleConfigSave}
+      />
+
+      <BatchEvaluationModal
+        isOpen={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
+        project={project}
+        onStartJob={handleStartBatchJob}
+      />
     </div>
   )
 }

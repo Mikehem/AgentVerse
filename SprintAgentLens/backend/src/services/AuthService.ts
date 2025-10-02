@@ -23,7 +23,7 @@ import {
 
 /**
  * Enterprise Authentication Service
- * Maintains 100% compatibility with OPIK Java backend authentication logic
+ * Maintains 100% compatibility with Master Java backend authentication logic
  * 
  * CRITICAL: Password verification uses concatenation (password + salt) before BCrypt
  * This matches the Java DatabaseAuthService.verifyPassword() method exactly

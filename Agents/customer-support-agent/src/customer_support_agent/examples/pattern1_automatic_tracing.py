@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 sprintlens.configure(
     url="http://localhost:3000",
     username="admin",
-    password="OpikAdmin2024!",
+    password="MasterAdmin2024!",
     workspace_id="default",
     project_name="project-1758599350381"
 )

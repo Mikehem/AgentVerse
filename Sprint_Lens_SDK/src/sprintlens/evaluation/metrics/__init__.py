@@ -4,7 +4,7 @@ Comprehensive metrics library for Sprint Lens evaluation framework.
 Includes built-in metrics, LLM-based metrics, and custom metric capabilities.
 """
 
-from .base import BaseMetric, MetricResult
+from .base import BaseMetric, MetricResult, ScoreResult
 from .builtin import (
     AccuracyMetric, PrecisionMetric, RecallMetric, F1Metric,
     BleuMetric, RougeMetric, BertScoreMetric,
@@ -16,11 +16,11 @@ from .llm_based import (
     HallucinationMetric, ToxicityMetric, BiasMetric,
     GroundednessMetric, FluencyMetric, ConcisenessMetric
 )
-from .custom import CustomMetric, LLMAsJudgeMetric
+from .custom import CustomMetric, LLMAsJudgeMetric, CometStyleCustomMetric, CometLLMJudgeMetric
 
 __all__ = [
     # Base classes
-    "BaseMetric", "MetricResult",
+    "BaseMetric", "MetricResult", "ScoreResult",
     
     # Built-in metrics  
     "AccuracyMetric", "PrecisionMetric", "RecallMetric", "F1Metric",
@@ -34,5 +34,5 @@ __all__ = [
     "GroundednessMetric", "FluencyMetric", "ConcisenessMetric",
     
     # Custom metrics
-    "CustomMetric", "LLMAsJudgeMetric"
+    "CustomMetric", "LLMAsJudgeMetric", "CometStyleCustomMetric", "CometLLMJudgeMetric"
 ]

@@ -176,7 +176,7 @@ class SimpleAgent:
         self.send_metric("token_usage", token_usage, "tokens", {"conversation_id": conversation_id})
         self.send_metric("cost", cost, "usd", {"conversation_id": conversation_id})
         
-        # Send evaluation metrics (OPIK-style)
+        # Send evaluation metrics (Master-style)
         self.send_metric("answer_relevance", random.uniform(0.7, 0.98), "score", 
                         evaluation_model="gpt-4o", threshold=0.8)
         self.send_metric("coherence_score", random.uniform(0.75, 0.95), "score")
@@ -192,8 +192,8 @@ class SimpleAgent:
         # Start a new run
         run_id = self.start_run(
             name=f"Enhanced Demo Run - {num_conversations} conversations",
-            description=f"Enhanced demo with SDK v1.0 featuring multiturn conversations and OPIK-style evaluation",
-            tags=["demo", "enhanced", "multiturn", "sdk-v1", "opik-style"],
+            description=f"Enhanced demo with SDK v1.0 featuring multiturn conversations and Master-style evaluation",
+            tags=["demo", "enhanced", "multiturn", "sdk-v1", "Master-style"],
             metadata={
                 "num_conversations": num_conversations, 
                 "include_multiturn": include_multiturn,
@@ -335,7 +335,7 @@ def main():
         print("🤖 Enhanced Simple Agent with SDK v1.0")
         print("   - Run-based session tracking")
         print("   - Multiturn conversation support")
-        print("   - OPIK-style evaluation metrics")
+        print("   - Master-style evaluation metrics")
         print("   - Thread-based conversation grouping")
         print()
         

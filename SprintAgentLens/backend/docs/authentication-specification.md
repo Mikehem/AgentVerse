@@ -1,7 +1,7 @@
 # Authentication Specification for SprintAgentLens
 
 ## Overview
-This document provides detailed specifications for implementing the authentication system in SprintAgentLens, maintaining full compatibility with the existing OPIK Java backend.
+This document provides detailed specifications for implementing the authentication system in SprintAgentLens, maintaining full compatibility with the existing Master Java backend.
 
 ## Authentication Architecture
 
@@ -723,4 +723,4 @@ describe('AuthService', () => {
 });
 ```
 
-This authentication specification provides a comprehensive guide for implementing secure, compatible authentication in SprintAgentLens while maintaining full compatibility with the existing OPIK Java backend.
+This authentication specification provides a comprehensive guide for implementing secure, compatible authentication in SprintAgentLens while maintaining full compatibility with the existing Master Java backend.

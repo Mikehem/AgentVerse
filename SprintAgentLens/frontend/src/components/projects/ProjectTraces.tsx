@@ -11,7 +11,7 @@ interface ProjectTracesProps {
   project: Project
 }
 
-interface OpikTrace {
+interface MasterTrace {
   id: string
   name: string
   operationName?: string
@@ -29,7 +29,7 @@ interface OpikTrace {
 }
 
 // Placeholder components for missing dependencies
-function TraceAnalyticsDashboard({ traces }: { traces: OpikTrace[] }) {
+function TraceAnalyticsDashboard({ traces }: { traces: MasterTrace[] }) {
   return (
     <div className="bg-white p-6 rounded-lg border">
       <h4 className="text-lg font-semibold mb-4">Trace Analytics</h4>
@@ -55,7 +55,7 @@ function TraceAnalyticsDashboard({ traces }: { traces: OpikTrace[] }) {
   )
 }
 
-function MetadataEditor({ trace, onUpdate }: { trace: OpikTrace; onUpdate: (metadata: Record<string, any>) => void }) {
+function MetadataEditor({ trace, onUpdate }: { trace: MasterTrace; onUpdate: (metadata: Record<string, any>) => void }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedMetadata, setEditedMetadata] = useState<string>('')
 
@@ -111,8 +111,8 @@ function MetadataEditor({ trace, onUpdate }: { trace: OpikTrace; onUpdate: (meta
 }
 
 export function ProjectTraces({ project }: ProjectTracesProps) {
-  const [selectedTrace, setSelectedTrace] = useState<OpikTrace | null>(null)
-  const [traces, setTraces] = useState<OpikTrace[]>([])
+  const [selectedTrace, setSelectedTrace] = useState<MasterTrace | null>(null)
+  const [traces, setTraces] = useState<MasterTrace[]>([])
   const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')

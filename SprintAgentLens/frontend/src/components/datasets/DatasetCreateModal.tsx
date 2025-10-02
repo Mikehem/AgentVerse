@@ -12,6 +12,7 @@ import {
   Eye,
   Plus
 } from 'lucide-react'
+import { deduplicateItems, formatDeduplicationSummary, type DatasetItem as DeduplicationDatasetItem } from '@/lib/utils/dataDeduplication'
 
 interface DatasetCreateModalProps {
   isOpen: boolean
@@ -46,6 +47,13 @@ export function DatasetCreateModal({
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+  
+  // Deduplication tracking
+  const [deduplicationResult, setDeduplicationResult] = useState<{
+    duplicateCount: number
+    totalProcessed: number
+    summary: string
+  } | null>(null)
   
   // File upload
   const [file, setFile] = useState<File | null>(null)
@@ -87,6 +95,13 @@ export function DatasetCreateModal({
   }
 
   const handleFileUpload = async (uploadedFile: File) => {
+    // File size validation (10MB limit)
+    const maxFileSize = 10 * 1024 * 1024 // 10MB in bytes
+    if (uploadedFile.size > maxFileSize) {
+      setError(`File size (${(uploadedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds the maximum allowed size of 10MB. Please use a smaller file or contact support for larger datasets.`)
+      return
+    }
+
     setFile(uploadedFile)
     setError(null)
     
@@ -273,6 +288,23 @@ export function DatasetCreateModal({
         }
       }
       
+      // Apply deduplication to items before adding
+      if (itemsToAdd.length > 0) {
+        const deduplicationResult = deduplicateItems(itemsToAdd as DeduplicationDatasetItem[])
+        
+        // Update items with deduplicated list
+        itemsToAdd = deduplicationResult.uniqueItems
+        
+        // Store deduplication result for user feedback
+        setDeduplicationResult({
+          duplicateCount: deduplicationResult.duplicateCount,
+          totalProcessed: deduplicationResult.totalProcessed,
+          summary: formatDeduplicationSummary(deduplicationResult)
+        })
+        
+        console.log('Deduplication applied:', deduplicationResult)
+      }
+      
       // Add items to dataset if any
       if (itemsToAdd.length > 0) {
         const itemsResponse = await fetch(`/api/v1/datasets/${dataset.id}/items`, {
@@ -284,6 +316,11 @@ export function DatasetCreateModal({
         if (!itemsResponse.ok) {
           throw new Error('Failed to add items to dataset')
         }
+      }
+      
+      // Show deduplication results to user if any duplicates were found
+      if (deduplicationResult && deduplicationResult.duplicateCount > 0) {
+        alert(`Dataset created successfully!\n\n${deduplicationResult.summary}`)
       }
       
       onSuccess(dataset)
@@ -682,13 +719,60 @@ export function DatasetCreateModal({
                   Back
                 </button>
                 <button
-                  onClick={() => setStep('review')}
+                  onClick={() => {
+                    // Validate JSON before proceeding to review
+                    let hasValidationErrors = false
+                    const validationErrors: string[] = []
+                    
+                    if (creationMethod === 'manual') {
+                      items.forEach((item, index) => {
+                        const inputText = itemTexts[`${index}_input`] || JSON.stringify(item.input_data, null, 2)
+                        const outputText = itemTexts[`${index}_output`] || JSON.stringify(item.expected_output, null, 2)
+                        
+                        // Validate input JSON if there's content beyond empty object
+                        if (inputText.trim() !== '{}' && inputText.trim() !== '') {
+                          try {
+                            JSON.parse(inputText)
+                          } catch (err) {
+                            hasValidationErrors = true
+                            validationErrors.push(`Item ${index + 1} - Input JSON is invalid: ${err.message}`)
+                          }
+                        }
+                        
+                        // Validate output JSON if there's content beyond empty object
+                        if (outputText.trim() !== '{}' && outputText.trim() !== '') {
+                          try {
+                            JSON.parse(outputText)
+                          } catch (err) {
+                            hasValidationErrors = true
+                            validationErrors.push(`Item ${index + 1} - Output JSON is invalid: ${err.message}`)
+                          }
+                        }
+                      })
+                      
+                      // Check if all items are empty
+                      const allItemsEmpty = items.every((item, index) => {
+                        const inputText = itemTexts[`${index}_input`] || JSON.stringify(item.input_data, null, 2)
+                        const outputText = itemTexts[`${index}_output`] || JSON.stringify(item.expected_output, null, 2)
+                        return (inputText.trim() === '{}' || inputText.trim() === '') && 
+                               (outputText.trim() === '{}' || outputText.trim() === '')
+                      })
+                      
+                      if (allItemsEmpty) {
+                        hasValidationErrors = true
+                        validationErrors.push('Please add content to at least one input or output field')
+                      }
+                    }
+                    
+                    if (hasValidationErrors) {
+                      alert('Validation Errors:\n\n' + validationErrors.join('\n'))
+                      return
+                    }
+                    
+                    setStep('review')
+                  }}
                   disabled={
-                    (creationMethod === 'upload' && !file) ||
-                    (creationMethod === 'manual' && items.every(item => 
-                      Object.keys(item.input_data).length === 0 && 
-                      Object.keys(item.expected_output || {}).length === 0
-                    ))
+                    (creationMethod === 'upload' && !file)
                   }
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300"
                 >

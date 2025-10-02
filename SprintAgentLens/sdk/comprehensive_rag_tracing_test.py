@@ -2,7 +2,7 @@
 """
 Comprehensive RAG (Retrieval-Augmented Generation) Tracing Test
 
-This test demonstrates Opik-style tracing for complex LLM applications involving:
+This test demonstrates Master-style tracing for complex LLM applications involving:
 - Document retrieval and ranking
 - Pre-processing and context preparation
 - LLM generation with multiple attempts

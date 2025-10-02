@@ -1,6 +1,6 @@
 """
 SprintAgentLens Tracing SDK
-Enhanced Opik-style tracing for agent observability and performance monitoring.
+Enhanced Master-style tracing for agent observability and performance monitoring.
 """
 
 import asyncio

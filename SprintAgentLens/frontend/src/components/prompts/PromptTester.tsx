@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Play, Copy, CheckCircle, AlertCircle, Clock, Send, Loader2, Settings, RotateCcw } from 'lucide-react'
+import { X, Play, Copy, CheckCircle, AlertCircle, Clock, Send, Loader2, Settings, RotateCcw, Plus, Trash2, MessageSquare, Database, GitBranch } from 'lucide-react'
 
 interface PromptVersion {
   id: string
@@ -35,12 +35,18 @@ interface TestExecution {
   }
 }
 
+interface Project {
+  id: string
+  name: string
+}
+
 interface PromptTesterProps {
   prompt: Prompt
+  project: Project
   onClose: () => void
 }
 
-export function PromptTester({ prompt, onClose }: PromptTesterProps) {
+export function PromptTester({ prompt, project, onClose }: PromptTesterProps) {
   const [selectedVersion, setSelectedVersion] = useState<PromptVersion | null>(null)
   const [variables, setVariables] = useState<Record<string, string>>({})
   const [output, setOutput] = useState('')
@@ -48,14 +54,43 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
   const [executionHistory, setExecutionHistory] = useState<TestExecution[]>([])
   const [selectedExecution, setSelectedExecution] = useState<TestExecution | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [showDatasets, setShowDatasets] = useState(false)
+  const [selectedDataset, setSelectedDataset] = useState<string | null>(null)
+  const [availableDatasets, setAvailableDatasets] = useState<any[]>([])
   
   // Test settings
   const [testSettings, setTestSettings] = useState({
     provider: 'openai',
-    model: 'gpt-4',
+    model: 'gpt-4o-mini',
     temperature: 0.7,
     maxTokens: 1000
   })
+
+  // Message structure for chat-based prompts
+  const [messages, setMessages] = useState([
+    { role: 'system', content: '' },
+    { role: 'user', content: '' }
+  ])
+
+  // Provider configurations
+  const providers = {
+    openai: {
+      name: 'OpenAI',
+      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo']
+    },
+    anthropic: {
+      name: 'Anthropic',
+      models: ['claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307', 'claude-3-opus-20240229']
+    },
+    ollama: {
+      name: 'Ollama',
+      models: ['llama2', 'llama3', 'mistral', 'codellama']
+    },
+    gemini: {
+      name: 'Google Gemini',
+      models: ['gemini-pro', 'gemini-pro-vision']
+    }
+  }
 
   useEffect(() => {
     // Auto-select active version or first version
@@ -67,7 +102,24 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
       setSelectedVersion(firstVersion)
       initializeVariables(firstVersion)
     }
+    
+    // Fetch available datasets for this project
+    fetchDatasets()
   }, [prompt])
+
+  const fetchDatasets = async () => {
+    try {
+      const response = await fetch(`/api/v1/datasets?projectId=${project.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setAvailableDatasets(data.data || [])
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch datasets:', error)
+    }
+  }
 
   const initializeVariables = (version: PromptVersion) => {
     const initialVars: Record<string, string> = {}
@@ -76,6 +128,18 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
       initialVars[variable] = ''
     })
     setVariables(initialVars)
+    
+    // Initialize messages with template content if available
+    if (version.template && version.template.trim()) {
+      setMessages([
+        { role: 'user', content: version.template }
+      ])
+    } else {
+      setMessages([
+        { role: 'system', content: '' },
+        { role: 'user', content: '' }
+      ])
+    }
   }
 
   const handleVersionChange = (versionId: string) => {
@@ -110,29 +174,48 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
     const startTime = Date.now()
 
     try {
-      // Interpolate template with variables
-      const finalPrompt = interpolateTemplate(selectedVersion.template, variables)
+      // Interpolate variables in messages
+      const messagesForAPI = messages
+        .filter(msg => msg.content.trim() !== '') // Filter out empty messages
+        .map(msg => ({
+          role: msg.role,
+          content: interpolateTemplate(msg.content, variables)
+        }))
 
-      // Mock execution - in real implementation, this would call your LLM API
-      const mockExecution = await mockLLMCall(finalPrompt, testSettings)
+      // If no messages configured, fall back to template
+      if (messagesForAPI.length === 0 && selectedVersion.template) {
+        const finalPrompt = interpolateTemplate(selectedVersion.template, variables)
+        messagesForAPI.push({ role: 'user', content: finalPrompt })
+      }
+
+      if (messagesForAPI.length === 0) {
+        throw new Error('No messages configured for execution')
+      }
+
+      // Call playground API
+      const playgroundResult = await callPlaygroundAPI(messagesForAPI, testSettings, variables)
       const endTime = Date.now()
       const executionTime = endTime - startTime
 
       const execution: TestExecution = {
         id: `test-${Date.now()}`,
         timestamp: new Date(),
-        input: { ...variables, _finalPrompt: finalPrompt },
-        output: mockExecution.output,
+        input: { 
+          ...variables, 
+          _messages: messagesForAPI,
+          _template: selectedVersion.template ? interpolateTemplate(selectedVersion.template, variables) : undefined
+        },
+        output: playgroundResult.output || '',
         executionTime,
-        success: mockExecution.success,
-        error: mockExecution.error,
-        cost: mockExecution.cost,
-        tokens: mockExecution.tokens
+        success: playgroundResult.success,
+        error: playgroundResult.error,
+        cost: playgroundResult.cost,
+        tokens: playgroundResult.tokens
       }
 
       setExecutionHistory(prev => [execution, ...prev])
       setSelectedExecution(execution)
-      setOutput(mockExecution.output)
+      setOutput(playgroundResult.output || '')
 
     } catch (error) {
       const endTime = Date.now()
@@ -155,32 +238,98 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
     }
   }
 
-  // Mock LLM call - replace with actual API call
-  const mockLLMCall = async (prompt: string, settings: any) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000))
+  // Real API call to playground endpoint
+  const callPlaygroundAPI = async (messages: any[], settings: any, variables: Record<string, string>) => {
+    try {
+      const response = await fetch('/api/v1/playground', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          provider: settings.provider,
+          model: settings.model,
+          messages,
+          settings: {
+            temperature: settings.temperature,
+            maxTokens: settings.maxTokens
+          },
+          variables
+        })
+      })
 
-    // Mock different responses based on prompt content
-    const responses = [
-      "This is a mock response to your prompt. In a real implementation, this would be the actual LLM output.",
-      "Here's a detailed response that addresses your prompt with multiple points and considerations.",
-      "Thank you for your prompt! This is an example of how the AI would respond to your specific request.",
-      "Based on your input, here's a comprehensive answer that demonstrates the prompt template functionality.",
-    ]
-
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-    const inputTokens = Math.floor(prompt.length / 4) // Rough estimate
-    const outputTokens = Math.floor(randomResponse.length / 4)
-
-    return {
-      success: Math.random() > 0.1, // 90% success rate
-      output: randomResponse,
-      cost: (inputTokens * 0.00003 + outputTokens * 0.00006), // GPT-4 pricing
-      tokens: {
-        input: inputTokens,
-        output: outputTokens,
-        total: inputTokens + outputTokens
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Playground API call failed')
       }
+
+      const result = {
+        success: true,
+        output: data.data.content,
+        cost: data.data.cost,
+        tokens: {
+          input: data.data.usage.promptTokens,
+          output: data.data.usage.completionTokens,
+          total: data.data.usage.totalTokens
+        },
+        latency: data.data.latency,
+        model: data.data.model,
+        provider: data.data.provider
+      }
+
+      // Log conversation to project (the API already handles this, but we can add explicit logging here if needed)
+      await logConversationToProject(messages, result, settings, variables)
+
+      return result
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Network error'
+      }
+    }
+  }
+
+  // Log conversation to project conversations
+  const logConversationToProject = async (messages: any[], result: any, settings: any, variables: Record<string, string>) => {
+    try {
+      await fetch('/api/v1/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          project_id: project.id,
+          agent_id: `prompt_tester_${prompt.id}`,
+          agent_name: `Prompt Tester: ${prompt.name}`,
+          messages: messages.map((msg, index) => ({
+            id: `msg_${Date.now()}_${index}`,
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date().toISOString()
+          })),
+          response: result.output,
+          status: result.success ? 'success' : 'error',
+          total_cost: result.cost || 0,
+          input_tokens: result.tokens?.input || 0,
+          output_tokens: result.tokens?.output || 0,
+          total_tokens: result.tokens?.total || 0,
+          latency: result.latency || 0,
+          provider: settings.provider,
+          model: settings.model,
+          temperature: settings.temperature,
+          max_tokens: settings.maxTokens,
+          metadata: {
+            prompt_version: selectedVersion?.version_number,
+            variables,
+            dataset_id: selectedDataset
+          }
+        })
+      })
+    } catch (error) {
+      console.error('Failed to log conversation to project:', error)
+      // Don't throw error here as it shouldn't break the main flow
     }
   }
 
@@ -194,6 +343,33 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
     if (selectedVersion) {
       initializeVariables(selectedVersion)
     }
+    setMessages([
+      { role: 'system', content: '' },
+      { role: 'user', content: '' }
+    ])
+  }
+
+  const addMessage = () => {
+    setMessages(prev => [...prev, { role: 'user', content: '' }])
+  }
+
+  const updateMessage = (index: number, field: 'role' | 'content', value: string) => {
+    setMessages(prev => prev.map((msg, i) => 
+      i === index ? { ...msg, [field]: value } : msg
+    ))
+  }
+
+  const removeMessage = (index: number) => {
+    if (messages.length > 1) {
+      setMessages(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  const duplicatePrompt = () => {
+    // Create a new version of the current prompt for quick experimentation
+    const currentMessages = messages.map(msg => ({...msg}))
+    // Logic to save as new version would go here
+    console.log('Duplicating prompt with messages:', currentMessages)
   }
 
   if (!selectedVersion) {
@@ -228,6 +404,13 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowDatasets(!showDatasets)}
+              className="p-2 hover:bg-accent rounded-lg transition-colors"
+              title="Connect dataset"
+            >
+              <Database className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 hover:bg-accent rounded-lg transition-colors"
@@ -281,12 +464,20 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
                     <label className="text-xs text-muted">Provider</label>
                     <select 
                       value={testSettings.provider}
-                      onChange={(e) => setTestSettings(prev => ({ ...prev, provider: e.target.value }))}
+                      onChange={(e) => {
+                        const newProvider = e.target.value
+                        const firstModel = providers[newProvider as keyof typeof providers]?.models[0] || ''
+                        setTestSettings(prev => ({ 
+                          ...prev, 
+                          provider: newProvider,
+                          model: firstModel
+                        }))
+                      }}
                       className="w-full px-2 py-1 text-sm border border-border rounded"
                     >
-                      <option value="openai">OpenAI</option>
-                      <option value="anthropic">Anthropic</option>
-                      <option value="google">Google</option>
+                      {Object.entries(providers).map(([key, provider]) => (
+                        <option key={key} value={key}>{provider.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -296,9 +487,9 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
                       onChange={(e) => setTestSettings(prev => ({ ...prev, model: e.target.value }))}
                       className="w-full px-2 py-1 text-sm border border-border rounded"
                     >
-                      <option value="gpt-4">GPT-4</option>
-                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                      <option value="claude-3">Claude 3</option>
+                      {providers[testSettings.provider as keyof typeof providers]?.models.map((model) => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -328,39 +519,120 @@ export function PromptTester({ prompt, onClose }: PromptTesterProps) {
               </div>
             )}
 
+            {/* Dataset Panel */}
+            {showDatasets && (
+              <div className="p-4 border-b border-border bg-blue-50">
+                <h3 className="text-sm font-medium text-primary mb-3">Dataset Connection</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted">Select Dataset</label>
+                    <select 
+                      value={selectedDataset || ''}
+                      onChange={(e) => setSelectedDataset(e.target.value || null)}
+                      className="w-full px-2 py-1 text-sm border border-border rounded"
+                    >
+                      <option value="">No dataset selected</option>
+                      {availableDatasets.map((dataset) => (
+                        <option key={dataset.id} value={dataset.id}>
+                          {dataset.name} ({dataset.items_count || 0} items)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {selectedDataset && (
+                    <div className="bg-white p-2 rounded border text-xs">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Database className="w-3 h-3 text-blue-500" />
+                        <span className="font-medium">Dataset Connected</span>
+                      </div>
+                      <p className="text-muted">Variables will be populated from dataset items during experimental runs.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Variables Input */}
             <div className="flex-1 overflow-auto p-4">
-              <h3 className="text-sm font-medium text-primary mb-3">Variables</h3>
-              {selectedVersion.variables.length === 0 ? (
-                <p className="text-sm text-muted">No variables defined for this template</p>
-              ) : (
+              {selectedVersion.variables.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-primary mb-3">Variables</h3>
+                  <div className="space-y-3">
+                    {selectedVersion.variables.map((variable) => (
+                      <div key={variable}>
+                        <label className="text-xs font-medium text-primary block mb-1">
+                          {variable}
+                        </label>
+                        <input
+                          type="text"
+                          value={variables[variable] || ''}
+                          onChange={(e) => setVariables(prev => ({ ...prev, [variable]: e.target.value }))}
+                          placeholder={`Enter value for ${variable}...`}
+                          className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Messages Configuration */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-primary">Messages</h3>
+                  <button
+                    onClick={addMessage}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary/90"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Message
+                  </button>
+                </div>
                 <div className="space-y-3">
-                  {selectedVersion.variables.map((variable) => (
-                    <div key={variable}>
-                      <label className="text-xs font-medium text-primary block mb-1">
-                        {variable}
-                      </label>
+                  {messages.map((message, index) => (
+                    <div key={index} className="border border-border rounded-lg p-3 bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <select
+                          value={message.role}
+                          onChange={(e) => updateMessage(index, 'role', e.target.value)}
+                          className="px-2 py-1 text-xs border border-border rounded"
+                        >
+                          <option value="system">System</option>
+                          <option value="user">User</option>
+                          <option value="assistant">Assistant</option>
+                        </select>
+                        {messages.length > 1 && (
+                          <button
+                            onClick={() => removeMessage(index)}
+                            className="p-1 hover:bg-red-100 rounded transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3 text-red-500" />
+                          </button>
+                        )}
+                      </div>
                       <textarea
-                        value={variables[variable] || ''}
-                        onChange={(e) => setVariables(prev => ({ ...prev, [variable]: e.target.value }))}
-                        placeholder={`Enter value for ${variable}...`}
+                        value={message.content}
+                        onChange={(e) => updateMessage(index, 'content', e.target.value)}
+                        placeholder={`Enter ${message.role} message...`}
                         className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                         rows={3}
                       />
                     </div>
                   ))}
                 </div>
-              )}
-              
-              {/* Template Preview */}
-              <div className="mt-6">
-                <h3 className="text-sm font-medium text-primary mb-2">Template Preview</h3>
-                <div className="bg-gray-50 border border-border rounded-lg p-3">
-                  <pre className="text-sm font-mono whitespace-pre-wrap">
-                    {interpolateTemplate(selectedVersion.template, variables)}
-                  </pre>
-                </div>
               </div>
+              
+              {/* Template Preview (if using template) */}
+              {selectedVersion.template && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-primary mb-2">Template Preview</h3>
+                  <div className="bg-gray-50 border border-border rounded-lg p-3">
+                    <pre className="text-sm font-mono whitespace-pre-wrap">
+                      {interpolateTemplate(selectedVersion.template, variables)}
+                    </pre>
+                  </div>
+                </div>
+              )}
 
               {/* Execute Button */}
               <button

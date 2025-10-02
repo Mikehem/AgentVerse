@@ -24,7 +24,7 @@ import sprintlens
 sprintlens.configure(
     url="http://localhost:3001",
     username="admin",
-    password="OpikAdmin2024!",
+    password="MasterAdmin2024!",
     workspace_id="default",
     project_name="my-ai-project"
 )
@@ -35,7 +35,7 @@ from sprintlens import SprintLensClient
 client = SprintLensClient(
     url="http://localhost:3001",
     username="admin", 
-    password="OpikAdmin2024!",
+    password="MasterAdmin2024!",
     workspace_id="default",
     project_name="my-ai-project"
 )
@@ -48,7 +48,7 @@ await client.initialize()
 # Connection settings
 export SPRINTLENS_URL="http://localhost:3001"
 export SPRINTLENS_USERNAME="admin"
-export SPRINTLENS_PASSWORD="OpikAdmin2024!"
+export SPRINTLENS_PASSWORD="MasterAdmin2024!"
 export SPRINTLENS_WORKSPACE_ID="default"
 export SPRINTLENS_PROJECT_NAME="project-1758599350381"
 
@@ -447,7 +447,7 @@ from sprintlens.llm import OpenAIProvider
 sprintlens.configure(
     url="http://localhost:3001",
     username="admin",
-    password="OpikAdmin2024!",
+    password="MasterAdmin2024!",
     project_name="customer-support-agent"
 )
 
@@ -715,7 +715,7 @@ def function_with_custom_attributes(user_id: str, operation: str):
 1. **"No global client configured" Error**
    ```python
    # Solution: Ensure sprintlens.configure() is called before using decorators
-   sprintlens.configure(url="http://localhost:3001", username="admin", password="OpikAdmin2024!")
+   sprintlens.configure(url="http://localhost:3001", username="admin", password="MasterAdmin2024!")
    ```
 
 2. **Authentication Errors**
@@ -766,7 +766,7 @@ def function_with_custom_attributes(user_id: str, operation: str):
    sprintlens.configure(
        url="http://localhost:3001",
        username="admin",
-       password="OpikAdmin2024!",
+       password="MasterAdmin2024!",
        batch_size=100,  # Increase batch size
        flush_interval=30.0,  # Increase flush interval
        async_mode=True  # Enable async processing

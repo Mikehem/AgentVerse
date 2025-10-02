@@ -10,7 +10,7 @@ import { AuthService } from '../../src/services/AuthService';
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL?.replace('opik_db', 'opik_test_db') || 'mysql://test:test@localhost:3306/opik_test_db',
+      url: process.env.DATABASE_URL?.replace('Master_db', 'Master_test_db') || 'mysql://test:test@localhost:3306/Master_test_db',
     },
   },
 });

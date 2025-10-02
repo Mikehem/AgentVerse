@@ -1,9 +1,9 @@
 """
-Opik-Compatible Python SDK for Sprint Agent Lens
+Master-Compatible Python SDK for Sprint Agent Lens
 
-This module provides a full Opik-compatible interface that integrates
+This module provides a full Master-compatible interface that integrates
 with the Sprint Agent Lens backend while maintaining API compatibility
-with existing Opik workflows.
+with existing Master workflows.
 """
 
 import json
@@ -31,7 +31,7 @@ except ImportError:
 
 @dataclass
 class DatasetItem:
-    """Dataset item compatible with Opik format."""
+    """Dataset item compatible with Master format."""
     input_data: Dict[str, Any]
     expected_output: Optional[Dict[str, Any]] = None
     metadata: Optional[Dict[str, Any]] = None
@@ -50,20 +50,20 @@ class DatasetInfo:
     updated_at: Optional[str] = None
 
 
-class OpikSDKError(Exception):
-    """Custom exception for Opik SDK errors."""
+class MasterSDKError(Exception):
+    """Custom exception for Master SDK errors."""
     pass
 
 
 class Dataset:
     """
-    Opik-compatible Dataset class that manages datasets in Sprint Agent Lens.
+    Master-compatible Dataset class that manages datasets in Sprint Agent Lens.
     
-    This class provides the same interface as Opik's Dataset class but integrates
+    This class provides the same interface as Master's Dataset class but integrates
     with Sprint Agent Lens backend infrastructure.
     """
     
-    def __init__(self, dataset_info: DatasetInfo, client: 'OpikClient'):
+    def __init__(self, dataset_info: DatasetInfo, client: 'MasterClient'):
         self._info = dataset_info
         self._client = client
         self._base_url = client._base_url
@@ -92,7 +92,7 @@ class Dataset:
             items: List of items to insert. Can be dictionaries or DatasetItem objects.
         
         Raises:
-            OpikSDKError: If insertion fails.
+            MasterSDKError: If insertion fails.
         """
         try:
             # Convert items to proper format
@@ -107,7 +107,7 @@ class Dataset:
                 elif isinstance(item, DatasetItem):
                     formatted_item = asdict(item)
                 else:
-                    raise OpikSDKError(f"Invalid item type: {type(item)}")
+                    raise MasterSDKError(f"Invalid item type: {type(item)}")
                 
                 formatted_items.append(formatted_item)
             
@@ -118,13 +118,13 @@ class Dataset:
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to insert items: {response.text}")
+                raise MasterSDKError(f"Failed to insert items: {response.text}")
             
             # Update item count
             self._info.item_count += len(items)
             
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error inserting items: {str(e)}")
+            raise MasterSDKError(f"Network error inserting items: {str(e)}")
     
     def insert_from_pandas(self, dataframe) -> None:
         """
@@ -134,10 +134,10 @@ class Dataset:
             dataframe: DataFrame containing the data to insert.
             
         Raises:
-            OpikSDKError: If insertion fails or pandas not available.
+            MasterSDKError: If insertion fails or pandas not available.
         """
         if not HAS_PANDAS:
-            raise OpikSDKError("pandas is required for insert_from_pandas. Install with: pip install pandas")
+            raise MasterSDKError("pandas is required for insert_from_pandas. Install with: pip install pandas")
         
         try:
             items = []
@@ -152,7 +152,7 @@ class Dataset:
             self.insert(items)
             
         except Exception as e:
-            raise OpikSDKError(f"Failed to insert from pandas: {str(e)}")
+            raise MasterSDKError(f"Failed to insert from pandas: {str(e)}")
     
     def read_jsonl_from_file(self, file_path: str) -> None:
         """
@@ -162,7 +162,7 @@ class Dataset:
             file_path: Path to the JSONL file.
             
         Raises:
-            OpikSDKError: If reading or insertion fails.
+            MasterSDKError: If reading or insertion fails.
         """
         try:
             items = []
@@ -182,11 +182,11 @@ class Dataset:
                 self.insert(items)
                 
         except FileNotFoundError:
-            raise OpikSDKError(f"File not found: {file_path}")
+            raise MasterSDKError(f"File not found: {file_path}")
         except json.JSONDecodeError as e:
-            raise OpikSDKError(f"Invalid JSON in file: {str(e)}")
+            raise MasterSDKError(f"Invalid JSON in file: {str(e)}")
         except Exception as e:
-            raise OpikSDKError(f"Failed to read JSONL file: {str(e)}")
+            raise MasterSDKError(f"Failed to read JSONL file: {str(e)}")
     
     def to_pandas(self):
         """
@@ -196,10 +196,10 @@ class Dataset:
             DataFrame containing all dataset items.
             
         Raises:
-            OpikSDKError: If download fails or pandas not available.
+            MasterSDKError: If download fails or pandas not available.
         """
         if not HAS_PANDAS:
-            raise OpikSDKError("pandas is required for to_pandas. Install with: pip install pandas")
+            raise MasterSDKError("pandas is required for to_pandas. Install with: pip install pandas")
             
         try:
             response = requests.get(
@@ -208,7 +208,7 @@ class Dataset:
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to download dataset: {response.text}")
+                raise MasterSDKError(f"Failed to download dataset: {response.text}")
             
             result = response.json()
             items = result.get('data', [])
@@ -229,7 +229,7 @@ class Dataset:
             return pd.DataFrame(rows)
             
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error downloading dataset: {str(e)}")
+            raise MasterSDKError(f"Network error downloading dataset: {str(e)}")
     
     def to_json(self) -> List[Dict[str, Any]]:
         """
@@ -239,7 +239,7 @@ class Dataset:
             List of dataset items as dictionaries.
             
         Raises:
-            OpikSDKError: If download fails.
+            MasterSDKError: If download fails.
         """
         try:
             response = requests.get(
@@ -248,20 +248,20 @@ class Dataset:
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to download dataset: {response.text}")
+                raise MasterSDKError(f"Failed to download dataset: {response.text}")
             
             result = response.json()
             return result.get('data', [])
             
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error downloading dataset: {str(e)}")
+            raise MasterSDKError(f"Network error downloading dataset: {str(e)}")
     
     def clear(self) -> None:
         """
         Clear all items from the dataset.
         
         Raises:
-            OpikSDKError: If clearing fails.
+            MasterSDKError: If clearing fails.
         """
         try:
             response = requests.delete(
@@ -270,19 +270,19 @@ class Dataset:
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to clear dataset: {response.text}")
+                raise MasterSDKError(f"Failed to clear dataset: {response.text}")
             
             self._info.item_count = 0
             
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error clearing dataset: {str(e)}")
+            raise MasterSDKError(f"Network error clearing dataset: {str(e)}")
     
     def delete(self) -> None:
         """
         Delete the dataset.
         
         Raises:
-            OpikSDKError: If deletion fails.
+            MasterSDKError: If deletion fails.
         """
         try:
             response = requests.delete(
@@ -291,14 +291,14 @@ class Dataset:
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to delete dataset: {response.text}")
+                raise MasterSDKError(f"Failed to delete dataset: {response.text}")
                 
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error deleting dataset: {str(e)}")
+            raise MasterSDKError(f"Network error deleting dataset: {str(e)}")
     
     @property
     def size(self) -> int:
-        """Get dataset size (Opik compatibility)."""
+        """Get dataset size (Master compatibility)."""
         return self._info.item_count
     
     def __len__(self) -> int:
@@ -309,11 +309,11 @@ class Dataset:
         return f"Dataset(name='{self.name}', id='{self.id}', size={len(self)})"
 
 
-class OpikClient:
+class MasterClient:
     """
-    Opik-compatible client for Sprint Agent Lens.
+    Master-compatible client for Sprint Agent Lens.
     
-    This client provides the same interface as Opik but integrates with
+    This client provides the same interface as Master but integrates with
     Sprint Agent Lens backend infrastructure.
     """
     
@@ -325,7 +325,7 @@ class OpikClient:
         project_name: Optional[str] = None
     ):
         """
-        Initialize the Opik client.
+        Initialize the Master client.
         
         Args:
             api_key: API key for authentication (optional for local development).
@@ -343,7 +343,7 @@ class OpikClient:
         if HAS_SPRINT_TRACE:
             try:
                 self._sprint_client = SprintAgentLens(
-                    service_name="opik-integration",
+                    service_name="Master-integration",
                     environment="production",
                     endpoint=self._base_url
                 )
@@ -364,7 +364,7 @@ class OpikClient:
     
     def get_or_create_dataset(self, name: str, description: Optional[str] = None) -> Dataset:
         """
-        Get or create a dataset (Opik-compatible method).
+        Get or create a dataset (Master-compatible method).
         
         Args:
             name: Dataset name.
@@ -374,7 +374,7 @@ class OpikClient:
             Dataset object.
             
         Raises:
-            OpikSDKError: If operation fails.
+            MasterSDKError: If operation fails.
         """
         try:
             # Try to find existing dataset
@@ -389,17 +389,17 @@ class OpikClient:
                 headers=self._get_headers(),
                 json={
                     'name': name,
-                    'description': description or f'Dataset created via Opik integration',
+                    'description': description or f'Dataset created via Master integration',
                     'project_id': self._project_name,
                     'metadata': {
-                        'source': 'opik_integration',
-                        'created_by': 'opik_client'
+                        'source': 'Master_integration',
+                        'created_by': 'Master_client'
                     }
                 }
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to create dataset: {response.text}")
+                raise MasterSDKError(f"Failed to create dataset: {response.text}")
             
             result = response.json()
             dataset_data = result.get('data', {})
@@ -418,7 +418,7 @@ class OpikClient:
             return Dataset(dataset_info, self)
             
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error: {str(e)}")
+            raise MasterSDKError(f"Network error: {str(e)}")
     
     def list_datasets(self) -> List[DatasetInfo]:
         """
@@ -428,7 +428,7 @@ class OpikClient:
             List of DatasetInfo objects.
             
         Raises:
-            OpikSDKError: If listing fails.
+            MasterSDKError: If listing fails.
         """
         try:
             response = requests.get(
@@ -437,7 +437,7 @@ class OpikClient:
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to list datasets: {response.text}")
+                raise MasterSDKError(f"Failed to list datasets: {response.text}")
             
             result = response.json()
             datasets_data = result.get('data', [])
@@ -459,7 +459,7 @@ class OpikClient:
             return datasets
             
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error: {str(e)}")
+            raise MasterSDKError(f"Network error: {str(e)}")
     
     def get_dataset(self, dataset_id: str) -> Dataset:
         """
@@ -472,7 +472,7 @@ class OpikClient:
             Dataset object.
             
         Raises:
-            OpikSDKError: If dataset not found or operation fails.
+            MasterSDKError: If dataset not found or operation fails.
         """
         try:
             response = requests.get(
@@ -481,7 +481,7 @@ class OpikClient:
             )
             
             if not response.ok:
-                raise OpikSDKError(f"Failed to get dataset: {response.text}")
+                raise MasterSDKError(f"Failed to get dataset: {response.text}")
             
             result = response.json()
             data = result.get('data', {})
@@ -500,11 +500,11 @@ class OpikClient:
             return Dataset(dataset_info, self)
             
         except requests.RequestException as e:
-            raise OpikSDKError(f"Network error: {str(e)}")
+            raise MasterSDKError(f"Network error: {str(e)}")
 
 
 # Global client instance for convenience
-_global_client: Optional[OpikClient] = None
+_global_client: Optional[MasterClient] = None
 
 
 def configure(
@@ -512,9 +512,9 @@ def configure(
     endpoint: Optional[str] = None,
     workspace: Optional[str] = None,
     project_name: Optional[str] = None
-) -> OpikClient:
+) -> MasterClient:
     """
-    Configure global Opik client.
+    Configure global Master client.
     
     Args:
         api_key: API key for authentication.
@@ -523,10 +523,10 @@ def configure(
         project_name: Default project name.
         
     Returns:
-        Configured OpikClient instance.
+        Configured MasterClient instance.
     """
     global _global_client
-    _global_client = OpikClient(
+    _global_client = MasterClient(
         api_key=api_key,
         endpoint=endpoint,
         workspace=workspace,
@@ -547,22 +547,22 @@ def get_or_create_dataset(name: str, description: Optional[str] = None) -> Datas
         Dataset object.
         
     Raises:
-        OpikSDKError: If no global client configured or operation fails.
+        MasterSDKError: If no global client configured or operation fails.
     """
     global _global_client
     if _global_client is None:
-        _global_client = OpikClient()
+        _global_client = MasterClient()
     
     return _global_client.get_or_create_dataset(name, description)
 
 
 # Export main classes and functions
 __all__ = [
-    'OpikClient',
+    'MasterClient',
     'Dataset',
     'DatasetItem',
     'DatasetInfo',
-    'OpikSDKError',
+    'MasterSDKError',
     'configure',
     'get_or_create_dataset'
 ]

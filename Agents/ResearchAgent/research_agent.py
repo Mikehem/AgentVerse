@@ -105,7 +105,7 @@ class ResearchAgent:
             self.sprintlens_client = sprintlens.configure(
                 url=os.getenv("SPRINTLENS_URL", "http://localhost:3000"),
                 username=os.getenv("SPRINTLENS_USERNAME", "admin"),
-                password=os.getenv("SPRINTLENS_PASSWORD", "OpikAdmin2024!"),
+                password=os.getenv("SPRINTLENS_PASSWORD", "MasterAdmin2024!"),
                 workspace_id=os.getenv("SPRINTLENS_WORKSPACE_ID", "default"),
                 project_name="ResearchAgent_Autonomous"
             )

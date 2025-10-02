@@ -1,6 +1,6 @@
 /**
  * Distributed Tracing Types for Agent Lens
- * Based on Opik's distributed tracing specification
+ * Based on Master's distributed tracing specification
  */
 
 export interface DistributedTraceContext {

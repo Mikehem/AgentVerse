@@ -1,6 +1,6 @@
 /**
  * Authentication and authorization type definitions
- * Maintains compatibility with OPIK Java backend
+ * Maintains compatibility with Master Java backend
  */
 
 export interface LoginRequest {

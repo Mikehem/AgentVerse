@@ -2,7 +2,7 @@
 """
 Sprint Lens SDK Feature Parity Test
 
-Comprehensive test to validate 100% feature parity with OPIK SDK.
+Comprehensive test to validate 100% feature parity with Master SDK.
 This test covers all major SDK components and functionality.
 """
 
@@ -77,7 +77,7 @@ def test_configuration():
     config = SprintLensConfig(
         url="http://localhost:3000",
         username="admin",
-        password="OpikAdmin2024!",
+        password="MasterAdmin2024!",
         workspace_id="default"
     )
     assert config.url == "http://localhost:3000"
@@ -94,7 +94,7 @@ def test_client_creation():
     client = SprintLensClient(
         url="http://localhost:3000",
         username="admin", 
-        password="OpikAdmin2024!",
+        password="MasterAdmin2024!",
         workspace_id="default"
     )
     
@@ -346,7 +346,7 @@ def run_feature_parity_validation():
         print("✓ Dataset management")
         print("✓ Batch processing")
         print("✓ Statistical analysis")
-        print("✓ All OPIK SDK features implemented")
+        print("✓ All Master SDK features implemented")
         print("=" * 60)
         
         return True

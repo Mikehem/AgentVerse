@@ -11,6 +11,23 @@ import time
 from datetime import datetime
 
 
+@dataclass 
+class ScoreResult:
+    """Result of a single score calculation (compatible with Comet/AgentLens patterns)."""
+    
+    value: float
+    name: str
+    reason: Optional[str] = None
+    
+    def to_metric_result(self, details: Optional[Dict[str, Any]] = None) -> "MetricResult":
+        """Convert to MetricResult."""
+        return MetricResult(
+            name=self.name,
+            value=self.value,
+            details=details or {"reason": self.reason} if self.reason else {}
+        )
+
+
 @dataclass
 class MetricResult:
     """Result of a metric evaluation."""

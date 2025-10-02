@@ -21,7 +21,7 @@ async function main(): Promise<void> {
     });
 
     let admin = existingAdmin;
-    let adminPassword = 'OpikAdmin2024!';
+    let adminPassword = 'MasterAdmin2024!';
     let hash, salt;
     
     if (existingAdmin) {

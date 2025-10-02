@@ -19,7 +19,7 @@ import {
  * Projects Controller with Enterprise Authentication Integration
  * All endpoints require authentication and implement RBAC
  * 
- * Compatible with OPIK Java backend ProjectsResource
+ * Compatible with Master Java backend ProjectsResource
  */
 
 // Validation schemas
@@ -92,7 +92,7 @@ export default async function projectsController(fastify: FastifyInstance): Prom
 
   /**
    * GET / - List projects with authentication and filtering
-   * Compatible with OPIK Java: /v1/private/projects/
+   * Compatible with Master Java: /v1/private/projects/
    */
   fastify.get('/', {
     preHandler: requireUser,
@@ -203,7 +203,7 @@ export default async function projectsController(fastify: FastifyInstance): Prom
 
   /**
    * POST / - Create project with authentication and authorization
-   * Compatible with OPIK Java: /v1/private/projects/
+   * Compatible with Master Java: /v1/private/projects/
    */
   fastify.post('/', {
     preHandler: requireUser,
@@ -313,7 +313,7 @@ export default async function projectsController(fastify: FastifyInstance): Prom
 
   /**
    * GET /:id - Get project by ID with authentication and authorization
-   * Compatible with OPIK Java: /v1/private/projects/{id}
+   * Compatible with Master Java: /v1/private/projects/{id}
    */
   fastify.get('/:id', {
     preHandler: requireUser,
@@ -399,7 +399,7 @@ export default async function projectsController(fastify: FastifyInstance): Prom
 
   /**
    * PATCH /:id - Update project with authentication and authorization
-   * Compatible with OPIK Java: /v1/private/projects/{id}
+   * Compatible with Master Java: /v1/private/projects/{id}
    */
   fastify.patch('/:id', {
     preHandler: requireUser,
@@ -505,7 +505,7 @@ export default async function projectsController(fastify: FastifyInstance): Prom
 
   /**
    * DELETE /:id - Delete project with authentication and authorization
-   * Compatible with OPIK Java: /v1/private/projects/{id}
+   * Compatible with Master Java: /v1/private/projects/{id}
    */
   fastify.delete('/:id', {
     preHandler: requireUser,
@@ -597,7 +597,7 @@ export default async function projectsController(fastify: FastifyInstance): Prom
 
   /**
    * GET /:id/stats-summary - Get project statistics summary
-   * Compatible with OPIK Java: /v1/private/projects/{id}/stats-summary
+   * Compatible with Master Java: /v1/private/projects/{id}/stats-summary
    */
   fastify.get('/:id/stats-summary', {
     preHandler: requireAuth,
@@ -720,7 +720,7 @@ export default async function projectsController(fastify: FastifyInstance): Prom
 
   /**
    * GET /:id/feedback-scores/names - Get feedback score names for project
-   * Compatible with OPIK Java: /v1/private/projects/{id}/feedback-scores/names
+   * Compatible with Master Java: /v1/private/projects/{id}/feedback-scores/names
    */
   fastify.get('/:id/feedback-scores/names', {
     preHandler: requireAuth,

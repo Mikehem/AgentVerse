@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Settings, Play, BarChart3, Users, MessageSquare, Zap, TrendingUp, Activity, FileText, Database, TestTube, Copy, Check } from 'lucide-react'
+import { ArrowLeft, Settings, Play, BarChart3, Users, MessageSquare, Zap, TrendingUp, Activity, FileText, Database, TestTube, Copy, Check, Shield } from 'lucide-react'
 import { projectApi } from '@/lib/api'
 import { Project } from '@/lib/types'
 import { ProjectPrompts } from '@/components/prompts/ProjectPrompts'
@@ -14,6 +14,7 @@ import { ProjectDatasets } from '@/components/projects/ProjectDatasets'
 import { ProjectEvaluations } from '@/components/projects/ProjectEvaluations'
 import { ProjectExperiments } from '@/components/projects/ProjectExperiments'
 import { ProjectTraces } from '@/components/projects/ProjectTraces'
+import { ProjectRules } from '@/components/projects/ProjectRules'
 import { ProjectSettings } from '@/components/projects/ProjectSettings'
 
 interface ProjectPageProps {
@@ -125,6 +126,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     { id: 'datasets', name: 'Datasets', icon: Database },
     { id: 'evaluations', name: 'Evaluations', icon: TestTube },
     { id: 'experiments', name: 'Experiments', icon: Zap },
+    { id: 'rules', name: 'Rules', icon: Shield },
     { id: 'settings', name: 'Settings', icon: Settings }
   ]
 
@@ -244,6 +246,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         )}
         {activeTab === 'traces' && (
           <ProjectTraces project={project} />
+        )}
+        {activeTab === 'rules' && (
+          <ProjectRules project={project} />
         )}
         {activeTab === 'settings' && (
           <ProjectSettings project={project} onUpdate={setProject} />

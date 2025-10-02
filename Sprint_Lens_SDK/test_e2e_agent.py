@@ -54,7 +54,7 @@ class AgentConfig:
     simulate_errors: bool = True
     backend_url: str = "http://localhost:3000"
     username: str = "admin"
-    password: str = "OpikAdmin2024!"
+    password: str = "MasterAdmin2024!"
     workspace_id: str = "default"
 
 

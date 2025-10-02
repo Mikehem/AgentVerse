@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { tracesDb, spansDb, conversationDb } from '@/lib/database'
 import { calculateCost, aggregateCosts, type TokenUsage, type CostAggregation } from '@/lib/costCalculation'
 
-// Cost analytics API following Opik cost tracking specifications
+// Cost analytics API following Master cost tracking specifications
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

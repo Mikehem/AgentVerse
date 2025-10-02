@@ -41,7 +41,7 @@ if [ ! -f "package.json" ]; then
 {
   "name": "sprintagentlens-backend",
   "version": "1.0.0",
-  "description": "SprintAgentLens Backend - Node.js/TypeScript migration from OPIK Java backend",
+  "description": "SprintAgentLens Backend - Node.js/TypeScript migration from Master Java backend",
   "main": "dist/app.js",
   "scripts": {
     "dev": "tsx watch src/app.ts",

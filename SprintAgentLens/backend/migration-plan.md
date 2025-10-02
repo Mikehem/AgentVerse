@@ -2,7 +2,7 @@
 
 ## Migration Overview
 
-This document outlines the comprehensive strategy for migrating the OPIK Java backend (Dropwizard + MySQL + ClickHouse) to a modern JavaScript/TypeScript backend for SprintAgentLens.
+This document outlines the comprehensive strategy for migrating the Master Java backend (Dropwizard + MySQL + ClickHouse) to a modern JavaScript/TypeScript backend for SprintAgentLens.
 
 ## Target Technology Stack
 
@@ -92,7 +92,7 @@ This document outlines the comprehensive strategy for migrating the OPIK Java ba
 - ✅ **Authentication Integration**: Every endpoint protected with enterprise middleware
 - ✅ **Database Schema**: Complete Prisma models with proper relationships and indexing
 - ✅ **Comprehensive Testing**: 40+ unit tests with authentication scenario coverage
-- ✅ **API Compatibility**: 100% OPIK Java backend compatibility maintained
+- ✅ **API Compatibility**: 100% Master Java backend compatibility maintained
 - ✅ **Enterprise Security**: Complete audit trails, resource ownership, and multi-tenancy
 
 #### Week 3: Projects & Workspaces ✅ COMPLETED
@@ -105,7 +105,7 @@ This document outlines the comprehensive strategy for migrating the OPIK Java ba
 - [x] **SECURITY**: Workspace isolation for all operations
 - [x] **ENTERPRISE**: Resource ownership validation
 - [x] **TESTING**: Comprehensive unit tests for all functionality
-- [x] **API COMPATIBILITY**: Full OPIK Java backend compatibility
+- [x] **API COMPATIBILITY**: Full Master Java backend compatibility
 
 #### Week 4: Datasets & Experiments ✅ COMPLETED
 - [x] Implement Dataset model and operations **WITH PROJECT PERMISSIONS** ✅

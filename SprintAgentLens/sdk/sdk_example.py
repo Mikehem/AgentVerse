@@ -2,13 +2,13 @@
 """
 Sprint Agent Lens SDK Example
 
-This script demonstrates how to use the Opik-compatible SDK
+This script demonstrates how to use the Master-compatible SDK
 with Sprint Agent Lens for dataset management and tracing.
 """
 
 import json
 import pandas as pd
-from opik_client import configure, get_or_create_dataset, DatasetItem
+from Master_client import configure, get_or_create_dataset, DatasetItem
 
 
 def main():
@@ -57,7 +57,7 @@ def main():
     print(f"✅ Inserted {len(example_items)} items")
     print(f"   New dataset size: {len(dataset)} items")
     
-    # Insert from dictionary format (Opik-compatible)
+    # Insert from dictionary format (Master-compatible)
     print("\n4. Inserting dictionary data...")
     dict_items = [
         {

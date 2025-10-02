@@ -21,9 +21,9 @@ const metricSchema = z.object({
     'user_satisfaction', 'task_completion_rate', 'escalation_rate',
     // Agent-to-Agent (A2A) Metrics
     'a2a_calls', 'a2a_success_rate', 'a2a_latency', 'handoff_count',
-    // Opik-style Heuristic Metrics (Deterministic)
+    // Master-style Heuristic Metrics (Deterministic)
     'equals_match', 'contains_match', 'regex_match', 'is_json_valid', 'levenshtein_distance',
-    // Opik-style LLM-as-Judge Metrics (Non-deterministic)
+    // Master-style LLM-as-Judge Metrics (Non-deterministic)
     'hallucination_score', 'moderation_score', 'answer_relevance', 'usefulness_score',
     'context_recall', 'context_precision', 'factual_accuracy',
     // Conversational Quality Metrics
@@ -39,7 +39,7 @@ const metricSchema = z.object({
   aggregationType: z.enum(['instant', 'avg', 'sum', 'count', 'min', 'max', 'p95', 'p99']).default('instant'),
   timestamp: z.string().optional(),
   metadata: z.record(z.any()).optional(),
-  // Additional Opik-style fields
+  // Additional Master-style fields
   evaluationModel: z.string().optional(), // e.g., 'gpt-4o', 'claude-3', 'custom'
   referenceValue: z.string().optional(), // For comparison metrics
   threshold: z.number().optional(), // For pass/fail metrics
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       aggregationType: body.aggregationType || 'instant',
       timestamp: body.timestamp || new Date().toISOString(),
       metadata: body.metadata || {},
-      // Opik-style evaluation fields
+      // Master-style evaluation fields
       evaluationModel: body.evaluationModel || null,
       referenceValue: body.referenceValue || null,
       threshold: body.threshold || null

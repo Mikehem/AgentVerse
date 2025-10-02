@@ -7,7 +7,7 @@
 
 ## 📋 Overview
 
-I've created comprehensive mockups for displaying all conversation features in the Sprint Agent Lens frontend. These designs are based on the enhanced Agent Lens SDK with OPIK-style decorators and contextvars-based threading support.
+I've created comprehensive mockups for displaying all conversation features in the Sprint Agent Lens frontend. These designs are based on the enhanced Agent Lens SDK with Master-style decorators and contextvars-based threading support.
 
 ## 🎨 Design System Used
 
@@ -70,7 +70,7 @@ I've created comprehensive mockups for displaying all conversation features in t
 **Purpose:** Deep dive into execution traces and span analysis
 
 #### Key Features:
-- **Waterfall Chart**: OPIK-style trace waterfall visualization
+- **Waterfall Chart**: Master-style trace waterfall visualization
 - **Performance Timeline**: Visual representation of span execution times
 - **Span Hierarchy**: Nested span structure with indentation levels
 - **Interactive Selection**: Click spans to view detailed metadata
@@ -84,7 +84,7 @@ I've created comprehensive mockups for displaying all conversation features in t
 - Span metadata, tags, and contextual information
 - Error details and stack traces
 - Performance bottleneck identification
-- OPIK-style contextvars isolation visualization
+- Master-style contextvars isolation visualization
 
 ---
 

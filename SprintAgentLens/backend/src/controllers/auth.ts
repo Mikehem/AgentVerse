@@ -15,7 +15,7 @@ import {
 
 /**
  * Authentication Controller
- * Enterprise-grade authentication endpoints compatible with OPIK Java backend
+ * Enterprise-grade authentication endpoints compatible with Master Java backend
  * 
  * Endpoints:
  * - POST /login - User authentication
@@ -84,7 +84,7 @@ export default async function authController(fastify: FastifyInstance): Promise<
 
   /**
    * POST /login - User authentication
-   * Compatible with OPIK Java EnterpriseAuthResource.login()
+   * Compatible with Master Java EnterpriseAuthResource.login()
    */
   fastify.post('/login', {
     schema: {
@@ -238,7 +238,7 @@ export default async function authController(fastify: FastifyInstance): Promise<
 
   /**
    * POST /logout - User logout
-   * Compatible with OPIK Java EnterpriseAuthResource.logout()
+   * Compatible with Master Java EnterpriseAuthResource.logout()
    */
   fastify.post('/logout', {
     preHandler: requireAuth,
@@ -307,7 +307,7 @@ export default async function authController(fastify: FastifyInstance): Promise<
 
   /**
    * GET /status - Check authentication status
-   * Compatible with OPIK Java EnterpriseAuthResource.status()
+   * Compatible with Master Java EnterpriseAuthResource.status()
    */
   fastify.get('/status', {
     preHandler: requireAuth,
@@ -383,7 +383,7 @@ export default async function authController(fastify: FastifyInstance): Promise<
 
   /**
    * POST /generate-hash - Generate password hash (development/testing only)
-   * Compatible with OPIK Java EnterpriseAuthResource.generateHash()
+   * Compatible with Master Java EnterpriseAuthResource.generateHash()
    */
   if (config.NODE_ENV === 'development' || config.DEBUG_ENABLED) {
     fastify.post('/generate-hash', {

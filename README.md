@@ -58,7 +58,7 @@ The Simple Agent requires the following environment variables:
 ### Sprint Agent Lens Configuration
 - `SPRINTLENS_URL`: Backend URL (default: "http://localhost:3000")
 - `SPRINTLENS_USERNAME`: Username (default: "admin")
-- `SPRINTLENS_PASSWORD`: Password (default: "OpikAdmin2024!")
+- `SPRINTLENS_PASSWORD`: Password (default: "MasterAdmin2024!")
 - `SPRINTLENS_WORKSPACE_ID`: Workspace ID (default: "default")
 - `SPRINTLENS_PROJECT_NAME`: Project name (default: "SimpleAgent")
 

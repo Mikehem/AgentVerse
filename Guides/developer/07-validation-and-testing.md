@@ -15,7 +15,7 @@ cat .env
 # Expected values (update with your actual IDs):
 SPRINTLENS_URL=http://localhost:3001
 SPRINTLENS_USERNAME=admin
-SPRINTLENS_PASSWORD=OpikAdmin2024!
+SPRINTLENS_PASSWORD=MasterAdmin2024!
 SPRINTLENS_WORKSPACE_ID=default
 SPRINTLENS_PROJECT_NAME=project-1758599350381
 AGENT_ID=agent_simpleag_mfw0ut5k
@@ -84,7 +84,7 @@ import sprintlens
 sprintlens.configure(
     url="http://localhost:3001",
     username="admin",
-    password="OpikAdmin2024!",
+    password="MasterAdmin2024!",
     workspace_id="default",
     project_name="project-1758599350381"
 )
@@ -187,7 +187,7 @@ from datetime import datetime
 sprintlens.configure(
     url="http://localhost:3001",
     username="admin",
-    password="OpikAdmin2024!",
+    password="MasterAdmin2024!",
     workspace_id="default",
     project_name="project-1758599350381"
 )

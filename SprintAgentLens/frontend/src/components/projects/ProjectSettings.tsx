@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Settings, Zap } from 'lucide-react'
+import { Settings, Zap, Terminal } from 'lucide-react'
 import { Project } from '@/lib/types'
 import { projectApi } from '@/lib/api'
+import { MCPConfiguration } from '@/components/mcp/MCPConfiguration'
 
 interface ProjectSettingsProps {
   project: Project
@@ -12,6 +13,7 @@ interface ProjectSettingsProps {
 
 export function ProjectSettings({ project, onUpdate }: ProjectSettingsProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const [activeTab, setActiveTab] = useState<'general' | 'mcp'>('general')
   const [formData, setFormData] = useState({
     name: project.name,
     description: project.description,
@@ -53,6 +55,11 @@ export function ProjectSettings({ project, onUpdate }: ProjectSettingsProps) {
     setIsEditing(false)
   }
 
+  const tabs = [
+    { id: 'general', name: 'General', icon: Settings },
+    { id: 'mcp', name: 'MCP Integration', icon: Terminal },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -60,7 +67,7 @@ export function ProjectSettings({ project, onUpdate }: ProjectSettingsProps) {
           <h2 className="text-xl font-semibold text-primary">Project Settings</h2>
           <p className="text-muted">Configure project details and preferences</p>
         </div>
-        {!isEditing && (
+        {!isEditing && activeTab === 'general' && (
           <button 
             onClick={() => setIsEditing(true)}
             className="btn btn-primary"
@@ -71,7 +78,33 @@ export function ProjectSettings({ project, onUpdate }: ProjectSettingsProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Tab Navigation */}
+      <div className="border-b border-border">
+        <nav className="flex space-x-8">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'general' | 'mcp')}
+                className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted hover:text-primary hover:border-muted'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.name}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'general' && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Basic Information */}
         <div className="card p-6">
           <h3 className="font-semibold text-primary mb-4">Basic Information</h3>
@@ -265,19 +298,25 @@ export function ProjectSettings({ project, onUpdate }: ProjectSettingsProps) {
         </div>
       )}
 
-      {/* Danger Zone */}
-      <div className="card p-6 border-error/20">
-        <h3 className="font-semibold text-error mb-4">Danger Zone</h3>
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="font-medium text-primary">Delete Project</h4>
-            <p className="text-sm text-muted">Permanently delete this project and all associated data</p>
+          {/* Danger Zone */}
+          <div className="card p-6 border-error/20">
+            <h3 className="font-semibold text-error mb-4">Danger Zone</h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-primary">Delete Project</h4>
+                <p className="text-sm text-muted">Permanently delete this project and all associated data</p>
+              </div>
+              <button className="btn btn-error">
+                Delete Project
+              </button>
+            </div>
           </div>
-          <button className="btn btn-error">
-            Delete Project
-          </button>
-        </div>
-      </div>
+        </>
+      )}
+
+      {activeTab === 'mcp' && (
+        <MCPConfiguration project={project} />
+      )}
     </div>
   )
 }

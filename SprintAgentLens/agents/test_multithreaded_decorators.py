@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Test script for multi-threaded Agent Lens decorators based on OPIK patterns
+Test script for multi-threaded Agent Lens decorators based on Master patterns
 
 This demonstrates the enhanced contextvars-based decorator system that provides
-proper thread isolation and async support, similar to OPIK's implementation.
+proper thread isolation and async support, similar to Master's implementation.
 """
 
 import threading
@@ -137,7 +137,7 @@ def test_context_isolation():
 def main():
     """Main test function"""
     print("🚀 Starting multi-threaded Agent Lens decorator tests")
-    print("   Based on OPIK threading patterns with contextvars")
+    print("   Based on Master threading patterns with contextvars")
     print()
     
     with agent_lens:
@@ -212,11 +212,11 @@ def main():
     print("✅ Context isolation between threads")
     print("✅ Async function tracking with contextvars")
     print("✅ Mixed sync/async thread coordination")
-    print("✅ OPIK-style span and trace context management")
+    print("✅ Master-style span and trace context management")
     print("✅ Automatic conversation logging across threads")
     
     print("\n🎉 All multi-threading tests completed successfully!")
-    print("   Agent Lens SDK now supports OPIK-style thread-safe decorators")
+    print("   Agent Lens SDK now supports Master-style thread-safe decorators")
 
 if __name__ == "__main__":
     main()

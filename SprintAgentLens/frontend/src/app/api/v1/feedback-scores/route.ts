@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { feedbackScoresDb } from '@/lib/database'
 
-// Feedback Score Schema based on Opik backend structure
+// Feedback Score Schema based on Master backend structure
 const feedbackScoreSchema = z.object({
   id: z.string().optional(),
   traceId: z.string(),

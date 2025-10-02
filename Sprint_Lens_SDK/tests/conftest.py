@@ -26,7 +26,7 @@ from sprintlens.core.exceptions import SprintLensError
 # Test configuration constants
 TEST_BACKEND_URL = "http://localhost:3000"
 TEST_USERNAME = "admin"
-TEST_PASSWORD = "OpikAdmin2024!"
+TEST_PASSWORD = "MasterAdmin2024!"
 TEST_WORKSPACE_ID = "default"
 TEST_PROJECT_NAME = "test_project"
 

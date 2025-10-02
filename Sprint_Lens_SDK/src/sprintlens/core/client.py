@@ -37,7 +37,7 @@ class SprintLensClient:
         >>> client = SprintLensClient(
         ...     url="http://localhost:3000",
         ...     username="admin",
-        ...     password="OpikAdmin2024!",
+        ...     password="MasterAdmin2024!",
         ...     workspace_id="default"
         ... )
         >>> await client.initialize()
