@@ -22,7 +22,16 @@ import {
   Network,
   Wrench,
   Library,
-  BarChart3
+  BarChart3,
+  Globe,
+  Brain,
+  Target,
+  DollarSign,
+  Shield,
+  Code,
+  PieChart,
+  TrendingUp,
+  Boxes
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +53,24 @@ const promptEngineeringNavigation = [
   { name: 'Testing Framework', href: '/prompt-engineering/testing', icon: TestTube, current: false, isSubItem: true },
   { name: 'Performance Analytics', href: '/prompt-engineering/analytics', icon: BarChart3, current: false, isSubItem: true },
   { name: 'Template Library', href: '/prompt-engineering/templates', icon: Library, current: false, isSubItem: true },
+]
+
+const operationsNavigation = [
+  { name: 'Agent Operations', href: '/agent-ops', icon: Activity, current: false },
+  { name: 'Data Analytics', href: '/data-analytics', icon: BarChart3, current: false },
+  { name: 'ML Engineering', href: '/ml-engineering', icon: Brain, current: false },
+]
+
+const businessNavigation = [
+  { name: 'Product Management', href: '/product-management', icon: Target, current: false },
+  { name: 'Business Intelligence', href: '/business-intelligence', icon: PieChart, current: false },
+  { name: 'Compliance', href: '/compliance', icon: Shield, current: false },
+]
+
+const developmentNavigation = [
+  { name: 'Agent Playground', href: '/agent-playground', icon: Boxes, current: false },
+  { name: 'MCP Registry', href: '/mcp-registry', icon: Globe, current: false },
+  { name: 'Developer Tools', href: '/developer-tools', icon: Code, current: false },
 ]
 
 const adminNavigation = [
@@ -92,6 +119,62 @@ export function Sidebar() {
           })}
         </ul>
 
+        {/* Operations Section */}
+        <div className="mt-8 pt-6 border-t border-light">
+          <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+            Operations
+          </p>
+          <ul className="space-y-1">
+            {operationsNavigation.map((item) => {
+              const Icon = item.icon
+              return (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className={cn(
+                      'nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      item.current
+                        ? 'active bg-primary-alpha text-primary'
+                        : 'text-secondary hover:bg-accent-alpha hover:text-primary'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+
+        {/* Business Section */}
+        <div className="mt-8 pt-6 border-t border-light">
+          <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+            Business
+          </p>
+          <ul className="space-y-1">
+            {businessNavigation.map((item) => {
+              const Icon = item.icon
+              return (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className={cn(
+                      'nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      item.current
+                        ? 'active bg-primary-alpha text-primary'
+                        : 'text-secondary hover:bg-accent-alpha hover:text-primary'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+
         {/* Prompt Engineering Section */}
         <div className="mt-8 pt-6 border-t border-light">
           <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
@@ -121,7 +204,35 @@ export function Sidebar() {
           </ul>
         </div>
 
-        {/* Secondary Navigation */}
+        {/* Development Section */}
+        <div className="mt-8 pt-6 border-t border-light">
+          <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+            Development
+          </p>
+          <ul className="space-y-1">
+            {developmentNavigation.map((item) => {
+              const Icon = item.icon
+              return (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className={cn(
+                      'nav-item flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      item.current
+                        ? 'active bg-primary-alpha text-primary'
+                        : 'text-secondary hover:bg-accent-alpha hover:text-primary'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+
+        {/* Administration Section */}
         <div className="mt-8 pt-6 border-t border-light">
           <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-3">
             Administration
